@@ -48,7 +48,7 @@ CREATE TABLE "city" (
 );
 
 CREATE TABLE "address" (
-  "id" PRIMARY KEY,
+  "id" SERIAL PRIMARY KEY,
   "region_id" INT NOT NULL, -- we let region_id because city_id can be null, so we can determine region & country
   "city_id" INT,
   "street" VARCHAR(100),
@@ -63,6 +63,6 @@ CREATE TABLE "address" (
 );
 
 CREATE TABLE "role" (
-  "id" SMALLINT PRIMARY KEY,
+  "id" smallserial PRIMARY KEY,
   "name" VARCHAR(30) NOT NULL
 );
