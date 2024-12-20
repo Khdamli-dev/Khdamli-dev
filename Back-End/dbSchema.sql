@@ -66,3 +66,46 @@ CREATE TABLE "role" (
   "id" smallserial PRIMARY KEY,
   "name" VARCHAR(30) NOT NULL
 );
+
+CREATE TYPE sex_enum AS ENUM('male','female');
+
+CREATE TABLE "sex" (
+  "id" smallserial PRIMARY KEY,
+  "name" sex_enum NOT NULL
+);
+
+CREATE TABLE "phone_ext" (
+  "extension" smallint PRIMARY KEY,
+  "country_id" smallint NOT NULL,
+  CONSTRAINT "FK_phone-ext_country"
+    FOREIGN KEY("country_id")
+      REFERENCES "country"("id")
+);
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";  -- enable the function that generate uuid randomly
+
+CREATE TABLE "user" (
+  "id" UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  "phone_number" INTEGER UNIQUE NOT NULL,
+  "email" VARCHAR(254) UNIQUE,  -- maximum length of email is 254 chracter
+  "password" VARCHAR(60) NOT NULL,   -- 60 character to generate password with bcrypt library
+  "firstname" VARCHAR(20) NOT NULL,
+  "lastname" VARCHAR(20) NOT NULL,
+  "sex" SMALLINT NOT NULL,
+  "age" SMALLINT NOT NULL,
+  "address" INT NOT NULL,
+  "role_id" SMALLINT NOT NULL,
+  "registration_date" DATE NOT NULL DEFAULT CURRENT_DATE,
+  "profile_image" VARCHAR(100),
+  CONSTRAINT "unique_username"
+  UNIQUE ("firstname","lastname"), -- to enforce that don 't two users have the same username
+  CONSTRAINT "FK_user_address"
+    FOREIGN KEY ("address")
+      REFERENCES "address"("id"),
+  CONSTRAINT "FK_user_role"
+    FOREIGN KEY ("role_id")
+      REFERENCES "role"("id"),
+  CONSTRAINT "FK_user_sex"
+    FOREIGN KEY ("sex")
+      REFERENCES "sex"("id")
+);
