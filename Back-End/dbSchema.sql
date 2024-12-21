@@ -123,3 +123,19 @@ CREATE TABLE "worker" (
       REFERENCES "user"("id")
   -- the worker will be added to user table after that he will be added to worker table with same id
 );
+
+CREATE TABLE "category" (
+  "id" SERIAL PRIMARY KEY,
+  "name" VARCHAR(80) NOT NULL,
+  "description" TEXT,
+  "logo" VARCHAR(100),
+  "start_date" DATE NOT NULL DEFAULT CURRENT_DATE,
+  "workers" INT NOT NULL,
+  "requests" INT NOT NULL,
+  "accepted_requests" INT NOT NULL,
+  "completed_requests" INT NOT NULL,
+  "parent_category" INT,  -- can be null
+  CONSTRAINT "FK_category_category"
+    FOREIGN KEY("parent_category")
+      REFERENCES "category"("id")
+);
