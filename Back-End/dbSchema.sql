@@ -109,3 +109,17 @@ CREATE TABLE "user" (
     FOREIGN KEY ("sex")
       REFERENCES "sex"("id")
 );
+
+CREATE TABLE "worker" (
+  "id" UUID PRIMARY KEY,
+  "registration_date" DATE NOT NULL DEFAULT CURRENT_DATE,
+  "bio" TEXT,
+  "active" BOOLEAN NOT NULL,
+  "transport" BOOLEAN NOT NULL,
+  "accepted_requests" smallint NOT NULL,
+  "completed_requests" smallint NOT NULL,
+  CONSTRAINT "FK_worker_user"
+    FOREIGN KEY("id")
+      REFERENCES "user"("id")
+  -- the worker will be added to user table after that he will be added to worker table with same id
+);
