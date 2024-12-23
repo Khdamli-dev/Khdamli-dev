@@ -116,10 +116,57 @@ CREATE TABLE "worker" (
   "bio" TEXT,
   "active" BOOLEAN NOT NULL,
   "transport" BOOLEAN NOT NULL,
+  "sent_requests" smallint NOT NULL,
   "accepted_requests" smallint NOT NULL,
   "completed_requests" smallint NOT NULL,
   CONSTRAINT "FK_worker_user"
     FOREIGN KEY("id")
       REFERENCES "user"("id")
   -- the worker will be added to user table after that he will be added to worker table with same id
+);
+
+CREATE TABLE "category" (
+  "id" SERIAL PRIMARY KEY,
+  "name" VARCHAR(80) NOT NULL,
+  "description" TEXT,
+  "logo" VARCHAR(100),
+  "start_date" DATE NOT NULL DEFAULT CURRENT_DATE,
+  "workers" INT NOT NULL,
+  "sent_requests" INT NOT NULL,
+  "accepted_requests" INT NOT NULL,
+  "completed_requests" INT NOT NULL,
+  "parent_category" INT,  -- can be null
+  CONSTRAINT "FK_category_category"
+    FOREIGN KEY("parent_category")
+      REFERENCES "category"("id")
+);
+
+CREATE TABLE "unity" (
+  "id" smallserial PRIMARY KEY,
+  "name" VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE "unity_of_category" (
+  "id" SERIAL PRIMARY KEY,
+  "category_id" INT NOT NULL,
+  "unity_id" smallint NOT NULL,
+  CONSTRAINT "FK_unity-of-category_category"
+    FOREIGN KEY ("category_id")
+      REFERENCES "category"("id"),
+  CONSTRAINT "FK_unity-of-category_unity"
+    FOREIGN KEY ("unity_id")
+      REFERENCES "unity"("id")
+);
+
+CREATE TABLE "worker_category" (
+  "id" SERIAL PRIMARY KEY,
+  "category_id" INT NOT NULL,
+  "worker_id" UUID NOT NULL,
+  "price" NUMERIC(8,2),
+  CONSTRAINT "FK_worker-category_worker"
+    FOREIGN KEY ("worker_id")
+      REFERENCES "worker"("id"),
+  CONSTRAINT "FK_worker-category_unity-of-work"
+    FOREIGN KEY ("category_id")
+      REFERENCES "unity_of_category"("id")
 );
