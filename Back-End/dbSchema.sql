@@ -170,3 +170,21 @@ CREATE TABLE "worker_category" (
     FOREIGN KEY ("category_id")
       REFERENCES "unity_of_category"("id")
 );
+
+CREATE TABLE "payment_methode" (
+  "id" smallserial PRIMARY KEY,
+  "name" VARCHAR(50) NOT NULL,
+  "description" TEXT
+);
+
+CREATE TABLE "worker_payment" (
+  "id" SERIAL PRIMARY KEY,
+  "payment_id" smallint NOT NULL,
+  "worker_id" UUID NOT NULL,
+  CONSTRAINT "FK_worker-payement_worker"
+    FOREIGN KEY ("worker_id")
+      REFERENCES "worker"("id"),
+  CONSTRAINT "FK_worker-payement_payment-methode"
+    FOREIGN KEY ("payment_id")
+      REFERENCES "payment_methode"("id")
+);
