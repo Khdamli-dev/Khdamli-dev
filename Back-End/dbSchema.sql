@@ -6,7 +6,7 @@ CREATE TABLE "language" (
 -- we make this table to destinct between tables that need translation
 CREATE TABLE "entity" (
   "id" smallserial PRIMARY KEY,
-  "name" VARCHAR(30) NOT NULL
+  "name" VARCHAR(30) NOT NULL UNIQUE -- search of name of entity is frequently
 );
 
 CREATE TABLE "translation" (
@@ -44,7 +44,9 @@ CREATE TABLE "city" (
   "region_id" INT NOT NULL,
   CONSTRAINT "FK_city_region"
     FOREIGN KEY ("region_id")
-      REFERENCES "region"("id")
+      REFERENCES "region"("id"),
+  CONSTRAINT "unique_regionID_cityName" -- optimize query of list all cities situated in the same region
+  UNIQUE ("region_id","name")
 );
 
 CREATE TABLE "address" (
