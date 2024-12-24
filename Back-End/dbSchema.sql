@@ -6,7 +6,7 @@ CREATE TABLE "language" (
 -- we make this table to destinct between tables that need translation
 CREATE TABLE "entity" (
   "id" smallserial PRIMARY KEY,
-  "name" VARCHAR(30) NOT NULL
+  "name" VARCHAR(30) NOT NULL UNIQUE -- search of name of entity is frequently
 );
 
 CREATE TABLE "translation" (
@@ -44,7 +44,9 @@ CREATE TABLE "city" (
   "region_id" INT NOT NULL,
   CONSTRAINT "FK_city_region"
     FOREIGN KEY ("region_id")
-      REFERENCES "region"("id")
+      REFERENCES "region"("id"),
+  CONSTRAINT "unique_regionID_cityName" -- optimize query of list all cities situated in the same region
+  UNIQUE ("region_id","name")
 );
 
 CREATE TABLE "address" (
@@ -87,7 +89,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";  -- enable the function that generat
 CREATE TABLE "user" (
   "id" UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   "phone_number" INTEGER UNIQUE NOT NULL,
-  "email" VARCHAR(254) UNIQUE,  -- maximum length of email is 254 chracter
+  "email" VARCHAR(254) UNIQUE,
+  -- the qeury of check if phone number or email are already used is frequently
   "password" VARCHAR(60) NOT NULL,   -- 60 character to generate password with bcrypt library
   "firstname" VARCHAR(20) NOT NULL,
   "lastname" VARCHAR(20) NOT NULL,
@@ -98,7 +101,7 @@ CREATE TABLE "user" (
   "registration_date" DATE NOT NULL DEFAULT CURRENT_DATE,
   "profile_image" VARCHAR(100),
   CONSTRAINT "unique_username"
-  UNIQUE ("firstname","lastname"), -- to enforce that don 't two users have the same username
+  UNIQUE ("firstname","lastname"), -- query of check if username is already used is frequently
   CONSTRAINT "FK_user_address"
     FOREIGN KEY ("address")
       REFERENCES "address"("id"),
@@ -127,7 +130,7 @@ CREATE TABLE "worker" (
 
 CREATE TABLE "category" (
   "id" SERIAL PRIMARY KEY,
-  "name" VARCHAR(80) NOT NULL,
+  "name" VARCHAR(80) NOT NULL UNIQUE, -- the query of search category by its name is frequently
   "description" TEXT,
   "logo" VARCHAR(100),
   "start_date" DATE NOT NULL DEFAULT CURRENT_DATE,
@@ -146,27 +149,43 @@ CREATE TABLE "unity" (
   "name" VARCHAR(50) NOT NULL
 );
 
-CREATE TABLE "unity_of_category" (
-  "id" SERIAL PRIMARY KEY,
-  "category_id" INT NOT NULL,
-  "unity_id" smallint NOT NULL,
-  CONSTRAINT "FK_unity-of-category_category"
-    FOREIGN KEY ("category_id")
-      REFERENCES "category"("id"),
-  CONSTRAINT "FK_unity-of-category_unity"
-    FOREIGN KEY ("unity_id")
-      REFERENCES "unity"("id")
-);
-
 CREATE TABLE "worker_category" (
   "id" SERIAL PRIMARY KEY,
   "category_id" INT NOT NULL,
   "worker_id" UUID NOT NULL,
   "price" NUMERIC(8,2),
+  "unity_id" smallint NOT NULL,
   CONSTRAINT "FK_worker-category_worker"
     FOREIGN KEY ("worker_id")
       REFERENCES "worker"("id"),
-  CONSTRAINT "FK_worker-category_unity-of-work"
+  CONSTRAINT "FK_worker-category_category"
     FOREIGN KEY ("category_id")
-      REFERENCES "unity_of_category"("id")
+      REFERENCES "category"("id"),
+  CONSTRAINT "FK_worker-category_unity"
+    FOREIGN KEY ("unity_id")
+      REFERENCES "unity"("id"),
+  CONSTRAINT "unique_category_worker_unity"
+    UNIQUE("category_id","worker_id","unity_id")
+  -- query of search the workers of each category is frequent then search categories of each worker
+);
+
+CREATE TABLE "payment_methode" (
+  "id" smallserial PRIMARY KEY,
+  "name" VARCHAR(50) NOT NULL,
+  "description" TEXT
+);
+
+CREATE TABLE "worker_payment" (
+  "id" SERIAL PRIMARY KEY,
+  "payment_id" smallint NOT NULL,
+  "worker_id" UUID NOT NULL,
+  CONSTRAINT "FK_worker-payement_worker"
+    FOREIGN KEY ("worker_id")
+      REFERENCES "worker"("id"),
+  CONSTRAINT "FK_worker-payement_payment-methode"
+    FOREIGN KEY ("payment_id")
+      REFERENCES "payment_methode"("id"),
+  CONSTRAINT "unique_woker_payment-methode"
+    UNIQUE("worker_id","payment_id")
+  -- query of get all the payment methods of worker is frequent
 );
