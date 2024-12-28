@@ -189,3 +189,22 @@ CREATE TABLE "worker_payment" (
     UNIQUE("worker_id","payment_id")
   -- query of get all the payment methods of worker is frequent
 );
+
+CREATE TABLE "day" (
+  "id" smallserial PRIMARY KEY,
+  "name" VARCHAR(9) NOT NULL
+);
+
+CREATE TABLE "time_work" (
+  "worker_id" UUID NOT NULL,
+  "day" smallint NOT NULL,
+  "begin" TIME,
+  "end" TIME,
+  PRIMARY KEY("worker_id","day"),
+  CONSTRAINT "FK_time-work_worker"
+    FOREIGN KEY ("worker_id")
+      REFERENCES "worker"("id"),
+  CONSTRAINT "FK_time-work_day"
+    FOREIGN KEY ("day")
+      REFERENCES "day"("id")
+);
