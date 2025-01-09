@@ -208,3 +208,13 @@ CREATE TABLE "time_work" (
     FOREIGN KEY ("day")
       REFERENCES "day"("id")
 );
+
+CREATE TABLE "request_type" (
+  "id" smallserial PRIMARY KEY,
+  "name" VARCHAR(30) NOT NULL
+);
+
+CREATE TABLE "request_status" (
+  "id" smallserial PRIMARY KEY,
+  "name" VARCHAR(30) NOT NULL
+);
