@@ -271,3 +271,16 @@ CREATE TABLE "request_medias" (
     FOREIGN KEY ("request")
       REFERENCES "request"("id")
 );
+
+CREATE TABLE "public_request_messages" (
+  "request" INTEGER NOT NULL,
+  "worker" UUID NOT NULL,
+  "message" TEXT NOT NULL,
+  PRIMARY KEY("request","worker"),
+  CONSTRAINT "FK_public-request-messages_request"
+    FOREIGN KEY ("request")
+      REFERENCES "request"("id"),
+  CONSTRAINT "FK_public-request-messages_worker"
+    FOREIGN KEY("worker")
+      REFERENCES "worker"("id")
+);
