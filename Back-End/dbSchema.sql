@@ -253,3 +253,20 @@ CREATE TABLE "request" (
     FOREIGN KEY("status")
       REFERENCES "request_status"("id")
 );
+
+CREATE TABLE "media_type" (
+  "id" smallserial PRIMARY KEY,
+  "name" VARCHAR(10) NOT NULL
+);
+
+CREATE TABLE "request_medias" (
+  "request" INTEGER NOT NULL,
+  "media_type" smallint NOT NULL,
+  "url" VARCHAR(18) NOT NULL,
+  CONSTRAINT "FK_request-medias_media_type"
+    FOREIGN KEY ("media_type")
+      REFERENCES "media_type"("id"),
+  CONSTRAINT "FK_request-medias_request"
+    FOREIGN KEY ("request")
+      REFERENCES "request"("id")
+);
