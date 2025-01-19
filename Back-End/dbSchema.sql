@@ -218,3 +218,38 @@ CREATE TABLE "request_status" (
   "id" smallserial PRIMARY KEY,
   "name" VARCHAR(30) NOT NULL
 );
+
+CREATE TABLE "request" (
+  "id" SERIAL PRIMARY KEY,
+  "worker" UUID, -- worker can be null (before choose worker in puplic request)
+  "client" UUID NOT NULL,
+  "client_address" INT NOT NULL,
+  "sent_time" TIMESTAMP NOT NULL DEFAULT DATE_TRUNC('minute', CURRENT_TIMESTAMP),
+  "working_time" TIMESTAMP NOT NULL,
+  "category" INT NOT NULL,
+  "payment" SMALLINT NOT NULL,
+  "description" TEXT,
+  "type" SMALLINT NOT NULL,
+  "status" SMALLINT NOT NULL,
+  CONSTRAINT "FK_request_worker"
+    FOREIGN KEY("worker")
+      REFERENCES "worker"("id"),
+  CONSTRAINT "FK_request_user"
+    FOREIGN KEY("client")
+      REFERENCES "user"("id"),
+  CONSTRAINT "FK_request_address"
+    FOREIGN KEY("client_address")
+      REFERENCES "address"("id"),
+  CONSTRAINT "FK_request_category"
+    FOREIGN KEY("category")
+      REFERENCES "category"("id"),
+  CONSTRAINT "FK_request-payment_methode"
+    FOREIGN KEY("payment")
+      REFERENCES "payment_methode"("id"),
+  CONSTRAINT "FK_request-request_type"
+    FOREIGN KEY("request")
+      REFERENCES "request_type"("id"),
+  CONSTRAINT "FK_request-request_status"
+    FOREIGN KEY("status")
+      REFERENCES "request_status"("id")
+);
