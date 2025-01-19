@@ -218,3 +218,69 @@ CREATE TABLE "request_status" (
   "id" smallserial PRIMARY KEY,
   "name" VARCHAR(30) NOT NULL
 );
+
+CREATE TABLE "request" (
+  "id" SERIAL PRIMARY KEY,
+  "worker" UUID, -- worker can be null (before choose worker in puplic request)
+  "client" UUID NOT NULL,
+  "client_address" INT NOT NULL,
+  "sent_time" TIMESTAMP NOT NULL DEFAULT DATE_TRUNC('minute', CURRENT_TIMESTAMP),
+  "working_time" TIMESTAMP NOT NULL,
+  "category" INT NOT NULL,
+  "payment" SMALLINT NOT NULL,
+  "description" TEXT,
+  "type" SMALLINT NOT NULL,
+  "status" SMALLINT NOT NULL,
+  CONSTRAINT "FK_request_worker"
+    FOREIGN KEY("worker")
+      REFERENCES "worker"("id"),
+  CONSTRAINT "FK_request_user"
+    FOREIGN KEY("client")
+      REFERENCES "user"("id"),
+  CONSTRAINT "FK_request_address"
+    FOREIGN KEY("client_address")
+      REFERENCES "address"("id"),
+  CONSTRAINT "FK_request_category"
+    FOREIGN KEY("category")
+      REFERENCES "category"("id"),
+  CONSTRAINT "FK_request-payment_methode"
+    FOREIGN KEY("payment")
+      REFERENCES "payment_methode"("id"),
+  CONSTRAINT "FK_request-request_type"
+    FOREIGN KEY("request")
+      REFERENCES "request_type"("id"),
+  CONSTRAINT "FK_request-request_status"
+    FOREIGN KEY("status")
+      REFERENCES "request_status"("id")
+);
+
+CREATE TABLE "media_type" (
+  "id" smallserial PRIMARY KEY,
+  "name" VARCHAR(10) NOT NULL
+);
+
+CREATE TABLE "request_medias" (
+  "request" INTEGER NOT NULL,
+  "media_type" smallint NOT NULL,
+  "url" VARCHAR(18) NOT NULL,
+  PRIMARY KEY("request","media_type","url"),
+  CONSTRAINT "FK_request-medias_media_type"
+    FOREIGN KEY ("media_type")
+      REFERENCES "media_type"("id"),
+  CONSTRAINT "FK_request-medias_request"
+    FOREIGN KEY ("request")
+      REFERENCES "request"("id")
+);
+
+CREATE TABLE "public_request_messages" (
+  "request" INTEGER NOT NULL,
+  "worker" UUID NOT NULL,
+  "message" TEXT NOT NULL,
+  PRIMARY KEY("request","worker"),
+  CONSTRAINT "FK_public-request-messages_request"
+    FOREIGN KEY ("request")
+      REFERENCES "request"("id"),
+  CONSTRAINT "FK_public-request-messages_worker"
+    FOREIGN KEY("worker")
+      REFERENCES "worker"("id")
+);
