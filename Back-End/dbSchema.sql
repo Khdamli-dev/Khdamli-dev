@@ -263,6 +263,7 @@ CREATE TABLE "request_medias" (
   "request" INTEGER NOT NULL,
   "media_type" smallint NOT NULL,
   "url" VARCHAR(18) NOT NULL,
+  PRIMARY KEY("request","media_type","url"),
   CONSTRAINT "FK_request-medias_media_type"
     FOREIGN KEY ("media_type")
       REFERENCES "media_type"("id"),
