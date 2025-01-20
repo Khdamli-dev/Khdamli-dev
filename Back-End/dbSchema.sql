@@ -84,10 +84,8 @@ CREATE TABLE "phone_ext" (
       REFERENCES "country"("id")
 );
 
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";  -- enable the function that generate uuid randomly
-
 CREATE TABLE "user" (
-  "id" UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  "id" SERIAL PRIMARY KEY,
   "phone_number" INTEGER UNIQUE NOT NULL,
   "email" VARCHAR(254) UNIQUE,
   -- the qeury of check if phone number or email are already used is frequently
@@ -114,7 +112,7 @@ CREATE TABLE "user" (
 );
 
 CREATE TABLE "worker" (
-  "id" UUID PRIMARY KEY,
+  "id" INTEGER PRIMARY KEY,
   "registration_date" DATE NOT NULL DEFAULT CURRENT_DATE,
   "bio" TEXT,
   "active" BOOLEAN NOT NULL,
@@ -125,6 +123,8 @@ CREATE TABLE "worker" (
   CONSTRAINT "FK_worker_user"
     FOREIGN KEY("id")
       REFERENCES "user"("id")
+      ON DELETE CASCADE
+      ON UPDATE CASCADE
   -- the worker will be added to user table after that he will be added to worker table with same id
 );
 
@@ -152,12 +152,14 @@ CREATE TABLE "unity" (
 CREATE TABLE "worker_category" (
   "id" SERIAL PRIMARY KEY,
   "category" INT NOT NULL,
-  "worker" UUID NOT NULL,
+  "worker" INTEGER NOT NULL,
   "price" NUMERIC(8,2),
   "unity" smallint NOT NULL,
   CONSTRAINT "FK_worker-category_worker"
     FOREIGN KEY ("worker")
-      REFERENCES "worker"("id"),
+      REFERENCES "worker"("id")
+      ON DELETE CASCADE 
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_worker-category_category"
     FOREIGN KEY ("category")
       REFERENCES "category"("id"),
@@ -178,10 +180,12 @@ CREATE TABLE "payment_methode" (
 CREATE TABLE "worker_payment" (
   "id" SERIAL PRIMARY KEY,
   "payment" smallint NOT NULL,
-  "worker" UUID NOT NULL,
+  "worker" INTEGER NOT NULL,
   CONSTRAINT "FK_worker-payement_worker"
     FOREIGN KEY ("worker")
-      REFERENCES "worker"("id"),
+      REFERENCES "worker"("id")
+      ON DELETE CASCADE
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_worker-payement_payment-methode"
     FOREIGN KEY ("payment")
       REFERENCES "payment_methode"("id"),
@@ -196,14 +200,16 @@ CREATE TABLE "day" (
 );
 
 CREATE TABLE "time_work" (
-  "worker" UUID NOT NULL,
+  "worker" INTEGER NOT NULL,
   "day" smallint NOT NULL,
   "begin" TIME,
   "end" TIME,
   PRIMARY KEY("worker","day"),
   CONSTRAINT "FK_time-work_worker"
     FOREIGN KEY ("worker")
-      REFERENCES "worker"("id"),
+      REFERENCES "worker"("id")
+      ON DELETE CASCADE
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_time-work_day"
     FOREIGN KEY ("day")
       REFERENCES "day"("id")
@@ -221,8 +227,8 @@ CREATE TABLE "request_status" (
 
 CREATE TABLE "request" (
   "id" SERIAL PRIMARY KEY,
-  "worker" UUID, -- worker can be null (before choose worker in puplic request)
-  "client" UUID NOT NULL,
+  "worker" INTEGER, -- worker can be null (before choose worker in puplic request)
+  "client" INTEGER,
   "client_address" INT NOT NULL,
   "sent_time" TIMESTAMP NOT NULL DEFAULT DATE_TRUNC('minute', CURRENT_TIMESTAMP),
   "working_time" TIMESTAMP NOT NULL,
@@ -233,10 +239,14 @@ CREATE TABLE "request" (
   "status" SMALLINT NOT NULL,
   CONSTRAINT "FK_request_worker"
     FOREIGN KEY("worker")
-      REFERENCES "worker"("id"),
+      REFERENCES "worker"("id")
+      ON DELETE SET NULL
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_request_user"
     FOREIGN KEY("client")
-      REFERENCES "user"("id"),
+      REFERENCES "user"("id")
+      ON DELETE SET NULL
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_request_address"
     FOREIGN KEY("client_address")
       REFERENCES "address"("id"),
@@ -259,7 +269,7 @@ CREATE TABLE "media_type" (
   "name" VARCHAR(10) NOT NULL
 );
 
-CREATE TABLE "request_medias" (
+CREATE TABLE "request_media" (
   "request" INTEGER NOT NULL,
   "media_type" smallint NOT NULL,
   "url" VARCHAR(18) NOT NULL,
@@ -274,7 +284,7 @@ CREATE TABLE "request_medias" (
 
 CREATE TABLE "public_request_messages" (
   "request" INTEGER NOT NULL,
-  "worker" UUID NOT NULL,
+  "worker" INTEGER NOT NULL,
   "message" TEXT NOT NULL,
   PRIMARY KEY("request","worker"),
   CONSTRAINT "FK_public-request-messages_request"
@@ -283,4 +293,6 @@ CREATE TABLE "public_request_messages" (
   CONSTRAINT "FK_public-request-messages_worker"
     FOREIGN KEY("worker")
       REFERENCES "worker"("id")
+      ON DELETE CASCADE
+      ON UPDATE CASCADE
 );
