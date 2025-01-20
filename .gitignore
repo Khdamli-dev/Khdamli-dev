@@ -1,5 +1,7 @@
 ./Back-End/node_modules
 ./Front-End/node_modules
 ./Front-End/.env
+./Front-End/package-lock.json
 ./Back-End/.env
+./Back-End/package-lock.json
 .vscode
