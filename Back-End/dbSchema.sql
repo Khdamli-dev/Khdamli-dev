@@ -12,12 +12,12 @@ CREATE TABLE "entity" (
 CREATE TABLE "translation" (
   "entity_id" SMALLINT,   -- define the table
   "entity_key" INT,      -- define primary key of table
-  "lang_id" SMALLINT,
+  "language" SMALLINT,
   "column_name" VARCHAR(30),  -- define the column of table, because there are some tables have at least two columns need to be translated
   "text" TEXT NOT NULL,
-  PRIMARY KEY("entity_id","entity_key","column_name","lang_id"),  -- the order is important
+  PRIMARY KEY("entity_id","entity_key","column_name","language"),  -- the order is important
   CONSTRAINT "FK_translation_language"
-    FOREIGN KEY ("lang_id")
+    FOREIGN KEY ("language")
       REFERENCES "language"("id"),
   CONSTRAINT "FK_translation_entity"
     FOREIGN KEY ("entity_id")
@@ -32,35 +32,35 @@ CREATE TABLE "country"(
 CREATE TABLE "region"(
   "id" SERIAL PRIMARY KEY,
   "name" VARCHAR(30) NOT NULL,
-  "country_id" SMALLINT NOT NULL,
+  "country" SMALLINT NOT NULL,
   CONSTRAINT "FK_region_country"
-    FOREIGN KEY ("country_id")
+    FOREIGN KEY ("country")
       REFERENCES "country"("id")
 );
 
 CREATE TABLE "city" (
   "id" SERIAL PRIMARY KEY,
   "name" VARCHAR(30) NOT NULL,
-  "region_id" INT NOT NULL,
+  "region" INT NOT NULL,
   CONSTRAINT "FK_city_region"
-    FOREIGN KEY ("region_id")
+    FOREIGN KEY ("region")
       REFERENCES "region"("id"),
   CONSTRAINT "unique_regionID_cityName" -- optimize query of list all cities situated in the same region
-  UNIQUE ("region_id","name")
+  UNIQUE ("region","name")
 );
 
 CREATE TABLE "address" (
   "id" SERIAL PRIMARY KEY,
-  "region_id" INT NOT NULL, -- we let region_id because city_id can be null, so we can determine region & country
-  "city_id" INT,
+  "region" INT NOT NULL, -- we let region_id because city_id can be null, so we can determine region & country
+  "city" INT,
   "street" VARCHAR(100),
   "adress_number" INT,
   "postal_code" INT,
   CONSTRAINT "FK_address_city"
-    FOREIGN KEY ("city_id")
+    FOREIGN KEY ("city")
       REFERENCES "city"("id"),
   CONSTRAINT "FK_address_region"
-    FOREIGN KEY ("region_id")
+    FOREIGN KEY ("region")
       REFERENCES "region"("id")
 );
 
@@ -78,16 +78,14 @@ CREATE TABLE "sex" (
 
 CREATE TABLE "phone_ext" (
   "extension" smallint PRIMARY KEY,
-  "country_id" smallint NOT NULL,
+  "country" smallint NOT NULL,
   CONSTRAINT "FK_phone-ext_country"
-    FOREIGN KEY("country_id")
+    FOREIGN KEY("country")
       REFERENCES "country"("id")
 );
 
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";  -- enable the function that generate uuid randomly
-
 CREATE TABLE "user" (
-  "id" UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  "id" SERIAL PRIMARY KEY,
   "phone_number" INTEGER UNIQUE NOT NULL,
   "email" VARCHAR(254) UNIQUE,
   -- the qeury of check if phone number or email are already used is frequently
@@ -97,7 +95,7 @@ CREATE TABLE "user" (
   "sex" SMALLINT NOT NULL,
   "age" SMALLINT NOT NULL,
   "address" INT NOT NULL,
-  "role_id" SMALLINT NOT NULL,
+  "role" SMALLINT NOT NULL,
   "registration_date" DATE NOT NULL DEFAULT CURRENT_DATE,
   "profile_image" VARCHAR(100),
   CONSTRAINT "unique_username"
@@ -106,7 +104,7 @@ CREATE TABLE "user" (
     FOREIGN KEY ("address")
       REFERENCES "address"("id"),
   CONSTRAINT "FK_user_role"
-    FOREIGN KEY ("role_id")
+    FOREIGN KEY ("role")
       REFERENCES "role"("id"),
   CONSTRAINT "FK_user_sex"
     FOREIGN KEY ("sex")
@@ -114,7 +112,7 @@ CREATE TABLE "user" (
 );
 
 CREATE TABLE "worker" (
-  "id" UUID PRIMARY KEY,
+  "id" INTEGER PRIMARY KEY,
   "registration_date" DATE NOT NULL DEFAULT CURRENT_DATE,
   "bio" TEXT,
   "active" BOOLEAN NOT NULL,
@@ -125,6 +123,8 @@ CREATE TABLE "worker" (
   CONSTRAINT "FK_worker_user"
     FOREIGN KEY("id")
       REFERENCES "user"("id")
+      ON DELETE CASCADE
+      ON UPDATE CASCADE
   -- the worker will be added to user table after that he will be added to worker table with same id
 );
 
@@ -151,21 +151,23 @@ CREATE TABLE "unity" (
 
 CREATE TABLE "worker_category" (
   "id" SERIAL PRIMARY KEY,
-  "category_id" INT NOT NULL,
-  "worker_id" UUID NOT NULL,
+  "category" INT NOT NULL,
+  "worker" INTEGER NOT NULL,
   "price" NUMERIC(8,2),
-  "unity_id" smallint NOT NULL,
+  "unity" smallint NOT NULL,
   CONSTRAINT "FK_worker-category_worker"
-    FOREIGN KEY ("worker_id")
-      REFERENCES "worker"("id"),
+    FOREIGN KEY ("worker")
+      REFERENCES "worker"("id")
+      ON DELETE CASCADE 
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_worker-category_category"
-    FOREIGN KEY ("category_id")
+    FOREIGN KEY ("category")
       REFERENCES "category"("id"),
   CONSTRAINT "FK_worker-category_unity"
-    FOREIGN KEY ("unity_id")
+    FOREIGN KEY ("unity")
       REFERENCES "unity"("id"),
   CONSTRAINT "unique_category_worker_unity"
-    UNIQUE("category_id","worker_id","unity_id")
+    UNIQUE("category","worker","unity")
   -- query of search the workers of each category is frequent then search categories of each worker
 );
 
@@ -177,16 +179,18 @@ CREATE TABLE "payment_methode" (
 
 CREATE TABLE "worker_payment" (
   "id" SERIAL PRIMARY KEY,
-  "payment_id" smallint NOT NULL,
-  "worker_id" UUID NOT NULL,
+  "payment" smallint NOT NULL,
+  "worker" INTEGER NOT NULL,
   CONSTRAINT "FK_worker-payement_worker"
-    FOREIGN KEY ("worker_id")
-      REFERENCES "worker"("id"),
+    FOREIGN KEY ("worker")
+      REFERENCES "worker"("id")
+      ON DELETE CASCADE
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_worker-payement_payment-methode"
-    FOREIGN KEY ("payment_id")
+    FOREIGN KEY ("payment")
       REFERENCES "payment_methode"("id"),
   CONSTRAINT "unique_woker_payment-methode"
-    UNIQUE("worker_id","payment_id")
+    UNIQUE("worker","payment")
   -- query of get all the payment methods of worker is frequent
 );
 
@@ -196,14 +200,16 @@ CREATE TABLE "day" (
 );
 
 CREATE TABLE "time_work" (
-  "worker_id" UUID NOT NULL,
+  "worker" INTEGER NOT NULL,
   "day" smallint NOT NULL,
   "begin" TIME,
   "end" TIME,
-  PRIMARY KEY("worker_id","day"),
+  PRIMARY KEY("worker","day"),
   CONSTRAINT "FK_time-work_worker"
-    FOREIGN KEY ("worker_id")
-      REFERENCES "worker"("id"),
+    FOREIGN KEY ("worker")
+      REFERENCES "worker"("id")
+      ON DELETE CASCADE
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_time-work_day"
     FOREIGN KEY ("day")
       REFERENCES "day"("id")
@@ -221,8 +227,8 @@ CREATE TABLE "request_status" (
 
 CREATE TABLE "request" (
   "id" SERIAL PRIMARY KEY,
-  "worker" UUID, -- worker can be null (before choose worker in puplic request)
-  "client" UUID NOT NULL,
+  "worker" INTEGER, -- worker can be null (before choose worker in puplic request)
+  "client" INTEGER,
   "client_address" INT NOT NULL,
   "sent_time" TIMESTAMP NOT NULL DEFAULT DATE_TRUNC('minute', CURRENT_TIMESTAMP),
   "working_time" TIMESTAMP NOT NULL,
@@ -233,10 +239,14 @@ CREATE TABLE "request" (
   "status" SMALLINT NOT NULL,
   CONSTRAINT "FK_request_worker"
     FOREIGN KEY("worker")
-      REFERENCES "worker"("id"),
+      REFERENCES "worker"("id")
+      ON DELETE SET NULL
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_request_user"
     FOREIGN KEY("client")
-      REFERENCES "user"("id"),
+      REFERENCES "user"("id")
+      ON DELETE SET NULL
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_request_address"
     FOREIGN KEY("client_address")
       REFERENCES "address"("id"),
@@ -259,7 +269,7 @@ CREATE TABLE "media_type" (
   "name" VARCHAR(10) NOT NULL
 );
 
-CREATE TABLE "request_medias" (
+CREATE TABLE "request_media" (
   "request" INTEGER NOT NULL,
   "media_type" smallint NOT NULL,
   "url" VARCHAR(18) NOT NULL,
@@ -274,7 +284,7 @@ CREATE TABLE "request_medias" (
 
 CREATE TABLE "public_request_messages" (
   "request" INTEGER NOT NULL,
-  "worker" UUID NOT NULL,
+  "worker" INTEGER NOT NULL,
   "message" TEXT NOT NULL,
   PRIMARY KEY("request","worker"),
   CONSTRAINT "FK_public-request-messages_request"
@@ -283,4 +293,6 @@ CREATE TABLE "public_request_messages" (
   CONSTRAINT "FK_public-request-messages_worker"
     FOREIGN KEY("worker")
       REFERENCES "worker"("id")
+      ON DELETE CASCADE
+      ON UPDATE CASCADE
 );
