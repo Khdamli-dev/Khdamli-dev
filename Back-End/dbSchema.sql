@@ -36,6 +36,8 @@ CREATE TABLE "region"(
   CONSTRAINT "FK_region_country"
     FOREIGN KEY ("country")
       REFERENCES "country"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE
 );
 
 CREATE TABLE "city" (
@@ -44,7 +46,9 @@ CREATE TABLE "city" (
   "region" INT NOT NULL,
   CONSTRAINT "FK_city_region"
     FOREIGN KEY ("region")
-      REFERENCES "region"("id"),
+      REFERENCES "region"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE,
   CONSTRAINT "unique_regionID_cityName" -- optimize query of list all cities situated in the same region
   UNIQUE ("region","name")
 );
@@ -58,10 +62,14 @@ CREATE TABLE "address" (
   "postal_code" INT,
   CONSTRAINT "FK_address_city"
     FOREIGN KEY ("city")
-      REFERENCES "city"("id"),
+      REFERENCES "city"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_address_region"
     FOREIGN KEY ("region")
       REFERENCES "region"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE
 );
 
 CREATE TABLE "role" (
