@@ -18,10 +18,14 @@ CREATE TABLE "translation" (
   PRIMARY KEY("entity_id","entity_key","column_name","language"),  -- the order is important
   CONSTRAINT "FK_translation_language"
     FOREIGN KEY ("language")
-      REFERENCES "language"("id"),
+      REFERENCES "language"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_translation_entity"
     FOREIGN KEY ("entity_id")
       REFERENCES "entity"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE
 );
 
 CREATE TABLE "country"(
@@ -90,6 +94,8 @@ CREATE TABLE "phone_ext" (
   CONSTRAINT "FK_phone-ext_country"
     FOREIGN KEY("country")
       REFERENCES "country"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE
 );
 
 CREATE TABLE "user" (
@@ -110,13 +116,19 @@ CREATE TABLE "user" (
   UNIQUE ("firstname","lastname"), -- query of check if username is already used is frequently
   CONSTRAINT "FK_user_address"
     FOREIGN KEY ("address")
-      REFERENCES "address"("id"),
+      REFERENCES "address"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_user_role"
     FOREIGN KEY ("role")
-      REFERENCES "role"("id"),
+      REFERENCES "role"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_user_sex"
     FOREIGN KEY ("sex")
       REFERENCES "sex"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE
 );
 
 CREATE TABLE "worker" (
@@ -150,6 +162,8 @@ CREATE TABLE "category" (
   CONSTRAINT "FK_category_category"
     FOREIGN KEY("parent_category")
       REFERENCES "category"("id")
+      ON DELETE CASCADE
+      ON UPDATE CASCADE
 );
 
 CREATE TABLE "unity" (
@@ -170,10 +184,14 @@ CREATE TABLE "worker_category" (
       ON UPDATE CASCADE,
   CONSTRAINT "FK_worker-category_category"
     FOREIGN KEY ("category")
-      REFERENCES "category"("id"),
+      REFERENCES "category"("id")
+      ON DELETE CASCADE 
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_worker-category_unity"
     FOREIGN KEY ("unity")
-      REFERENCES "unity"("id"),
+      REFERENCES "unity"("id")
+      ON DELETE CASCADE 
+      ON UPDATE CASCADE,
   CONSTRAINT "unique_category_worker_unity"
     UNIQUE("category","worker","unity")
   -- query of search the workers of each category is frequent then search categories of each worker
@@ -196,7 +214,9 @@ CREATE TABLE "worker_payment" (
       ON UPDATE CASCADE,
   CONSTRAINT "FK_worker-payement_payment-methode"
     FOREIGN KEY ("payment")
-      REFERENCES "payment_methode"("id"),
+      REFERENCES "payment_methode"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE,
   CONSTRAINT "unique_woker_payment-methode"
     UNIQUE("worker","payment")
   -- query of get all the payment methods of worker is frequent
@@ -221,6 +241,8 @@ CREATE TABLE "time_work" (
   CONSTRAINT "FK_time-work_day"
     FOREIGN KEY ("day")
       REFERENCES "day"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE
 );
 
 CREATE TABLE "request_type" (
@@ -257,19 +279,29 @@ CREATE TABLE "request" (
       ON UPDATE CASCADE,
   CONSTRAINT "FK_request_address"
     FOREIGN KEY("client_address")
-      REFERENCES "address"("id"),
+      REFERENCES "address"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_request_category"
     FOREIGN KEY("category")
-      REFERENCES "category"("id"),
+      REFERENCES "category"("id")
+      ON DELETE CASCADE
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_request-payment_methode"
     FOREIGN KEY("payment")
-      REFERENCES "payment_methode"("id"),
+      REFERENCES "payment_methode"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_request-request_type"
-    FOREIGN KEY("request")
-      REFERENCES "request_type"("id"),
+    FOREIGN KEY("type")
+      REFERENCES "request_type"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_request-request_status"
     FOREIGN KEY("status")
       REFERENCES "request_status"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE
 );
 
 CREATE TABLE "media_type" (
@@ -284,10 +316,14 @@ CREATE TABLE "request_media" (
   PRIMARY KEY("request","media_type","url"),
   CONSTRAINT "FK_request-medias_media_type"
     FOREIGN KEY ("media_type")
-      REFERENCES "media_type"("id"),
+      REFERENCES "media_type"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_request-medias_request"
     FOREIGN KEY ("request")
       REFERENCES "request"("id")
+      ON DELETE CASCADE
+      ON UPDATE CASCADE
 );
 
 CREATE TABLE "public_request_messages" (
@@ -297,7 +333,9 @@ CREATE TABLE "public_request_messages" (
   PRIMARY KEY("request","worker"),
   CONSTRAINT "FK_public-request-messages_request"
     FOREIGN KEY ("request")
-      REFERENCES "request"("id"),
+      REFERENCES "request"("id")
+      ON DELETE CASCADE
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_public-request-messages_worker"
     FOREIGN KEY("worker")
       REFERENCES "worker"("id")
