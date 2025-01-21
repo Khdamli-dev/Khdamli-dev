@@ -140,6 +140,7 @@ CREATE TABLE "worker" (
   "sent_requests" smallint NOT NULL,
   "accepted_requests" smallint NOT NULL,
   "completed_requests" smallint NOT NULL,
+  "nbr_media" smallint NOT NULL,
   CONSTRAINT "FK_worker_user"
     FOREIGN KEY("id")
       REFERENCES "user"("id")
@@ -323,6 +324,23 @@ CREATE TABLE "request_media" (
     FOREIGN KEY ("request")
       REFERENCES "request"("id")
       ON DELETE CASCADE
+      ON UPDATE CASCADE
+);
+
+CREATE TABLE "worker_media" (
+  "worker" INTEGER NOT NULL,
+  "media_type" smallint NOT NULL,
+  "url" VARCHAR(21) NOT NULL,
+  PRIMARY KEY("worker","media_type","url"),
+  CONSTRAINT "FK_worker_media.worker"
+    FOREIGN KEY ("worker")
+      REFERENCES "worker"("id")
+      ON DELETE CASCADE
+      ON UPDATE CASCADE,
+  CONSTRAINT "FK_worker_media.media_type"
+    FOREIGN KEY ("media_type")
+      REFERENCES "media_type"("id")
+      ON DELETE RESTRICT
       ON UPDATE CASCADE
 );
 
