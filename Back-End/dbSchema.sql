@@ -34,7 +34,7 @@ CREATE TABLE "country"(
 );
 
 CREATE TABLE "region"(
-  "id" SERIAL PRIMARY KEY,
+  "id" smallserial PRIMARY KEY,
   "name" VARCHAR(30) NOT NULL,
   "country" SMALLINT NOT NULL,
   CONSTRAINT "FK_region_country"
@@ -45,7 +45,7 @@ CREATE TABLE "region"(
 );
 
 CREATE TABLE "city" (
-  "id" SERIAL PRIMARY KEY,
+  "id" smallserial PRIMARY KEY,
   "name" VARCHAR(30) NOT NULL,
   "region" INT NOT NULL,
   CONSTRAINT "FK_city_region"
@@ -59,8 +59,8 @@ CREATE TABLE "city" (
 
 CREATE TABLE "address" (
   "id" SERIAL PRIMARY KEY,
-  "region" INT NOT NULL, -- we let region_id because city_id can be null, so we can determine region & country
-  "city" INT,
+  "region" smallint NOT NULL, -- we let region_id because city_id can be null, so we can determine region & country
+  "city" smallint,
   "street" VARCHAR(100),
   "adress_number" INT,
   "postal_code" INT,
@@ -78,7 +78,28 @@ CREATE TABLE "address" (
 
 CREATE TABLE "role" (
   "id" smallserial PRIMARY KEY,
-  "name" VARCHAR(30) NOT NULL
+  "name" VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE "permission" (
+  "id" smallserial PRIMARY KEY,
+  "name" VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE "role_permission" (
+  "role" smallint NOT NULL,
+  "permission" smallint NOT NULL,
+  PRIMARY KEY("permission","role"), -- frequent query is to get all roles of one permission
+  CONSTRAINT "FK_role-permission_permission"
+    FOREIGN KEY("permission")
+      REFERENCES "permission"("id")
+      ON DELETE CASCADE 
+      ON UPDATE CASCADE,
+  CONSTRAINT "FK_role-permission_role"
+    FOREIGN KEY("role")
+      REFERENCES "role"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE
 );
 
 CREATE TYPE sex_enum AS ENUM('male','female');
@@ -200,8 +221,7 @@ CREATE TABLE "worker_category" (
 
 CREATE TABLE "payment_methode" (
   "id" smallserial PRIMARY KEY,
-  "name" VARCHAR(50) NOT NULL,
-  "description" TEXT
+  "name" VARCHAR(100) NOT NULL
 );
 
 CREATE TABLE "worker_payment" (
@@ -223,9 +243,11 @@ CREATE TABLE "worker_payment" (
   -- query of get all the payment methods of worker is frequent
 );
 
+CREATE TYPE day_enum AS ENUM('sunday','monday','tuesday','wednesday','thursday','friday','saturday');
+
 CREATE TABLE "day" (
   "id" smallserial PRIMARY KEY,
-  "name" VARCHAR(9) NOT NULL
+  "name" day_enum NOT NULL
 );
 
 CREATE TABLE "time_work" (
@@ -307,7 +329,7 @@ CREATE TABLE "request" (
 
 CREATE TABLE "media_type" (
   "id" smallserial PRIMARY KEY,
-  "name" VARCHAR(10) NOT NULL
+  "name" VARCHAR(30) NOT NULL
 );
 
 CREATE TABLE "request_media" (
