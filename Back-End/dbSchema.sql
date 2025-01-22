@@ -76,11 +76,9 @@ CREATE TABLE "address" (
       ON UPDATE CASCADE
 );
 
-CREATE TYPE role_enum AS ENUM('client','worker','admin');
-
 CREATE TABLE "role" (
   "id" smallserial PRIMARY KEY,
-  "name" role_enum NOT NULL
+  "name" VARCHAR(100) NOT NULL
 );
 
 CREATE TABLE "permission" (
@@ -223,8 +221,7 @@ CREATE TABLE "worker_category" (
 
 CREATE TABLE "payment_methode" (
   "id" smallserial PRIMARY KEY,
-  "name" VARCHAR(50) NOT NULL,
-  "description" TEXT
+  "name" VARCHAR(100) NOT NULL
 );
 
 CREATE TABLE "worker_payment" (
@@ -246,9 +243,11 @@ CREATE TABLE "worker_payment" (
   -- query of get all the payment methods of worker is frequent
 );
 
+CREATE TYPE day_enum AS ENUM('sunday','monday','tuesday','wednesday','thursday','friday','saturday');
+
 CREATE TABLE "day" (
   "id" smallserial PRIMARY KEY,
-  "name" VARCHAR(9) NOT NULL
+  "name" day_enum NOT NULL
 );
 
 CREATE TABLE "time_work" (
@@ -330,7 +329,7 @@ CREATE TABLE "request" (
 
 CREATE TABLE "media_type" (
   "id" smallserial PRIMARY KEY,
-  "name" VARCHAR(10) NOT NULL
+  "name" VARCHAR(30) NOT NULL
 );
 
 CREATE TABLE "request_media" (
