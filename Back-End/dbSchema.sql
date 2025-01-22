@@ -34,7 +34,7 @@ CREATE TABLE "country"(
 );
 
 CREATE TABLE "region"(
-  "id" SERIAL PRIMARY KEY,
+  "id" smallserial PRIMARY KEY,
   "name" VARCHAR(30) NOT NULL,
   "country" SMALLINT NOT NULL,
   CONSTRAINT "FK_region_country"
@@ -45,7 +45,7 @@ CREATE TABLE "region"(
 );
 
 CREATE TABLE "city" (
-  "id" SERIAL PRIMARY KEY,
+  "id" smallserial PRIMARY KEY,
   "name" VARCHAR(30) NOT NULL,
   "region" INT NOT NULL,
   CONSTRAINT "FK_city_region"
@@ -59,8 +59,8 @@ CREATE TABLE "city" (
 
 CREATE TABLE "address" (
   "id" SERIAL PRIMARY KEY,
-  "region" INT NOT NULL, -- we let region_id because city_id can be null, so we can determine region & country
-  "city" INT,
+  "region" smallint NOT NULL, -- we let region_id because city_id can be null, so we can determine region & country
+  "city" smallint,
   "street" VARCHAR(100),
   "adress_number" INT,
   "postal_code" INT,
@@ -76,9 +76,11 @@ CREATE TABLE "address" (
       ON UPDATE CASCADE
 );
 
+CREATE TYPE role_enum AS ENUM('client','worker','admin');
+
 CREATE TABLE "role" (
   "id" smallserial PRIMARY KEY,
-  "name" VARCHAR(30) NOT NULL
+  "name" role_enum NOT NULL
 );
 
 CREATE TYPE sex_enum AS ENUM('male','female');
