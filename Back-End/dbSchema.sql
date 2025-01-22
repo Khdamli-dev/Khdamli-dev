@@ -83,6 +83,27 @@ CREATE TABLE "role" (
   "name" role_enum NOT NULL
 );
 
+CREATE TABLE "permission" (
+  "id" smallserial PRIMARY KEY,
+  "name" VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE "role_permission" (
+  "role" smallint NOT NULL,
+  "permission" smallint NOT NULL,
+  PRIMARY KEY("permission","role"), -- frequent query is to get all roles of one permission
+  CONSTRAINT "FK_role-permission_permission"
+    FOREIGN KEY("permission")
+      REFERENCES "permission"("id")
+      ON DELETE CASCADE 
+      ON UPDATE CASCADE,
+  CONSTRAINT "FK_role-permission_role"
+    FOREIGN KEY("role")
+      REFERENCES "role"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE
+);
+
 CREATE TYPE sex_enum AS ENUM('male','female');
 
 CREATE TABLE "sex" (
