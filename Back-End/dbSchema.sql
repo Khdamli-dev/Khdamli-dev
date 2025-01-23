@@ -219,7 +219,7 @@ CREATE TABLE "worker_category" (
   -- query of search the workers of each category is frequent then search categories of each worker
 );
 
-CREATE TABLE "payment_methode" (
+CREATE TABLE "payment_method" (
   "id" smallserial PRIMARY KEY,
   "name" VARCHAR(100) NOT NULL
 );
@@ -233,12 +233,12 @@ CREATE TABLE "worker_payment" (
       REFERENCES "worker"("id")
       ON DELETE CASCADE
       ON UPDATE CASCADE,
-  CONSTRAINT "FK_worker-payement_payment-methode"
+  CONSTRAINT "FK_worker-payement_payment-method"
     FOREIGN KEY ("payment")
-      REFERENCES "payment_methode"("id")
+      REFERENCES "payment_method"("id")
       ON DELETE RESTRICT
       ON UPDATE CASCADE,
-  CONSTRAINT "unique_woker_payment-methode"
+  CONSTRAINT "unique_woker_payment-method"
     UNIQUE("worker","payment")
   -- query of get all the payment methods of worker is frequent
 );
@@ -310,9 +310,9 @@ CREATE TABLE "request" (
       REFERENCES "category"("id")
       ON DELETE CASCADE
       ON UPDATE CASCADE,
-  CONSTRAINT "FK_request-payment_methode"
+  CONSTRAINT "FK_request-payment_method"
     FOREIGN KEY("payment")
-      REFERENCES "payment_methode"("id")
+      REFERENCES "payment_method"("id")
       ON DELETE RESTRICT
       ON UPDATE CASCADE,
   CONSTRAINT "FK_request-request_type"
