@@ -1,7 +1,26 @@
-./Back-End/node_modules
-./Front-End/node_modules
-./Front-End/.env
-./Front-End/package-lock.json
-./Back-End/.env
-./Back-End/package-lock.json
-.vscode
+# Logs
+*.log
+logs/
+npm-debug.log*
+
+# Dependency directories
+node_modules/
+
+# Environment variables
+.env
+
+# Build output
+dist/
+build/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.swp
