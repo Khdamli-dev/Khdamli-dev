@@ -18,10 +18,14 @@ CREATE TABLE "translation" (
   PRIMARY KEY("entity_id","entity_key","column_name","language"),  -- the order is important
   CONSTRAINT "FK_translation_language"
     FOREIGN KEY ("language")
-      REFERENCES "language"("id"),
+      REFERENCES "language"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_translation_entity"
     FOREIGN KEY ("entity_id")
       REFERENCES "entity"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE
 );
 
 CREATE TABLE "country"(
@@ -30,7 +34,7 @@ CREATE TABLE "country"(
 );
 
 CREATE TABLE "region"(
-  "id" SERIAL PRIMARY KEY,
+  "id" smallserial PRIMARY KEY,
   "name" VARCHAR(30) NOT NULL,
   "country" SMALLINT NOT NULL,
   CONSTRAINT "FK_region_country"
@@ -41,7 +45,7 @@ CREATE TABLE "region"(
 );
 
 CREATE TABLE "city" (
-  "id" SERIAL PRIMARY KEY,
+  "id" smallserial PRIMARY KEY,
   "name" VARCHAR(30) NOT NULL,
   "region" INT NOT NULL,
   CONSTRAINT "FK_city_region"
@@ -55,8 +59,8 @@ CREATE TABLE "city" (
 
 CREATE TABLE "address" (
   "id" SERIAL PRIMARY KEY,
-  "region" INT NOT NULL, -- we let region_id because city_id can be null, so we can determine region & country
-  "city" INT,
+  "region" smallint NOT NULL, -- we let region_id because city_id can be null, so we can determine region & country
+  "city" smallint,
   "street" VARCHAR(100),
   "adress_number" INT,
   "postal_code" INT,
@@ -74,7 +78,28 @@ CREATE TABLE "address" (
 
 CREATE TABLE "role" (
   "id" smallserial PRIMARY KEY,
-  "name" VARCHAR(30) NOT NULL
+  "name" VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE "permission" (
+  "id" smallserial PRIMARY KEY,
+  "name" VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE "role_permission" (
+  "role" smallint NOT NULL,
+  "permission" smallint NOT NULL,
+  PRIMARY KEY("permission","role"), -- frequent query is to get all roles of one permission
+  CONSTRAINT "FK_role-permission_permission"
+    FOREIGN KEY("permission")
+      REFERENCES "permission"("id")
+      ON DELETE CASCADE 
+      ON UPDATE CASCADE,
+  CONSTRAINT "FK_role-permission_role"
+    FOREIGN KEY("role")
+      REFERENCES "role"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE
 );
 
 CREATE TYPE sex_enum AS ENUM('male','female');
@@ -90,6 +115,8 @@ CREATE TABLE "phone_ext" (
   CONSTRAINT "FK_phone-ext_country"
     FOREIGN KEY("country")
       REFERENCES "country"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE
 );
 
 CREATE TABLE "user" (
@@ -110,13 +137,19 @@ CREATE TABLE "user" (
   UNIQUE ("firstname","lastname"), -- query of check if username is already used is frequently
   CONSTRAINT "FK_user_address"
     FOREIGN KEY ("address")
-      REFERENCES "address"("id"),
+      REFERENCES "address"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_user_role"
     FOREIGN KEY ("role")
-      REFERENCES "role"("id"),
+      REFERENCES "role"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_user_sex"
     FOREIGN KEY ("sex")
       REFERENCES "sex"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE
 );
 
 CREATE TABLE "worker" (
@@ -128,6 +161,7 @@ CREATE TABLE "worker" (
   "sent_requests" smallint NOT NULL,
   "accepted_requests" smallint NOT NULL,
   "completed_requests" smallint NOT NULL,
+  "nbr_media" smallint NOT NULL,
   CONSTRAINT "FK_worker_user"
     FOREIGN KEY("id")
       REFERENCES "user"("id")
@@ -150,6 +184,8 @@ CREATE TABLE "category" (
   CONSTRAINT "FK_category_category"
     FOREIGN KEY("parent_category")
       REFERENCES "category"("id")
+      ON DELETE CASCADE
+      ON UPDATE CASCADE
 );
 
 CREATE TABLE "unity" (
@@ -170,19 +206,22 @@ CREATE TABLE "worker_category" (
       ON UPDATE CASCADE,
   CONSTRAINT "FK_worker-category_category"
     FOREIGN KEY ("category")
-      REFERENCES "category"("id"),
+      REFERENCES "category"("id")
+      ON DELETE CASCADE 
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_worker-category_unity"
     FOREIGN KEY ("unity")
-      REFERENCES "unity"("id"),
+      REFERENCES "unity"("id")
+      ON DELETE CASCADE 
+      ON UPDATE CASCADE,
   CONSTRAINT "unique_category_worker_unity"
     UNIQUE("category","worker","unity")
   -- query of search the workers of each category is frequent then search categories of each worker
 );
 
-CREATE TABLE "payment_methode" (
+CREATE TABLE "payment_method" (
   "id" smallserial PRIMARY KEY,
-  "name" VARCHAR(50) NOT NULL,
-  "description" TEXT
+  "name" VARCHAR(100) NOT NULL
 );
 
 CREATE TABLE "worker_payment" (
@@ -194,17 +233,21 @@ CREATE TABLE "worker_payment" (
       REFERENCES "worker"("id")
       ON DELETE CASCADE
       ON UPDATE CASCADE,
-  CONSTRAINT "FK_worker-payement_payment-methode"
+  CONSTRAINT "FK_worker-payement_payment-method"
     FOREIGN KEY ("payment")
-      REFERENCES "payment_methode"("id"),
-  CONSTRAINT "unique_woker_payment-methode"
+      REFERENCES "payment_method"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE,
+  CONSTRAINT "unique_woker_payment-method"
     UNIQUE("worker","payment")
   -- query of get all the payment methods of worker is frequent
 );
 
+CREATE TYPE day_enum AS ENUM('sunday','monday','tuesday','wednesday','thursday','friday','saturday');
+
 CREATE TABLE "day" (
   "id" smallserial PRIMARY KEY,
-  "name" VARCHAR(9) NOT NULL
+  "name" day_enum NOT NULL
 );
 
 CREATE TABLE "time_work" (
@@ -221,6 +264,8 @@ CREATE TABLE "time_work" (
   CONSTRAINT "FK_time-work_day"
     FOREIGN KEY ("day")
       REFERENCES "day"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE
 );
 
 CREATE TABLE "request_type" (
@@ -257,24 +302,34 @@ CREATE TABLE "request" (
       ON UPDATE CASCADE,
   CONSTRAINT "FK_request_address"
     FOREIGN KEY("client_address")
-      REFERENCES "address"("id"),
+      REFERENCES "address"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_request_category"
     FOREIGN KEY("category")
-      REFERENCES "category"("id"),
-  CONSTRAINT "FK_request-payment_methode"
+      REFERENCES "category"("id")
+      ON DELETE CASCADE
+      ON UPDATE CASCADE,
+  CONSTRAINT "FK_request-payment_method"
     FOREIGN KEY("payment")
-      REFERENCES "payment_methode"("id"),
+      REFERENCES "payment_method"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_request-request_type"
-    FOREIGN KEY("request")
-      REFERENCES "request_type"("id"),
+    FOREIGN KEY("type")
+      REFERENCES "request_type"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_request-request_status"
     FOREIGN KEY("status")
       REFERENCES "request_status"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE
 );
 
 CREATE TABLE "media_type" (
   "id" smallserial PRIMARY KEY,
-  "name" VARCHAR(10) NOT NULL
+  "name" VARCHAR(30) NOT NULL
 );
 
 CREATE TABLE "request_media" (
@@ -284,10 +339,31 @@ CREATE TABLE "request_media" (
   PRIMARY KEY("request","media_type","url"),
   CONSTRAINT "FK_request-medias_media_type"
     FOREIGN KEY ("media_type")
-      REFERENCES "media_type"("id"),
+      REFERENCES "media_type"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_request-medias_request"
     FOREIGN KEY ("request")
       REFERENCES "request"("id")
+      ON DELETE CASCADE
+      ON UPDATE CASCADE
+);
+
+CREATE TABLE "worker_media" (
+  "worker" INTEGER NOT NULL,
+  "media_type" smallint NOT NULL,
+  "url" VARCHAR(21) NOT NULL,
+  PRIMARY KEY("worker","media_type","url"),
+  CONSTRAINT "FK_worker_media.worker"
+    FOREIGN KEY ("worker")
+      REFERENCES "worker"("id")
+      ON DELETE CASCADE
+      ON UPDATE CASCADE,
+  CONSTRAINT "FK_worker_media.media_type"
+    FOREIGN KEY ("media_type")
+      REFERENCES "media_type"("id")
+      ON DELETE RESTRICT
+      ON UPDATE CASCADE
 );
 
 CREATE TABLE "public_request_messages" (
@@ -297,7 +373,9 @@ CREATE TABLE "public_request_messages" (
   PRIMARY KEY("request","worker"),
   CONSTRAINT "FK_public-request-messages_request"
     FOREIGN KEY ("request")
-      REFERENCES "request"("id"),
+      REFERENCES "request"("id")
+      ON DELETE CASCADE
+      ON UPDATE CASCADE,
   CONSTRAINT "FK_public-request-messages_worker"
     FOREIGN KEY("worker")
       REFERENCES "worker"("id")
