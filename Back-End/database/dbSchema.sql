@@ -125,8 +125,7 @@ CREATE TABLE "user" (
   "email" VARCHAR(254) UNIQUE,
   -- the qeury of check if phone number or email are already used is frequently
   "password" VARCHAR(60) NOT NULL,   -- 60 character to generate password with bcrypt library
-  "firstname" VARCHAR(20) NOT NULL,
-  "lastname" VARCHAR(20) NOT NULL,
+  "username" VARCHAR(40) NOT NULL,
   "sex" SMALLINT NOT NULL,
   "age" SMALLINT NOT NULL,
   "address" INT NOT NULL,
@@ -134,7 +133,7 @@ CREATE TABLE "user" (
   "registration_date" DATE NOT NULL DEFAULT CURRENT_DATE,
   "profile_image" VARCHAR(100),
   CONSTRAINT "unique_username"
-  UNIQUE ("firstname","lastname"), -- query of check if username is already used is frequently
+  UNIQUE ("username"), -- query of check if username is already used is frequently
   CONSTRAINT "FK_user_address"
     FOREIGN KEY ("address")
       REFERENCES "address"("id")
@@ -151,6 +150,9 @@ CREATE TABLE "user" (
       ON DELETE RESTRICT
       ON UPDATE CASCADE
 );
+
+CREATE EXTENSION IF NOT EXISTS pg_trgm; -- it is used fuzzy searches
+CREATE INDEX username_trgm ON "user" USING GIN (username gin_trgm_ops);
 
 CREATE TABLE "worker" (
   "id" INTEGER PRIMARY KEY,
