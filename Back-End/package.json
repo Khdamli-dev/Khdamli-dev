@@ -1,19 +1,26 @@
 {
   "name": "back-end",
   "version": "1.0.0",
-  "main": "./dist/server.js",
+  "main": "server.ts",
+  "type": "module",
   "scripts": {
     "start": "node dist/server.js",
     "build": "tsc",
-    "dev": "ts-node server.ts"
+    "dev": "nodemon --exec tsx server.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@types/express": "^5.0.0",
     "@types/node": "^22.10.10",
-    "ts-node": "^10.9.2",
+    "nodemon": "^3.1.9",
+    "tsx": "^4.19.2",
     "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
   }
 }
