@@ -1,9 +1,8 @@
-import express from 'express';
+import express,{Router} from 'express';
+import signup from './signup';
 
-const mainRouter = express.Router();
+const mainRouter:Router = express.Router();
 
-mainRouter.get('/',(req,res) => {
-    res.send("this is main route");
-});
+mainRouter.use('/signup', signup);
 
 export default mainRouter;
