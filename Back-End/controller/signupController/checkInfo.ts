@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import User from "../../interface/user";
-import pool from "../../database/dbConnection";
+import checkUsername from "../../utils/validator/checkUsername";
+import checkEmail from "../../utils/validator/checkEmail";
+import checkPhoneNumber from "../../utils/validator/checkPhoneNumber";
 
 const checkInfo = async (req : Request, res : Response) => {
     try {
@@ -10,30 +12,20 @@ const checkInfo = async (req : Request, res : Response) => {
        return;
     }
     // check if the info is already used
-    const {rows : existUsername} = await pool.query(`
-        SELECT id from "user"
-        where username=$1
-        `,[username]);
-    const {rows : existEmail} = await pool.query(`
-        SELECT id from "user" 
-        where email=$1
-        `,[email]);
-    const {rows : existPhoneNumber} = await pool.query(`
-        SELECT id from "user"
-        where phone_number=$1
-        `,[phoneNumber]);
-    const success = !existUsername.length && !existEmail.length && !existPhoneNumber.length;
+    const validUsername : boolean = await checkUsername(username);
+    const validEmail : boolean = await checkEmail(email);
+    const validPhoneNumber : boolean = await checkPhoneNumber(phoneNumber);
+    const success = validUsername && validEmail && validPhoneNumber;
     const status = success ? 200 : 400;
     res.status(status).json({
         success : success,
-        username : !existUsername.length,
-        email : !existEmail.length,
-        phoneNumber : !existPhoneNumber.length
+        username : validUsername,
+        email : validEmail,
+        phoneNumber : validPhoneNumber
     });
     } catch (error) {
         console.log(error);
         res.status(500).json({message : 'internal error'});
-        return;
     }
 }
 
