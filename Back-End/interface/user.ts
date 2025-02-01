@@ -2,7 +2,7 @@ interface User{
     email : string;
     phoneNumber : number;
     username : string;
-    age : number;
+    password : string;
 }
 
 export default User;
