@@ -11,6 +11,6 @@ signup.post('/checkInfo', checkInfo);
 signup.get('/regions', getRegions);
 signup.get('/cities', getCities);
 signup.post('/createUser',createUser);
-signup.post('/createAddress',createAddress)
+signup.post('/createAddress',createAddress);
 
 export default signup;
