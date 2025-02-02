@@ -3,6 +3,7 @@ interface User{
     phoneNumber : number;
     username : string;
     password : string;
+    role: number;
 }
 
 export default User;
