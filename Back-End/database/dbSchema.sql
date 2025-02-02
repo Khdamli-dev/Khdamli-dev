@@ -125,9 +125,9 @@ CREATE TABLE "user" (
   -- the qeury of check if phone number or email are already used is frequently
   "password" VARCHAR(60) NOT NULL,   -- 60 character to generate password with bcrypt library
   "username" VARCHAR(40) NOT NULL,
-  "sex" SMALLINT NOT NULL,
-  "age" SMALLINT NOT NULL,
-  "address" INT NOT NULL,
+  "sex" SMALLINT,
+  "age" SMALLINT,
+  "address" INT,
   "role" SMALLINT NOT NULL,
   "registration_date" DATE NOT NULL DEFAULT CURRENT_DATE,
   "profile_image" VARCHAR(100),
