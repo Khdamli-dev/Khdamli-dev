@@ -121,8 +121,8 @@ CREATE TABLE "phone_ext" (
 CREATE TABLE "user" (
   "id" SERIAL PRIMARY KEY,
   "phone_number" INTEGER UNIQUE NOT NULL,
-  "email" VARCHAR(254) UNIQUE,
-  -- the qeury of check if phone number or email are already used is frequently
+  "email" VARCHAR(254) UNIQUE NOT NULL,
+  -- the query that check if phone number or email are already used is frequently
   "password" VARCHAR(60) NOT NULL,   -- 60 character to generate password with bcrypt library
   "username" VARCHAR(40) NOT NULL,
   "sex" SMALLINT,
