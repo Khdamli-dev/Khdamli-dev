@@ -1,6 +1,6 @@
 import pool from "../../database/dbConnection";
 import { Request, Response } from 'express';
-import address from '../../interface/address'
+import address from '../../interface/address';
 const createAddress = async (req: Request, res: Response) => {
     try {
         const { region , city , street , addressNumber }: address = req.body;
