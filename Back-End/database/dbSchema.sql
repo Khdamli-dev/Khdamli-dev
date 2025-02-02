@@ -62,8 +62,7 @@ CREATE TABLE "address" (
   "region" smallint NOT NULL, -- we let region_id because city_id can be null, so we can determine region & country
   "city" smallint,
   "street" VARCHAR(100),
-  "adress_number" INT,
-  "postal_code" INT,
+  "address_number" smallint,
   CONSTRAINT "FK_address_city"
     FOREIGN KEY ("city")
       REFERENCES "city"("id")
