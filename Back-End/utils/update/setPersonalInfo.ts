@@ -1,9 +1,10 @@
 import { Request, Response } from "express";
 import pool from "../../database/dbConnection";
-import User from "../../interface/user";
+import PersonalInfo from "../../interface/personalInfo";
 
 const setPersonalInfo = async (req: Request, res : Response) => {
-    const {id, age, sex, address}: User = req.body;
+    const id: number = +req.params.id;
+    const {age, sex, address}: PersonalInfo = req.body.personalInfo;
     if (!id){
         res.status(400).json({message : "id is required"});
         return;
