@@ -5,6 +5,7 @@ import checkEmail from "../validator/checkEmail";
 import checkPassword from "../validator/checkPassword";
 import checkUsername from "../validator/checkUsername";
 import checkPhoneNumber from "../validator/checkPhoneNumber";
+import { encryptPassword } from "../authentication/encryptPassword";
 
 const updateCredentials = async (req: Request, res: Response) => {
     try {
@@ -51,7 +52,7 @@ const updateCredentials = async (req: Request, res: Response) => {
 
         if (password) {
             query += ` password = $${counter++},`;
-            values.push(password);
+            values.push(await encryptPassword(password));
         }
 
         if (username) {
