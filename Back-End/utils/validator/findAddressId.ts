@@ -8,8 +8,8 @@ const findAddressId = async ({ region, city, street, addressNumber }: address): 
       region = $1 
       AND city = $2 
       AND street = $3 
-      AND address_number = $4
-    `, [region, city, street, addressNumber]);
+      AND adress_number = $4
+    `, [region, city || null, street || null, addressNumber || null]);
 
     // If no rows are returned, return 0
     if (result.rows.length === 0) {

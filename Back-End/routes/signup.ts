@@ -1,11 +1,8 @@
 import express, { Router } from 'express';
 import checkInfo from '../middleware/checkInfo';
 import createUser from '../controller/signupController/createUser';
-import createAddress from '../utils/address/createAddress';
-import getRegions from '../utils/address/getRegions';
-import getCities from '../utils/address/getCities';
 import assignAddress from '../middleware/assignAddress';
-import updateUserInformation from '../controller/signupController/updateUserInformation';
+import updateUserInformation from '../utils/update/updateUserInformation';
 
 
 const signup: Router = express.Router();
