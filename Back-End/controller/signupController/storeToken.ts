@@ -2,7 +2,7 @@ import pool from './../../database/dbConnection'
 
 const storeToken = async (userId : number, token : string) => {
     await pool.query(`
-        INSERT INTO token(user_id, token)
+        INSERT INTO confirmation_token(user_id, token)
         values ($1,$2)
         `,[userId,token]);
 } 

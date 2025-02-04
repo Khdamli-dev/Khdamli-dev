@@ -6,6 +6,7 @@ import storeToken from './storeToken';
 dotenv.config();
 
 const confirmationEmail = async (userId : number, email : string) => {
+    try {
     const token = jwt.sign({
         id : userId
         },
@@ -26,12 +27,15 @@ const confirmationEmail = async (userId : number, email : string) => {
     });
     // Email content
     const mailOptions = {
-        from: process.env.EMAIL_USER,
+        from: process.env.EMAIL,
         to: email,
         subject: 'Email Confirmation',
         text: `Click the link to verify your email: ${process.env.BASE_URL}/verify/${token}`,
     };
-    await transporter.sendMail(mailOptions);
+    await transporter.sendMail(mailOptions); 
+    } catch (error) {
+        console.log(error);
+    }
 }
 
 export default confirmationEmail;
