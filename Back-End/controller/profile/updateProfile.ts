@@ -6,9 +6,8 @@ import setPersonalInfo from "../../utils/update/setPersonalInfo";
 const updateProfile = async (req: Request, res: Response) => {
     const {personalInfo, cerdentialInfo} : {personalInfo : PersonalInfo, cerdentialInfo : Credentials} 
         = req.body;
-    if (personalInfo){
+    if (personalInfo)
         await setPersonalInfo(req,res);
-    }  
 }
 
 export default updateProfile;

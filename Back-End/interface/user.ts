@@ -1,12 +1,14 @@
 interface User{
-    id : number;
+    id : number,
     email : string;
     phoneNumber : number;
     username : string;
     password : string;
-    sex : number;
-    address : number;
-    age : number
+    role: number;
+    sex?:number,
+    age?:number,
+    profileImage?:string,
+    address?:number
 }
 
 export default User;
