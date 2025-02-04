@@ -7,12 +7,12 @@ import checkPassword from '../utils/validator/checkPassword';
 
 const checkInfo = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { username, email, phoneNumber, password }: User = req.body;
-    if (!username || !email || !phoneNumber || !password) {
+    const { username, email, phoneNumber, password, role }: User = req.body;
+    if (!username || !email || !phoneNumber || !password || !role) {
       res
         .status(200)
         .json({
-          message: 'username, email, phone number, password are required',
+          message: 'username, email, phone number, password, role are required',
         });
       return;
     }
