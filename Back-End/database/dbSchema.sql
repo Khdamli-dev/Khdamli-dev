@@ -129,7 +129,7 @@ CREATE TABLE "user" (
   "age" SMALLINT,
   "address" INT,
   "role" SMALLINT NOT NULL,
-  "registration_date" DATE NOT NULL DEFAULT CURRENT_DATE,
+  "registration_date" DATE,
   "profile_image" VARCHAR(100),
   CONSTRAINT "unique_username"
   UNIQUE ("username"), -- query of check if username is already used is frequently
