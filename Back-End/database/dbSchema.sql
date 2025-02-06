@@ -292,7 +292,7 @@ CREATE TABLE "request_status" (
 CREATE TABLE "request" (
   "id" SERIAL PRIMARY KEY,
   "worker" INTEGER, -- worker can be null (before choose worker in puplic request)
-  "client" INTEGER,
+  "client" INTEGER NOT NULL,
   "client_address" INT NOT NULL,
   "sent_time" TIMESTAMP NOT NULL DEFAULT DATE_TRUNC('minute', CURRENT_TIMESTAMP),
   "working_time" TIMESTAMP NOT NULL,
@@ -304,12 +304,12 @@ CREATE TABLE "request" (
   CONSTRAINT "FK_request_worker"
     FOREIGN KEY("worker")
       REFERENCES "worker"("id")
-      ON DELETE SET NULL
+      ON DELETE CASCADE
       ON UPDATE CASCADE,
   CONSTRAINT "FK_request_user"
     FOREIGN KEY("client")
       REFERENCES "user"("id")
-      ON DELETE SET NULL
+      ON DELETE CASCADE
       ON UPDATE CASCADE,
   CONSTRAINT "FK_request_address"
     FOREIGN KEY("client_address")
