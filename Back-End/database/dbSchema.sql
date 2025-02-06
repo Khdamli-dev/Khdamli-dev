@@ -129,7 +129,7 @@ CREATE TABLE "user" (
   "age" SMALLINT,
   "address" INT,
   "role" SMALLINT NOT NULL,
-  "registration_date" DATE NOT NULL DEFAULT CURRENT_DATE,
+  "registration_date" DATE,
   "profile_image" VARCHAR(100),
   CONSTRAINT "unique_username"
   UNIQUE ("username"), -- query of check if username is already used is frequently
@@ -152,6 +152,16 @@ CREATE TABLE "user" (
 
 CREATE EXTENSION IF NOT EXISTS pg_trgm; -- it is used fuzzy searches
 CREATE INDEX username_trgm ON "user" USING GIN (username gin_trgm_ops);
+
+CREATE TABLE "confirmation_token" (
+  "user_id" INT NOT NULL PRIMARY KEY,
+  "token" TEXT NOT NULL,
+  CONSTRAINT "FK_confirmation-token_user"
+    FOREIGN KEY("user_id")
+      REFERENCES "user"("id")
+      ON DELETE CASCADE 
+      ON UPDATE CASCADE
+);
 
 CREATE TABLE "worker" (
   "id" INTEGER PRIMARY KEY,

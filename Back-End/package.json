@@ -14,7 +14,9 @@
   "description": "",
   "devDependencies": {
     "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.8",
     "@types/node": "^22.10.10",
+    "@types/nodemailer": "^6.4.17",
     "@types/pg": "^8.11.11",
     "nodemon": "^3.1.9",
     "tsx": "^4.19.2",
@@ -24,6 +26,8 @@
     "crypto": "^1.0.1",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^6.10.0",
     "pg": "^8.13.1"
   }
 }
