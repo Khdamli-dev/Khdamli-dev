@@ -13,10 +13,6 @@ const updateCredentials = async (req: Request, res: Response) => {
         const credentials :Credentials  = req.body.credentials;
         const { email, password, username , phoneNumber}: Credentials = credentials;
 
-        if (!id) {
-            res.status(400).json({ message: "id is required" });
-            return;
-        }
         if (email && ! await checkEmail(email)) {
             res.status(400).json({ message: "Invalid email format" });
             return;
