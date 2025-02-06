@@ -10,16 +10,41 @@ const setPersonalInfo = async (req: Request, res : Response) => {
         res.status(400).json({message : "id is required"});
         return;
     }
-    const {rowCount : result} = await pool.query(`
-        UPDATE "user"
-        SET age=$1, sex=$2, address=$3
-        where id=$4
-        `, [age,sex,address,id]);
-    if (!result){
-        res.status(400).json({message : "user don 't exist"});
-        return;
-    }
-    res.status(200).json({message : "set personal info with succes"});    
+    let query = 'UPDATE "user" SET';
+        const values: (string | number)[] = [];
+        let counter = 1;
+
+        if (age) {
+            query += ` age = $${counter++},`;
+            values.push(age);
+        }
+
+        if (address) {
+            query += ` address = $${counter++},`;
+            values.push(address);
+        }
+
+        if (sex) {
+            query += ` sex = $${counter++},`;
+            values.push(sex);
+        }
+        if (values.length > 0) {
+            query = query.slice(0, -1);
+            query += ` WHERE id = $${counter}`;
+            values.push(id);
+            const { rowCount } = await pool.query(query, values);
+
+            if (rowCount === 0) {
+                res.status(400).json({ message: "user doesn't exist" });
+                return;
+            }
+
+            res.status(200).json({ message: "User information added successfully" });
+            console.log('User information added successfully');
+        } else {
+            res.status(400).json({ message: "No valid fields provided to update" });
+            console.log('No valid fields provided to update');
+        }   
     } catch (error) {
     console.log(error);
     res.status(500).json({message : "internal server error"});
