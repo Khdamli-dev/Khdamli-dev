@@ -12,7 +12,6 @@ const updateProfile = async (req: Request, res: Response) => {
         await updateCredentials(req,res);
 }
    if (personalInfo) {
-    await assignAddress(req,res, () => {})
     await setPersonalInfo(req,res);
    }
 }

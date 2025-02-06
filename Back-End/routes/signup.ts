@@ -3,11 +3,12 @@ import checkInfo from '../middleware/checkInfo';
 import createUser from '../controller/signupController/createUser';
 import updateProfile from '../controller/profile/updateProfile';
 import confirmationEmail from '../controller/signupController/confirmationEmail';
+import assignAddress from '../middleware/assignAddress';
 
 const signup: Router = express.Router();
 
 signup.post('/credentials', checkInfo , createUser); 
-signup.post('/personal-info/:id', updateProfile);
+signup.post('/personal-info/:id',assignAddress ,updateProfile);
 signup.post('/resend-email', async (req: Request, res : Response) => {
     try {
     const {userId, email} : {userId : number, email : string} = req.body;

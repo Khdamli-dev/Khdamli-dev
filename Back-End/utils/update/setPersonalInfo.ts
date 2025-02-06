@@ -28,7 +28,6 @@ const setPersonalInfo = async (req: Request, res : Response) => {
             query += ` sex = $${counter++},`;
             values.push(sex);
         }
-        if (values.length > 0) {
             query = query.slice(0, -1);
             query += ` WHERE id = $${counter}`;
             values.push(id);
@@ -41,10 +40,6 @@ const setPersonalInfo = async (req: Request, res : Response) => {
 
             res.status(200).json({ message: "User information added successfully" });
             console.log('User information added successfully');
-        } else {
-            res.status(400).json({ message: "No valid fields provided to update" });
-            console.log('No valid fields provided to update');
-        }   
     } catch (error) {
     console.log(error);
     res.status(500).json({message : "internal server error"});

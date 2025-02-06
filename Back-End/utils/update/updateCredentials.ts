@@ -10,11 +10,7 @@ import { encryptPassword } from "../authentication/encryptPassword";
 const updateCredentials = async (req: Request, res: Response) => {
     try {
         const id: number = +req.params.id;
-        const { credentials }: { credentials?: Credentials } = req.body;
-        if (!credentials) {
-            res.status(400).json({ message: "credentials is required" });
-            return;
-        }
+        const credentials :Credentials  = req.body.credentials;
         const { email, password, username , phoneNumber}: Credentials = credentials;
 
         if (!id) {
@@ -64,7 +60,6 @@ const updateCredentials = async (req: Request, res: Response) => {
             values.push(phoneNumber);
         }
 
-        if (values.length > 0) {
             query = query.slice(0, -1);
             query += ` WHERE id = $${counter}`;
             values.push(id);
@@ -77,11 +72,7 @@ const updateCredentials = async (req: Request, res: Response) => {
 
             res.status(200).json({ message: "Credentials updated successfully" });
             console.log('Credentials updated successfully');
-        } else {
-            res.status(400).json({ message: "No valid fields provided to update" });
-            console.log('No valid fields provided to update');
-        }
-    } catch (error) {
+        }  catch (error) {
         console.log(error);
         res.status(500).json({ message: "internal server error" });
     }
