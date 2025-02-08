@@ -1,10 +1,10 @@
 import express, { Router } from 'express';
 import checkInfo from '../middleware/checkInfo';
 import createUser from '../controller/signupController/createUser';
-import assignAddress from '../middleware/assignAddress';
 import updateProfile from '../controller/profile/updateProfile';
 import resendEmail from '../controller/signupController/resendEmail';
 import verifyToken from '../controller/signupController/verifyToken';
+import assignAddress from '../middleware/assignAddress';
 
 const signup: Router = express.Router();
 
