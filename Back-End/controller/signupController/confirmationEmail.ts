@@ -30,7 +30,7 @@ const confirmationEmail = async (userId : number, email : string) => {
         from: process.env.EMAIL,
         to: email,
         subject: 'Email Confirmation',
-        html: `<p>Click <a href="${process.env.BASE_URL}/confirm?token=${token}">here</a> to verify your email.</p>`
+        html: `<p>Click <a href="${process.env.BASE_URL}/${token}">here</a> to verify your email.</p>`
     };
     await transporter.sendMail(mailOptions); 
     } catch (error) {
