@@ -1,34 +1,12 @@
 import { Request, Response } from "express";
 import pool from "../../database/dbConnection";
 import Credentials from "../../interface/credentials";
-import checkEmail from "../validator/checkEmail";
-import checkPassword from "../validator/checkPassword";
-import checkUsername from "../validator/checkUsername";
-import checkPhoneNumber from "../validator/checkPhoneNumber";
-import { encryptPassword } from "../authentication/encryptPassword";
+import encryptPassword from "../authentication/encryptPassword";
 
 const updateCredentials = async (req: Request, res: Response) => {
     try {
         const {id, credentials}: {id : number, credentials : Credentials} = req.body;
         const { email, password, username , phoneNumber}: Credentials = credentials;
-        
-        // validation of credentials
-        if (email && ! await checkEmail(email)) {
-            res.status(400).json({ message: "Invalid email format" });
-            return;
-        }
-        if (password && !checkPassword(password)) {
-            res.status(400).json({ message: "Password does not meet requirements" });
-            return;
-        }
-        if (username && ! await checkUsername(username)) {
-            res.status(400).json({ message: "Username is invalid" });
-            return;
-        }
-        if (phoneNumber && ! await checkPhoneNumber(phoneNumber)) {
-            res.status(400).json({ message: "Phone number is invalid" });
-            return;
-        }
 
         // query formation
         let query = 'UPDATE "user" SET';

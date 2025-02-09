@@ -20,15 +20,17 @@ const setPersonalInfo = async (req: Request, res: Response) => {
       values.push(address);
     }
     if (sex) {
-      query += ` sex = $${counter++}`;
+      query += ` sex = $${counter++},`;
       values.push(sex);
     }
+    // delete the last , if there is at leat one updated value
+    query = query.slice(0,-1);
     query += ` WHERE id = $${counter}`;
     values.push(id);
     const { rowCount } = await pool.query(query, values);
     
     // check if user exist
-    if (rowCount === 0) {
+    if (rowCount == 0) {
       res.status(400).json({ message: "user doesn't exist" });
       return;
     }

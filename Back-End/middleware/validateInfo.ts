@@ -1,27 +1,23 @@
 import { NextFunction, Request, Response } from 'express';
-import User from '../interface/user';
+import Credentials from '../interface/credentials';
 import checkUsername from '../utils/validator/checkUsername';
 import checkEmail from '../utils/validator/checkEmail';
 import checkPhoneNumber from '../utils/validator/checkPhoneNumber';
 import checkPassword from '../utils/validator/checkPassword';
 
-const checkInfo = async (req: Request, res: Response, next: NextFunction) => {
+const validateInfo = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { username, email, phoneNumber, password, role }: User = req.body;
-    if (!username || !email || !phoneNumber || !password || !role) {
-      res
-        .status(200)
-        .json({
-          message: 'username, email, phone number, password, role are required',
-        });
-      return;
-    }
+    const { username, email, phoneNumber, password }: Credentials = req.body.credentials;
+
     // check if the info is already used
-    const validUsername: boolean = await checkUsername(username);
-    const validEmail: boolean = await checkEmail(email);
-    const validPhoneNumber: boolean = await checkPhoneNumber(phoneNumber);
-    const validPassword: boolean = checkPassword(password);
+    // i make condition might be null because we will reuse middleware when update profile
+    // if property exist we validate it else we give it true
+    const validUsername: boolean = username ? await checkUsername(username) : true;
+    const validEmail: boolean = email ? await checkEmail(email) : true;
+    const validPhoneNumber: boolean = phoneNumber ? await checkPhoneNumber(phoneNumber) : true;
+    const validPassword: boolean = password ? checkPassword(password) : true;
     const success = validUsername && validEmail && validPhoneNumber && validPassword;
+
     // if all info are valid jump to create account else we return errors of not valid info
     if (!success){
       res.status(400).json({
@@ -29,7 +25,7 @@ const checkInfo = async (req: Request, res: Response, next: NextFunction) => {
       username: validUsername,
       email: validEmail,
       phoneNumber: validPhoneNumber,
-      password: validPassword,
+      password: validPassword
       }); 
       return;
     }
@@ -40,4 +36,4 @@ const checkInfo = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-export default checkInfo;
+export default validateInfo;

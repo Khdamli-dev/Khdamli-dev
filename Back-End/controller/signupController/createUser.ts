@@ -1,12 +1,13 @@
 import pool from "../../database/dbConnection";
-import User from "../../interface/user";
+import Credentials from "../../interface/credentials";
 import { Request, Response } from 'express';
 import confirmationEmail from './confirmationEmail'
 import encryptPassword from "../../utils/authentication/encryptPassword";
 
 const createUser = async (req: Request, res: Response) => {
     try {
-        const { phoneNumber, email , password , username , role }: User = req.body;
+        const { phoneNumber, email , password , username }: Credentials = req.body.credentials;
+        const role = 1; // default role is client
         const hash : string=  await encryptPassword(password);
         const {rows : result} = await pool.query(`
             INSERT INTO "user" (username , email , phone_number , password , role)
@@ -20,6 +21,5 @@ const createUser = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'internal error' });
     }
 }
-
 
 export default createUser;
