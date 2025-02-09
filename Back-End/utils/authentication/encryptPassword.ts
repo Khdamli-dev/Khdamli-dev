@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-export const encryptPassword = (password: string): Promise<string> => {
+const encryptPassword = (password: string): Promise<string> => {
     return new Promise((resolve, reject) => {
       const salt = crypto.randomBytes(8).toString('hex');
       crypto.scrypt(password, salt, 21, (err, derivedKey) => {
@@ -7,4 +7,6 @@ export const encryptPassword = (password: string): Promise<string> => {
         resolve(`${salt}${derivedKey.toString('hex')}`);
       });
     });
-  };
+};
+
+export default encryptPassword;

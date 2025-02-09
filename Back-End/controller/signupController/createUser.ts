@@ -2,8 +2,8 @@ import pool from "../../database/dbConnection";
 import User from "../../interface/user";
 import { Request, Response } from 'express';
 import confirmationEmail from './confirmationEmail'
+import encryptPassword from "../../utils/authentication/encryptPassword";
 
-import { encryptPassword } from "../../utils/authentication/encryptPassword";
 const createUser = async (req: Request, res: Response) => {
     try {
         const { phoneNumber, email , password , username , role }: User = req.body;
