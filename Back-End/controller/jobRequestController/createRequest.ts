@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import pool from '../../database/dbConnection';
+import JobRequest from '../../interface/jobRequest';
 
 const createRequest = async (req: Request, res: Response) => {
   try {
@@ -12,7 +13,7 @@ const createRequest = async (req: Request, res: Response) => {
       description,
       type,       // 1 for Public, 2 for Private
       worker      // Optional: only required if type is private
-    } = req.body;
+    } : JobRequest = req.body;
 
     // For public requests, worker should be null.
     // For private requests (type = 2), worker must be provided.
@@ -42,7 +43,7 @@ const createRequest = async (req: Request, res: Response) => {
     const { rows } = await pool.query(query, values);
     res.status(201).json({
       message: 'Job request created successfully',
-      request: rows[0]
+      request: rows[0].id
     });
   } catch (error) {
     console.error('Error creating job request:', error);

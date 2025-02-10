@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import JobRequest from '../interface/jobRequest';
 
 const validateJobRequest = (req: Request, res: Response, next: NextFunction) => {
   const {
@@ -10,7 +11,7 @@ const validateJobRequest = (req: Request, res: Response, next: NextFunction) => 
     description,
     type,
     worker
-  } = req.body;
+  }: JobRequest = req.body;
 
   // Check for required fields
   if (!client || !client_address || !working_time || !category || !payment || !description || !type) {
