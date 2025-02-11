@@ -1,7 +1,6 @@
 import express, { Router } from "express";
 import getPaymentMethods from "../utils/payment/getPaymentMethods";
 import addWorkerPayment from "../controller/profile/addWorkerPayment";
-import validatePaymentSelection from "../middleware/validatePaymentSelection";
 
 const payment: Router = express.Router();
 
@@ -9,6 +8,6 @@ const payment: Router = express.Router();
 payment.get("/get-payment", getPaymentMethods);
 
 // Endpoint to add selected payment methods for a worker
-payment.post("/add-payment", validatePaymentSelection, addWorkerPayment);
+payment.post("/add-payment", addWorkerPayment);
 
 export default payment;

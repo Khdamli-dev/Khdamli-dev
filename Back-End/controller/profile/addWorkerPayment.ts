@@ -13,7 +13,6 @@ const addWorkerPayment = async (req: Request, res: Response) => {
 
   try {
     // For each selected payment method, insert an entry in worker_payment
-    // Use ON CONFLICT DO NOTHING to avoid duplicate entries
     payments.map(async (paymentId: number) => {
       await pool.query(
         `INSERT INTO worker_payment (worker, payment)
