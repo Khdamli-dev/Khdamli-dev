@@ -17,7 +17,7 @@ const login = async (req: Request, res: Response) => {
     // search user
     const { rows: user } = await pool.query(
       `
-        SELECT id, password from "user"
+        SELECT id, password, role, registration_date from "user"
         WHERE email=$1
         `,
       [email],
@@ -44,6 +44,16 @@ const login = async (req: Request, res: Response) => {
         validPassword: false,
       });
       return;
+    }
+
+    // check if account is valid
+    if (!user[0].registration_date){
+        res.status(403).json({
+            success: false,
+            message: "Email not verified. Please confirm your email to log in.",
+            validAccount : false
+        });
+        return; 
     }
 
     // success login
