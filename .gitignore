@@ -21,6 +21,8 @@ Thumbs.db
 .vscode/
 .idea/
 
+/Back-End/database/dbConnection.ts
+
 # Temporary files
 *.tmp
 *.swp
