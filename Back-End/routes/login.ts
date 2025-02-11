@@ -47,7 +47,7 @@ const login = async (req: Request, res: Response) => {
     }
 
     // success login
-    res.status(400).json({
+    res.status(200).json({
         success: true,
         message: 'login with success',
     });
