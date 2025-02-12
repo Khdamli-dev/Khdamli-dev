@@ -2,6 +2,10 @@ import { Request, Response } from 'express';
 import Credentials from '../interface/credentials';
 import pool from '../database/dbConnection';
 import authenticatePassword from '../utils/authentication/authenticatePassword';
+import dotenv from 'dotenv';
+import produceTokens from '../utils/authentication/produceTokens';
+
+dotenv.config();
 
 const login = async (req: Request, res: Response) => {
   try {
@@ -56,10 +60,15 @@ const login = async (req: Request, res: Response) => {
         return; 
     }
 
+    // produce jwt tokens
+    const {accessToken, refreshToken} = produceTokens(user[0].id, user[0].role);
+
     // success login
     res.status(200).json({
         success: true,
         message: 'login with success',
+        accessToken,
+        refreshToken
     });
   } catch (error) {
     console.log(error);
