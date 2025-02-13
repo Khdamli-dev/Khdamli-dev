@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import pool from '../../database/dbConnection';
 import dotenv from 'dotenv';
+import JwtToken from '../../interface/jwtToken';
+import produceTokens from '../../utils/authentication/produceTokens';
 
 dotenv.config();
 
@@ -38,17 +40,19 @@ const verifyToken = async (req: Request, res: Response) => {
 
     // check the signature
     jwt.verify(token, process.env.JWT_SECRET as string);
-    // valid the user
+
+    // validate the user
     const now = Date.now();
     const isoFormDate: string = new Date(now).toISOString();
-    await pool.query(
+    const {rows : user} = await pool.query(
       `
         UPDATE "user" 
         SET registration_date = $1
-        WHERE id = $2
+        WHERE id = $2 RETURNING role
         `,
       [isoFormDate, +userId],
     );
+    console.log(user[0].role);
     // remove his token
     await pool.query(
       `
@@ -57,10 +61,16 @@ const verifyToken = async (req: Request, res: Response) => {
       `,
       [+userId],
     );
+
+    // produce tokens
+    const {accessToken, refreshToken} : {accessToken : string, refreshToken : string} 
+          = produceTokens(+userId, user[0].role);
+
     res.status(200).json({
       message: 'confirm email with success',
       success: true,
-      resend: false,
+      accessToken,
+      refreshToken
     });
     return;
   } catch (error: unknown) {
