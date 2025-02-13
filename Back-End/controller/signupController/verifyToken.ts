@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import pool from '../../database/dbConnection';
 import dotenv from 'dotenv';
-import JwtToken from '../../interface/jwtToken';
 import produceTokens from '../../utils/authentication/produceTokens';
 
 dotenv.config();
@@ -41,18 +40,19 @@ const verifyToken = async (req: Request, res: Response) => {
     // check the signature
     jwt.verify(token, process.env.JWT_SECRET as string);
 
-    // validate the user
+    // validate the user if he is not valid (there is case when user want to update his email)
     const now = Date.now();
     const isoFormDate: string = new Date(now).toISOString();
     const {rows : user} = await pool.query(
       `
         UPDATE "user" 
-        SET registration_date = $1
+        SET registration_date = COALESCE(registration_date, $1)
         WHERE id = $2 RETURNING role
         `,
-      [isoFormDate, +userId],
+      [isoFormDate, +userId]
     );
-    console.log(user[0].role);
+    // i need to return user role because i will use it to make jwt tokens
+
     // remove his token
     await pool.query(
       `
@@ -72,7 +72,6 @@ const verifyToken = async (req: Request, res: Response) => {
       accessToken,
       refreshToken
     });
-    return;
   } catch (error: unknown) {
     if (error instanceof Error) {
       // case of token is invalid
