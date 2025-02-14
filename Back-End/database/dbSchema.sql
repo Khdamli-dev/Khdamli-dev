@@ -393,3 +393,15 @@ CREATE TABLE "public_request_messages" (
       ON DELETE CASCADE
       ON UPDATE CASCADE
 );
+
+CREATE TABLE "updated_email" (
+  "user_id" INT NOT NULL PRIMARY KEY,
+  "email" VARCHAR(254) NOT NULL,
+  CONSTRAINT "unique_updated_email"
+  UNIQUE ("email"),
+  CONSTRAINT "FK_updated-email_user"
+    FOREIGN KEY("user_id")
+      REFERENCES "user"("id")
+      ON DELETE CASCADE
+      ON UPDATE CASCADE
+);
