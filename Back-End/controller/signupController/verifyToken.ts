@@ -3,6 +3,7 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
 import pool from '../../database/dbConnection';
 import dotenv from 'dotenv';
 import produceTokens from '../../utils/authentication/produceTokens';
+import updatedEmail from '../../utils/validator/updatedEmail';
 
 dotenv.config();
 
@@ -10,17 +11,17 @@ const verifyToken = async (req: Request, res: Response) => {
   try {
     const token = req.params.token;
     if (!token) {
-      res.status(401).json({ 
+      res.status(401).json({
         message: "unothorized you don 't have a token",
-        success : false,
-        resend : false
-       });
+        success: false,
+        resend: false,
+      });
       return;
     }
 
     // check if user have a token
     const decode: string | JwtPayload | null = jwt.decode(token);
-    const { id: userId } = decode as JwtPayload & { id: string };
+    const { userId } = decode as JwtPayload & { userId: string };
     const { rows: result } = await pool.query(
       `
         SELECT token FROM confirmation_token
@@ -43,15 +44,18 @@ const verifyToken = async (req: Request, res: Response) => {
     // validate the user if he is not valid (there is case when user want to update his email)
     const now = Date.now();
     const isoFormDate: string = new Date(now).toISOString();
-    const {rows : user} = await pool.query(
+    const { rows: user } = await pool.query(
       `
         UPDATE "user" 
         SET registration_date = COALESCE(registration_date, $1)
         WHERE id = $2 RETURNING role
         `,
-      [isoFormDate, +userId]
+      [isoFormDate, +userId],
     );
     // i need to return user role because i will use it to make jwt tokens
+
+    // update user email if this email is updated one
+    await updatedEmail(+userId);
 
     // remove his token
     await pool.query(
@@ -63,16 +67,16 @@ const verifyToken = async (req: Request, res: Response) => {
     );
 
     // produce tokens
-    const {accessToken, refreshToken} : {accessToken : string, refreshToken : string} 
-          = produceTokens(+userId, user[0].role);
+    const { accessToken, refreshToken }: { accessToken: string; refreshToken: string } 
+      = produceTokens(+userId,user[0].role);
 
     res.status(200).json({
       message: 'confirm email with success',
       success: true,
       accessToken,
-      refreshToken
+      refreshToken,
     });
-  } catch (error: unknown) {
+  } catch (error : unknown) {
     if (error instanceof Error) {
       // case of token is invalid
       if (error.name === 'JsonWebTokenError')

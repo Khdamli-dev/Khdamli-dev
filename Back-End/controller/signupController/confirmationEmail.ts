@@ -8,7 +8,7 @@ dotenv.config();
 const confirmationEmail = async (userId : number, email : string) => {
     try {
     const token = jwt.sign({
-        id : userId
+        userId
         },
         process.env.JWT_SECRET || '',
         {

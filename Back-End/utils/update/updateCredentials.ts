@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import pool from "../../database/dbConnection";
 import Credentials from "../../interface/credentials";
 import encryptPassword from "../authentication/encryptPassword";
+import updateEmail from "./updateEmail";
 
 const updateCredentials = async (req: Request, res: Response) => {
     try {
@@ -13,6 +14,7 @@ const updateCredentials = async (req: Request, res: Response) => {
         const values: (string | number)[] = [];
         let counter = 1;
         if (email) {
+            await updateEmail(id, email);
             query += ` email = $${counter++},`;
             values.push(email);
         }
@@ -28,6 +30,9 @@ const updateCredentials = async (req: Request, res: Response) => {
             query += ` phone_number = $${counter++}`;
             values.push(phoneNumber);
         }
+
+        // delete the last , if there is at leat one updated value
+        query = query.slice(0,-1);
         query += ` WHERE id = $${counter}`;
         values.push(id);
         const { rowCount } = await pool.query(query, values);

@@ -11,7 +11,7 @@ import ensureEmailNotValid from '../middleware/ensureEmailNotValid';
 const signup: Router = express.Router();
 
 signup.post('/credentials', checkNotNull, validateInfo, createUser); 
-signup.post('/personal-info', assignAddress, updateProfile);
+signup.post('/update-profile', assignAddress, updateProfile);
 signup.post('/resend-email', ensureEmailNotValid, resendEmail);
 signup.get('/confirm-email/:token', verifyToken);
 
