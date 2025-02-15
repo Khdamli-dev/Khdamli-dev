@@ -13,11 +13,8 @@ const updateCredentials = async (req: Request, res: Response) => {
         let query = 'UPDATE "user" SET';
         const values: (string | number)[] = [];
         let counter = 1;
-        if (email) {
+        if (email)
             await updateEmail(id, email);
-            query += ` email = $${counter++},`;
-            values.push(email);
-        }
         if (password) {
             query += ` password = $${counter++},`;
             values.push(await encryptPassword(password));
@@ -27,10 +24,12 @@ const updateCredentials = async (req: Request, res: Response) => {
             values.push(username);
         }
         if (phoneNumber) {
-            query += ` phone_number = $${counter++}`;
+            query += ` phone_number = $${counter++},`;
             values.push(phoneNumber);
         }
-
+        
+        // make query if there is at least one field without email
+        if (values.length){
         // delete the last , if there is at leat one updated value
         query = query.slice(0,-1);
         query += ` WHERE id = $${counter}`;
@@ -41,6 +40,7 @@ const updateCredentials = async (req: Request, res: Response) => {
         if (rowCount === 0) {
             res.status(400).json({ message: "user doesn't exist" });
             return;
+        }    
         }
         res.status(200).json({ message: "Credentials updated successfully" });
         } catch (error) {

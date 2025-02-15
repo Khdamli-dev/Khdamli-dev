@@ -20,14 +20,13 @@ const verifyToken = async (req: Request, res: Response) => {
     }
 
     // check if user have a token
-    const decode: string | JwtPayload | null = jwt.decode(token);
-    const { userId } = decode as JwtPayload & { userId: string };
+    // we need to search with token not id, to prevent confirm email that is updated and not confirmed, after that it also updated
     const { rows: result } = await pool.query(
       `
-        SELECT token FROM confirmation_token
-        WHERE user_id=$1
+        SELECT user_id FROM confirmation_token
+        WHERE token=$1
         `,
-      [+userId],
+      [token],
     );
     if (!result.length) {
       res.status(403).json({
@@ -38,6 +37,7 @@ const verifyToken = async (req: Request, res: Response) => {
       return;
     }
 
+    const userId : number = result[0].user_id;
     // check the signature
     jwt.verify(token, process.env.JWT_SECRET as string);
 
@@ -50,12 +50,12 @@ const verifyToken = async (req: Request, res: Response) => {
         SET registration_date = COALESCE(registration_date, $1)
         WHERE id = $2 RETURNING role
         `,
-      [isoFormDate, +userId],
+      [isoFormDate, userId],
     );
     // i need to return user role because i will use it to make jwt tokens
 
     // update user email if this email is updated one
-    await updatedEmail(+userId);
+    await updatedEmail(userId);
 
     // remove his token
     await pool.query(
@@ -63,12 +63,12 @@ const verifyToken = async (req: Request, res: Response) => {
       DELETE FROM confirmation_token
       WHERE user_id = $1
       `,
-      [+userId],
+      [userId],
     );
 
     // produce tokens
     const { accessToken, refreshToken }: { accessToken: string; refreshToken: string } 
-      = produceTokens(+userId,user[0].role);
+      = produceTokens(userId,user[0].role);
 
     res.status(200).json({
       message: 'confirm email with success',
