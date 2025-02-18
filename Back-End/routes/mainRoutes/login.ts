@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
-import Credentials from '../interface/credentials';
-import pool from '../database/dbConnection';
-import authenticatePassword from '../utils/authentication/authenticatePassword';
+import Credentials from '../../interface/credentials';
+import pool from '../../database/dbConnection';
+import authenticatePassword from '../../utils/authentication/authenticatePassword';
 import dotenv from 'dotenv';
-import produceTokens from '../utils/authentication/produceTokens';
+import produceTokens from '../../utils/authentication/produceTokens';
 
 dotenv.config();
 
@@ -51,28 +51,31 @@ const login = async (req: Request, res: Response) => {
     }
 
     // check if account is valid
-    if (!user[0].registration_date){
-        res.status(403).json({
-            success: false,
-            message: "Email not verified. Please confirm your email to log in.",
-            validAccount : false
-        });
-        return; 
+    if (!user[0].registration_date) {
+      res.status(403).json({
+        success: false,
+        message: 'Email not verified. Please confirm your email to log in.',
+        validAccount: false,
+      });
+      return;
     }
 
     // produce jwt tokens
-    const {accessToken, refreshToken} = produceTokens(user[0].id, user[0].role);
+    const { accessToken, refreshToken } = produceTokens(
+      user[0].id,
+      user[0].role,
+    );
 
     // success login
     res.status(200).json({
-        success: true,
-        message: 'login with success',
-        accessToken,
-        refreshToken
+      success: true,
+      message: 'login with success',
+      accessToken,
+      refreshToken,
     });
   } catch (error) {
     console.log(error);
-    res.status(500).json({message : "internal error"});
+    res.status(500).json({ message: 'internal error' });
   }
 };
 
