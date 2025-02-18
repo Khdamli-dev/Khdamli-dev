@@ -1,6 +1,6 @@
 import express, { Router } from 'express';
-import setWorkingHours from '../controller/profile/setWorkingHours';
-import validateWorkingHours from '../middleware/validateWorkingHours';
+import setWorkingHours from '../../controller/profile/setWorkingHours';
+import validateWorkingHours from '../../middleware/validateWorkingHours';
 
 const workingHours: Router = express.Router();
 
