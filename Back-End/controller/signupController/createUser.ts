@@ -15,7 +15,7 @@ const createUser = async (req: Request, res: Response) => {
             `,[username, email, phoneNumber,hash, role],
         );
         await confirmationEmail(result[0].id, email);
-        res.status(200).json({ message: 'User added' });
+        res.status(201).json({ message: 'User added' });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: 'internal error' });

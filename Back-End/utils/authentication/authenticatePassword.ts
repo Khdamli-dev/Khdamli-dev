@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+
 const authenticatePassword = (storedPassword: string, inputPassword: string): Promise<boolean> => {
     return new Promise((resolve, reject) => {
       const salt : string= storedPassword.slice(0, 16); // First 16 characters = salt
