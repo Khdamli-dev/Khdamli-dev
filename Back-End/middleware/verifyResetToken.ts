@@ -21,7 +21,7 @@ export const verifyResetToken = (req: Request, res: Response, next: NextFunction
     const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload & { id: string };
 
     // Attach user ID to request body (so next middleware/controller can use it)
-    req.body.credentials = { id: Number(decoded.id) };
+    req.body = { id: Number(decoded.id) };
 
     next(); 
   } catch (error) {

@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import passwordResetEmail from "./passwordResetEmail";
 
-const resendEmail = async (req: Request, res : Response) => {
+const sendResetEmail = async (req: Request, res : Response) => {
     try {
     const {userId, email} : {userId : number, email : string} = req.body;
     await passwordResetEmail(email,userId); 
@@ -12,4 +12,4 @@ const resendEmail = async (req: Request, res : Response) => {
     }
 }
 
-export default resendEmail;
+export default sendResetEmail;
