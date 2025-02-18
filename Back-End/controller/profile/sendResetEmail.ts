@@ -4,6 +4,10 @@ import passwordResetEmail from "./passwordResetEmail";
 const sendResetEmail = async (req: Request, res : Response) => {
     try {
     const {userId, email} : {userId : number, email : string} = req.body;
+    if (!userId || !email ) { 
+      res.status(400).json({ message: 'email and id are required' });
+      return;
+    }
     await passwordResetEmail(email,userId); 
     res.status(200).json({message : "resend email with success"});   
     } catch (error) {
