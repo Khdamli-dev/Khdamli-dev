@@ -26,16 +26,16 @@ Thumbs.db
 *.swp
 
 # Backend-specific ignores
-backend/node_modules/
-backend/.env
-backend/dist/
-backend/build/
+Back-End/node_modules/
+Back-End/.env
+Back-End/dist/
+Back-End/build/
 
 # Frontend-specific ignores (React Native)
-frontend/node_modules/
-frontend/.env
-frontend/android/.gradle/
-frontend/android/app/build/
-frontend/ios/Pods/
-frontend/ios/build/
-frontend/expo/
+Front-End/node_modules/
+Front-End/.env
+Front-End/android/.gradle/
+Front-End/android/app/build/
+Front-End/ios/Pods/
+Front-End/ios/build/
+Front-End/expo/
