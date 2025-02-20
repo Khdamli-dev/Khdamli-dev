@@ -24,3 +24,18 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.swp
+
+# Backend-specific ignores
+backend/node_modules/
+backend/.env
+backend/dist/
+backend/build/
+
+# Frontend-specific ignores (React Native)
+frontend/node_modules/
+frontend/.env
+frontend/android/.gradle/
+frontend/android/app/build/
+frontend/ios/Pods/
+frontend/ios/build/
+frontend/expo/
