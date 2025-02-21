@@ -28,9 +28,9 @@ export default function SignUp() {
 
     // Validation schema using Yup
     const validationSchema = Yup.object({
-        userName: Yup.string().required("Full Name Is Required"),
+        username: Yup.string().required("Full Name Is Required"),
         email: Yup.string().email("Invalid email address").required("Email Is Required"),
-        phoneNumber: Yup.string().test('is-valid-phone', 'Invalid Phone Number', value => isValidPhoneNumber(value ?? "")),
+        phoneNumber: Yup.string(),
         password: Yup.string().min(6, "Password must be at least 6 characters").required("Password Is Required"),
         retypePassword: Yup.string().oneOf([Yup.ref('password'), undefined], "Passwords must match").required("Retype Password "),
         terms: Yup.boolean().oneOf([true], "You must accept the terms and conditions").required("You Must Agrre to The Terms"),
@@ -38,20 +38,33 @@ export default function SignUp() {
 
 
     // handSignUp
-    const handSignUp = async (credentials: { userName: string, email: string, phoneNumber: string, password: string, retypePassword: string, terms: boolean }) => {
-
-
+    const handSignUp = async ({ username, email, phoneNumber, password } : { username: string, email: string, phoneNumber: string, password: string  }) => {
+        const credentials = {
+            username: username, // Rename userName to username
+            email,
+            phoneNumber : +phoneNumber,
+            password,
+          };
+        console.log(API_URL);
         try {
-            const response = await axios.post(`${API_URL}/signup/credentials`, credentials);
-            if (response) {
+            const response = await axios.post(`${API_URL}/signup/credentials`, {credentials});
+            console.log(response);
+            if (response.data.success) {
                 console.log(response);
                 alert("Check Your Email, We have sent you a verification link. Click on it to confirm your account.");
             } else {
-
-                alert("Error, try using a different email");
+                if (!response.data.username){
+                    alert("username is used")
+                }
+                if (!response.data.phoneNumber)
+                    alert("phone number is used");
+                if (!response.data.email)
+                    alert("email id used");
+                if (!response.data.password)
+                    alert("password is wrong format");
             }
         } catch (error) {
-
+            console.log(error);
             alert("Server is busy, please try again later.");
         }
 
@@ -107,10 +120,12 @@ export default function SignUp() {
 
                         {/* Form */}
                         <Formik
-                            initialValues={{ userName: '', email: '', phoneNumber: '', password: '', retypePassword: '', terms: false }}
+                            initialValues={{ username: '', email: '', phoneNumber: '', password: '', retypePassword: '', terms: false }}
                             validationSchema={validationSchema}
                             onSubmit={(values) => {
-                                handSignUp(values)
+                                handSignUp({username : values.username, password : values.password, phoneNumber : values.phoneNumber,
+                                    email : values.email
+                                })
                             }}
                         >
                             {({ values, handleChange, handleBlur, handleSubmit, errors, touched, setFieldValue }) => (
@@ -119,14 +134,14 @@ export default function SignUp() {
                                         <FontAwesome6 name="user-large" color="#396F65" size={28} className="absolute left-14 top-6 text-2xl font-bold" />
                                         <TextInput
                                             className="absolute w-full h-full text-specialGreen text-2xl font-medium border-2 border-specialGreen rounded-full pl-28 py-2"
-                                            value={values.userName}
-                                            onChangeText={handleChange('userName')}
-                                            onBlur={handleBlur('userName')}
-                                            placeholder="Full Name"
+                                            value={values.username}
+                                            onChangeText={handleChange('username')}
+                                            onBlur={handleBlur('username')}
+                                            placeholder="User Name"
                                             placeholderTextColor="#4C8479"
                                         />
                                     </View>
-                                    {errors.userName && touched.userName && <Text className="text-red-500">{errors.userName}</Text>}
+                                    {errors.username && touched.username && <Text className="text-red-500">{errors.username}</Text>}
 
                                     <View className="relative w-10/12 h-20 my-2 self-center">
                                         <MaterialCommunityIcons name="email" color="#396F65" size={28} className="absolute left-14 top-6 text-2xl font-bold" />
@@ -200,7 +215,7 @@ export default function SignUp() {
                                     {errors.terms && touched.terms && <Text className="text-red-500">{errors.terms}</Text>}
 
                                     {/* Sign Up Button */}
-                                    <TouchableOpacity onPress={() => router.push("/OtherInformation")} className="bg-specialGreen p-6 mb-3 rounded-full w-full max-w-sm  shadow-md shadow-black mt-10">
+                                    <TouchableOpacity onPress={handleSubmit as any} className="bg-specialGreen p-6 mb-3 rounded-full w-full max-w-sm  shadow-md shadow-black mt-10">
                                         <Text className="text-white text-center text-4xl font-medium">Sign Up</Text>
                                     </TouchableOpacity>
                                 </View>
