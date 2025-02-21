@@ -3,9 +3,9 @@ import pool from "../database/dbConnection";
 
 export const verifyOTP = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { userId, otp, newPassword } = req.body;
+    const { id, otp, newPassword } = req.body;
 
-    if (!userId || !otp || !newPassword) {
+    if (!id || !otp || !newPassword) {
       res.status(400).json({ message: "User ID, OTP, and new password are required" });
       return ;
     }
@@ -13,7 +13,7 @@ export const verifyOTP = async (req: Request, res: Response, next: NextFunction)
     // Verify OTP from otp_codes table
     const { rows } = await pool.query(
       `SELECT expires_at FROM otp_codes WHERE user_id = $1 AND otp = $2`,
-      [userId, otp]
+      [id, otp]
     );
 
     if (!rows.length || new Date() > new Date(rows[0].expires_at)) {
@@ -22,7 +22,7 @@ export const verifyOTP = async (req: Request, res: Response, next: NextFunction)
     }
 
     req.body.credentials = { password: newPassword }; // Set new password in credentials
-    await pool.query(`DELETE FROM otp_codes WHERE user_id = $1`, [userId]);
+    await pool.query(`DELETE FROM otp_codes WHERE user_id = $1`, [id]);
     next();
   } catch (error) {
     console.error(error);

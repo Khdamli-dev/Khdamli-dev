@@ -6,18 +6,18 @@ dotenv.config();
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: process.env.EMAIL,
+    pass: process.env.EMAIL_PASSWORD,
   },
 });
 
-const sendMail = async (to: string,subject : string ,text: string) => {
+const sendMail = async (to: string,subject : string ,html: string) => {
   try {
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: process.env.EMAIL,
       to,
       subject, // Keeping a fixed subject
-      text,
+      html,
     });
     console.log(`Email sent to ${to}`);
   } catch (error) {

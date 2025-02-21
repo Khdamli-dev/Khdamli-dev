@@ -6,8 +6,7 @@ import resendEmail from '../controller/signupController/resendEmail';
 import verifyToken from '../controller/signupController/verifyToken';
 import assignAddress from '../middleware/assignAddress';
 import checkNotNull from '../middleware/checkNotNull';
-import { sendOTP } from "../controller/profile/handlePasswordReset";
-import { verifyOTP } from "../middleware/verifyOtp"; 
+
 
 
 const signup: Router = express.Router();
@@ -16,8 +15,7 @@ signup.post('/credentials', checkNotNull, validateInfo, createUser);
 signup.post('/personal-info', assignAddress , updateProfile);
 signup.post('/resend-email', resendEmail);
 signup.get('/confirm-email/:token', verifyToken);
-signup.post("/password-reset/request", sendOTP); // Request OTP for password reset
-signup.post("/password-reset/reset", verifyOTP, updateProfile);
+
 
 
 export default signup;
