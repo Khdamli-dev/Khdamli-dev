@@ -70,7 +70,7 @@ export default function OtherInformation() {
 
               </View>
               <View  >
-                <TouchableOpacity className='flex-1 flex items-center justify-center '>
+                <TouchableOpacity onPress={()=>router.push("/selectionRole")} className='flex-1 flex items-center justify-center '>
                   <Text style={{ textShadowColor: '#000', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 5 }} className='text-white text-4xl'>Skip</Text>
                 </TouchableOpacity>
               </View>
