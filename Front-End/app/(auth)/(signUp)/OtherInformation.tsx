@@ -55,7 +55,7 @@ export default function OtherInformation() {
     const id: number = Number(storedId); // Convert string to number safely
 
     try {
-      const response = await axios.post(`${API_URL}/signup/personal-info`, {
+      const response = await axios.post(`${API_URL}/profile/update/user-info`, {
         personalInfo,
         id,
       });

@@ -75,10 +75,10 @@ export default function SignUp() {
       password,
     };
     try {
-      const response = await axios.post(`${API_URL}/signup/credentials`, {
+      const response = await axios.post(`${API_URL}/auth/signup/credentials`, {
         credentials,
       });
-      if (response.data.success) {
+      if (response?.status === 201) {
         const id: number = response.data.userId;
         await AsyncStorage.setItem("userId", JSON.stringify(id));
         alert(
