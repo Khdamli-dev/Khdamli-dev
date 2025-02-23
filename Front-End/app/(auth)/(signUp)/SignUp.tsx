@@ -33,7 +33,14 @@ export default function SignUp() {
 
   // Validation schema using Yup
   const validationSchema = Yup.object({
-    username: Yup.string().required("Full Name Is Required"),
+    username: Yup.string()
+      .required("Username is required")
+      .min(3, "Username must be at least 3 characters")
+      .max(20, "Username cannot exceed 20 characters")
+      .matches(
+        /^[a-zA-Z0-9_]+$/,
+        "Only letters, numbers, and underscores are allowed"
+      ),
     email: Yup.string()
       .email("Invalid email address")
       .required("Email Is Required"),

@@ -39,7 +39,10 @@ export default function Login() {
   const loginSchema = Yup.object().shape({
     email: Yup.string().email("Invalid Email").required("Email Is Required"),
     password: Yup.string()
-      .min(8, "The password is short")
+      .matches(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*#.?&_-]).{8,64}$/,
+        "Password must be 8-64 characters long and include at least one lowercase letter, one uppercase letter, one number, and one special character"
+      )
       .required("Password Is Required"),
   });
   const [emailError, setEmailError] = useState("");
@@ -149,6 +152,7 @@ export default function Login() {
                     className=" absolute w-full h-full text-white text-2xl font-medium border-2 border-white rounded-full pl-28 py-2"
                     value={values.email}
                     onChangeText={handleChange("email")}
+                    onFocus={() => setEmailError("")}
                     autoCapitalize="none"
                     keyboardType="email-address"
                     placeholder="Email "
@@ -158,7 +162,7 @@ export default function Login() {
                 </View>
 
                 {touched.email && errors.email && (
-                  <Text className="text-center" style={{ color: "red" }}>
+                  <Text className="text-center w-9/12" style={{ color: "red" }}>
                     {errors.email}
                   </Text>
                 )}
@@ -179,6 +183,9 @@ export default function Login() {
                     className=" absolute w-full h-full text-white text-2xl font-medium border-2 border-white rounded-full pl-28  py-2"
                     value={values.password}
                     onChangeText={handleChange("password")}
+                    onFocus={() => {
+                      setPasswordError("");
+                    }}
                     secureTextEntry
                     placeholder="Password"
                     placeholderTextColor="#C4C4C4"
@@ -186,7 +193,7 @@ export default function Login() {
                 </View>
 
                 {touched.password && errors.password && (
-                  <Text className="text-center" style={{ color: "red" }}>
+                  <Text className="text-center w-9/12" style={{ color: "red" }}>
                     {errors.password}
                   </Text>
                 )}
