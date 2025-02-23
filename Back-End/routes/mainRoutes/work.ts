@@ -1,8 +1,8 @@
 import express, { Router } from 'express';
-import jobRequestRoutes from './jobRequest';
-import category from './categorySelection';
-import payment from './paymentSelection';
-import workingHours from './workingHours';
+import jobRequestRoutes from '../workRoutes/jobRequest';
+import category from '../workRoutes/categorySelection';
+import payment from '../workRoutes/paymentSelection';
+import workingHours from '../workRoutes/workingHours';
 
 const work: Router = express.Router();
 
