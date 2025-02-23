@@ -11,11 +11,11 @@ const verifyToken = async (req: Request, res: Response) => {
   try {
     const token = req.params.token;
     if (!token) {
-      res.status(401).json({
-        message: "unothorized you don 't have a token",
-        success: false,
-        resend: false,
-      });
+      res.status(401).json({ 
+        message: "unothorized you don't have a token",
+        success : false,
+        resend : false
+       });
       return;
     }
 

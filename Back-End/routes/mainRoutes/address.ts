@@ -1,6 +1,6 @@
 import express, { Router } from 'express';
-import getRegions from '../utils/address/getRegions';
-import getCities from '../utils/address/getCities';
+import getRegions from '../../utils/address/getRegions';
+import getCities from '../../utils/address/getCities';
 
 const address: Router = express.Router();
 
