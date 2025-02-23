@@ -38,7 +38,7 @@ export default function SignUp() {
       .min(3, "Username must be at least 3 characters")
       .max(20, "Username cannot exceed 20 characters")
       .matches(
-        /^[a-zA-Z0-9_]+$/,
+        /^[a-zA-Z0-9_ ]+$/,
         "Only letters, numbers, and underscores are allowed"
       ),
     email: Yup.string()
@@ -250,6 +250,7 @@ export default function SignUp() {
                     value={values.username}
                     onChangeText={handleChange("username")}
                     onBlur={handleBlur("username")}
+                    onFocus={() => setUsernameError("")}
                     placeholder="User Name"
                     placeholderTextColor="#4C8479"
                   />
@@ -273,6 +274,7 @@ export default function SignUp() {
                     value={values.email}
                     onChangeText={handleChange("email")}
                     onBlur={handleBlur("email")}
+                    onFocus={() => setEmailError("")}
                     placeholder="Email Address"
                     placeholderTextColor="#4C8479"
                     keyboardType="email-address"
@@ -297,6 +299,7 @@ export default function SignUp() {
                     value={values.phoneNumber}
                     onChangeText={handleChange("phoneNumber")}
                     onBlur={handleBlur("phoneNumber")}
+                    onFocus={() => setPhoneNumberError("")}
                     placeholder="Phone Number"
                     placeholderTextColor="#4C8479"
                     keyboardType="numeric"
