@@ -1,14 +1,14 @@
 import express, { Router } from 'express';
-import signup from './signup';
 import address from './address';
-import login from './login';
-import work from '../workRoutes/work';
+import work from './work';
+import auth from './auth';
+import profile from './profile';
 
 const mainRouter: Router = express.Router();
 
-mainRouter.use('/signup', signup);
+mainRouter.use('/auth', auth);
 mainRouter.use('/address', address);
-mainRouter.use('/login', login);
 mainRouter.use('/work', work);
+mainRouter.use('/profile', profile);
 
 export default mainRouter;

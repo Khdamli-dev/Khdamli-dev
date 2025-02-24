@@ -163,6 +163,12 @@ CREATE TABLE "confirmation_token" (
       ON UPDATE CASCADE
 );
 
+CREATE TABLE "otp_codes" (
+    "user_id" INT PRIMARY KEY REFERENCES "user"(id) ON DELETE CASCADE,
+    "otp" VARCHAR(6) NOT NULL,
+    "expires_at" TIMESTAMP NOT NULL
+);
+
 CREATE TABLE "worker" (
   "id" INTEGER PRIMARY KEY,
   "registration_date" DATE NOT NULL DEFAULT CURRENT_DATE,

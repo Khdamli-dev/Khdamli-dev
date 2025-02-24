@@ -20,7 +20,7 @@ const validateInfo = async (req: Request, res: Response, next: NextFunction) => 
 
     // if all info are valid jump to create account else we return errors of not valid info
     if (!success){
-      res.status(200).json({
+      res.status(400).json({
       success: success,
       username: validUsername,
       email: validEmail,
