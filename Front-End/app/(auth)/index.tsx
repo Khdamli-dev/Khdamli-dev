@@ -29,6 +29,9 @@ export default function Login() {
   const router = useRouter();
 
   const [focusedInput, setFocusedInput] = useState<string | null>(null); // Track focused input
+  const [passwordFocusedInput, setPasswordFocusedInput] = useState<
+    string | null
+  >(null); // Track focused input
 
   // Data
   const loginSchema = Yup.object().shape({
@@ -183,7 +186,7 @@ export default function Login() {
                 ) : null}
 
                 <View className="relative w-10/12 h-20 my-2 self-center ">
-                  {focusedInput !== "password" && (
+                  {passwordFocusedInput !== "password" && (
                     <Icon
                       name="locked"
                       color="#C4C4C4"
@@ -194,18 +197,18 @@ export default function Login() {
 
                   <TextInput
                     className={`${
-                      focusedInput === "password" ? "px-10" : "pl-28"
+                      passwordFocusedInput === "password" ? "px-10" : "pl-28"
                     } w-full h-full text-white text-2xl font-medium border-2 border-white rounded-full py-2 `}
                     value={values.password}
                     onChangeText={handleChange("password")}
                     onFocus={() => {
-                      setFocusedInput("password");
+                      setPasswordFocusedInput("password");
                       setPasswordError("");
                       setFieldTouched("password", false);
                     }}
                     onBlur={() => {
                       if (values.password === "") {
-                        setFocusedInput(null);
+                        setPasswordFocusedInput(null);
                       }
                       handleBlur("password");
                     }}

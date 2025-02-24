@@ -26,17 +26,13 @@ export default function SelectRole() {
       const storedId = await AsyncStorage.getItem("userId");
       const id: number = Number(storedId);
 
-      const response = await axios.post(`${API_URL}/auth/login`);
-      if (response.data.success) {
-        router.push("/(auth)/(signUp)/selectionRole"); //
-      } else {
-        alert("There is problem");
-      }
+      const response = await axios.post(
+        `${API_URL}/profile/update/role/worker`,
+        { userId: id }
+      );
+      router.replace("/+not-found");
     } catch (error: any) {
-      if (error.response?.status === 403 && error.response.data) {
-      } else {
-        alert("Server is busy, please try again later");
-      }
+      alert("Server is busy, please try again later");
     }
   };
 

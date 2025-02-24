@@ -30,7 +30,22 @@ import * as Linking from "expo-linking";
 export default function SignUp() {
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
   const router = useRouter();
-  const [focusedInput, setFocusedInput] = useState<string | null>(null); // Track focused input
+  //Foucused Input : To hidden the Icon
+  const [usernameFocusedInput, setUsernameFocusedInputt] = useState<
+    string | null
+  >(null);
+  const [emailFocusedInput, setEmailFocusedInput] = useState<string | null>(
+    null
+  );
+  const [phonenumberFocusedInput, setPhonenumberFocusedInput] = useState<
+    string | null
+  >(null);
+  const [passwordFocusedInput, setpasswordFocusedInput] = useState<
+    string | null
+  >(null);
+  const [retypepasswordFocusedInput, setRetypoepasswordFocusedInput] = useState<
+    string | null
+  >(null);
 
   // Validation schema using Yup
   const validationSchema = Yup.object({
@@ -82,7 +97,7 @@ export default function SignUp() {
     const credentials = {
       username: username,
       email,
-      phoneNumber: +phoneNumber,
+      phoneNumber: "+213" + phoneNumber,
       password,
     };
     try {
@@ -244,7 +259,7 @@ export default function SignUp() {
             }) => (
               <View className="w-full flex-1 justify-center items-center  ">
                 <View className="relative w-10/12 h-20 my-2 self-center">
-                  {focusedInput !== "username" && (
+                  {usernameFocusedInput !== "username" && (
                     <FontAwesome6
                       name="user-large"
                       color="#396F65"
@@ -255,18 +270,18 @@ export default function SignUp() {
 
                   <TextInput
                     className={`${
-                      focusedInput === "username" ? "px-10" : "pl-28"
+                      usernameFocusedInput === "username" ? "px-10" : "pl-28"
                     } w-full h-full text-specialGreen text-2xl font-medium border-2 border-specialGreen rounded-full py-2 `}
                     value={values.username}
                     onChangeText={handleChange("username")}
                     onBlur={() => {
                       if (values.username === "") {
-                        setFocusedInput(null);
+                        setUsernameFocusedInputt(null);
                       }
                       handleBlur("username");
                     }}
                     onFocus={() => {
-                      setFocusedInput("username");
+                      setUsernameFocusedInputt("username");
                       setUsernameError("");
                       setFieldTouched("username", false);
                     }}
@@ -282,7 +297,7 @@ export default function SignUp() {
                 ) : null}
 
                 <View className="relative w-10/12 h-20 my-2 self-center">
-                  {focusedInput !== "email" && (
+                  {emailFocusedInput !== "email" && (
                     <MaterialCommunityIcons
                       name="email"
                       color="#396F65"
@@ -293,18 +308,18 @@ export default function SignUp() {
 
                   <TextInput
                     className={`${
-                      focusedInput === "email" ? "px-10" : "pl-28"
+                      emailFocusedInput === "email" ? "px-10" : "pl-28"
                     } w-full h-full text-specialGreen text-2xl font-medium border-2 border-specialGreen rounded-full py-2 `}
                     value={values.email}
                     onChangeText={handleChange("email")}
                     onBlur={() => {
                       if (values.email === "") {
-                        setFocusedInput(null);
+                        setEmailFocusedInput(null);
                       }
                       handleBlur("email");
                     }}
                     onFocus={() => {
-                      setFocusedInput("email");
+                      setEmailFocusedInput("email");
                       setEmailError("");
                       setFieldTouched("email", false);
                     }}
@@ -321,7 +336,7 @@ export default function SignUp() {
                 ) : null}
 
                 <View className="relative w-10/12 h-20 my-2 self-center">
-                  {focusedInput !== "phoenNumber" && (
+                  {phonenumberFocusedInput !== "phoenNumber" && (
                     <FontAwesome
                       name="phone"
                       color="#396F65"
@@ -332,18 +347,20 @@ export default function SignUp() {
 
                   <TextInput
                     className={`${
-                      focusedInput === "phoenNumber" ? "px-10" : "pl-28"
+                      phonenumberFocusedInput === "phoenNumber"
+                        ? "px-10"
+                        : "pl-28"
                     } w-full h-full text-specialGreen text-2xl font-medium border-2 border-specialGreen rounded-full py-2 `}
                     value={values.phoneNumber}
                     onChangeText={handleChange("phoneNumber")}
                     onBlur={() => {
                       if (values.phoneNumber === "") {
-                        setFocusedInput(null);
+                        setPhonenumberFocusedInput(null);
                       }
                       handleBlur("phoenNumber");
                     }}
                     onFocus={() => {
-                      setFocusedInput("phoenNumber");
+                      setPhonenumberFocusedInput("phoenNumber");
                       setPhoneNumberError("");
                       setFieldTouched("phoenNumber", false);
                     }}
@@ -360,7 +377,7 @@ export default function SignUp() {
                 ) : null}
 
                 <View className="relative w-10/12 h-20 my-2 self-center">
-                  {focusedInput !== "password" && (
+                  {phonenumberFocusedInput !== "password" && (
                     <Icon
                       name="locked"
                       color="#396F65"
@@ -371,18 +388,18 @@ export default function SignUp() {
 
                   <TextInput
                     className={`${
-                      focusedInput === "password" ? "px-10" : "pl-28"
+                      passwordFocusedInput === "password" ? "px-10" : "pl-28"
                     } w-full h-full text-specialGreen text-2xl font-medium border-2 border-specialGreen rounded-full py-2 `}
                     value={values.password}
                     onChangeText={handleChange("password")}
                     onBlur={() => {
                       if (values.password === "") {
-                        setFocusedInput(null);
+                        setpasswordFocusedInput(null);
                       }
                       handleBlur("password");
                     }}
                     onFocus={() => {
-                      setFocusedInput("password");
+                      setpasswordFocusedInput("password");
                       setPhoneNumberError("");
                       setFieldTouched("password", false);
                     }}
@@ -396,7 +413,7 @@ export default function SignUp() {
                 )}
 
                 <View className="relative w-10/12 h-20 my-2 self-center">
-                  {focusedInput !== "retypePassword" && (
+                  {retypepasswordFocusedInput !== "retypePassword" && (
                     <Icon
                       name="locked"
                       color="#396F65"
@@ -407,18 +424,20 @@ export default function SignUp() {
 
                   <TextInput
                     className={`${
-                      focusedInput === "retypePassword" ? "px-10" : "pl-28"
+                      retypepasswordFocusedInput === "retypePassword"
+                        ? "px-10"
+                        : "pl-28"
                     } w-full h-full text-specialGreen text-2xl font-medium border-2 border-specialGreen rounded-full py-2 `}
                     value={values.retypePassword}
                     onChangeText={handleChange("retypePassword")}
                     onBlur={() => {
                       if (values.retypePassword === "") {
-                        setFocusedInput(null);
+                        setRetypoepasswordFocusedInput(null);
                       }
                       handleBlur("retypePassword");
                     }}
                     onFocus={() => {
-                      setFocusedInput("retypePassword");
+                      setRetypoepasswordFocusedInput("retypePassword");
                       setPhoneNumberError("");
                       setFieldTouched("retypePassword", false);
                     }}
@@ -460,7 +479,7 @@ export default function SignUp() {
 
                 {/* Sign Up Button */}
                 <TouchableOpacity
-                  onPress={handleSubmit as any}
+                  onPress={() => router.push("/OtherInformation")}
                   className="bg-specialGreen p-6 mb-3 rounded-full w-full max-w-sm  shadow-md shadow-black mt-10"
                 >
                   <Text className="text-white text-center text-4xl font-medium">

@@ -14,11 +14,13 @@ import {
 import Icon from "react-native-vector-icons/Fontisto";
 import AntDesign from "react-native-vector-icons/AntDesign";
 import Foundation from "react-native-vector-icons/Foundation";
+import { MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_URL } from "@env";
 import { KeyboardAvoidingView, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
-
+import WilayaDropdown from "@/Component/wilayaDropDown";
+import AddressDropdown from "@/Component/addressDropDown";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
@@ -94,21 +96,7 @@ export default function OtherInformation() {
             className=" w-full mb-safe-offset-2 pt-6  pb-2  shadow-md shadow-black"
           >
             {/* Go back Icon & Skip Icon */}
-            <View className=" w-full h-20  flex-row justify-between items-center pr-6 ">
-              <View className="  items-start justify-start ">
-                <TouchableOpacity onPress={() => router.back()}>
-                  <AntDesign
-                    style={{
-                      textShadowColor: "#000",
-                      textShadowOffset: { width: 1, height: 1 },
-                      textShadowRadius: 5,
-                    }}
-                    name="left"
-                    size={60}
-                    color="white"
-                  />
-                </TouchableOpacity>
-              </View>
+            <View className=" w-full h-20  flex-row justify-end items-center pr-6 ">
               <View>
                 <TouchableOpacity
                   onPress={() => router.push("/selectionRole")}
@@ -152,14 +140,6 @@ export default function OtherInformation() {
             </View>
           </LinearGradient>
 
-          <View className="flex items-center justify-center  w-full h-24 mb-8 ">
-            <Text className="text-xl font-medium">
-              This Step Is Optional ,But You Must Be {"\n"}
-              {"  "}18 Or Older To Proceed,You Can Edit{"\n"}
-              {"       "}It Later On your Personal Page
-            </Text>
-          </View>
-
           <Formik
             initialValues={{ age: "", sex: 0 }}
             validationSchema={validationSchema}
@@ -180,6 +160,10 @@ export default function OtherInformation() {
               setFieldValue,
             }) => (
               <View className="flex-1 w-full items-center  justify-center">
+                <View className="flex-1 items-center justify-center relative">
+                  <WilayaDropdown />
+                </View>
+
                 <View className=" relative w-80 h-20 mt-2 mb-7 self-center ">
                   <AntDesign
                     name="idcard"
