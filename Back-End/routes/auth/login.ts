@@ -1,9 +1,9 @@
-import { Request, Response } from 'express';
-import Credentials from '../../interface/credentials';
-import pool from '../../database/dbConnection';
-import authenticatePassword from '../../utils/authentication/authenticatePassword';
-import dotenv from 'dotenv';
-import produceTokens from '../../utils/authentication/produceTokens';
+import { Request, Response } from "express";
+import Credentials from "../../interface/credentials";
+import pool from "../../database/dbConnection";
+import authenticatePassword from "../../utils/authentication/authenticatePassword";
+import dotenv from "dotenv";
+import produceTokens from "../../utils/authentication/produceTokens";
 
 dotenv.config();
 
@@ -13,7 +13,7 @@ const login = async (req: Request, res: Response) => {
     if (!email || !password) {
       res.status(400).json({
         success: false,
-        message: 'email and password are required',
+        message: "email and password are required",
       });
       return;
     }
@@ -24,7 +24,7 @@ const login = async (req: Request, res: Response) => {
         SELECT id, password, role, registration_date from "user"
         WHERE email=$1
         `,
-      [email],
+      [email]
     );
     if (!user.length) {
       res.status(403).json({
@@ -38,12 +38,12 @@ const login = async (req: Request, res: Response) => {
     // validate password
     const validPassword = await authenticatePassword(
       user[0].password,
-      password,
+      password
     );
     if (!validPassword) {
       res.status(403).json({
         success: false,
-        message: 'password is wrong',
+        message: "password is wrong",
         validEmail: true,
         validPassword: false,
       });
@@ -54,7 +54,8 @@ const login = async (req: Request, res: Response) => {
     if (!user[0].registration_date) {
       res.status(403).json({
         success: false,
-        message: 'Email not verified. Please confirm your email to log in.',
+        message: "Email not verified. Please confirm your email to log in.",
+        validEmail: true,
         validAccount: false,
       });
       return;
@@ -63,19 +64,20 @@ const login = async (req: Request, res: Response) => {
     // produce jwt tokens
     const { accessToken, refreshToken } = produceTokens(
       user[0].id,
-      user[0].role,
+      user[0].role
     );
 
     // success login
     res.status(200).json({
       success: true,
-      message: 'login with success',
+      message: "login with success",
       accessToken,
       refreshToken,
+      userId: user[0].id,
     });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: 'internal error' });
+    res.status(500).json({ message: "internal error" });
   }
 };
 
