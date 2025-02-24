@@ -26,14 +26,9 @@ import { useFonts } from "expo-font";
 import { API_URL } from "@env";
 
 export default function Login() {
-  const [fontsLoaded] = useFonts({
-    Itim: require("../../assets/fonts/Itim-Regular.ttf"),
-    GrechenFuemen: require("../../assets/fonts/GrechenFuemen-Regular.ttf"),
-  });
-
   const router = useRouter();
 
-  const [loginError, setLoginError] = useState("");
+  const [focusedInput, setFocusedInput] = useState<string | null>(null); // Track focused input
 
   // Data
   const loginSchema = Yup.object().shape({
@@ -54,7 +49,7 @@ export default function Login() {
       if (response.data.success) {
         const id: number = response.data.userId;
         await AsyncStorage.setItem("userId", JSON.stringify(id));
-        router.push("/+not-found"); //
+        router.push("/(auth)/(signUp)/selectionRole"); //
       } else {
         alert("There is problem");
       }
@@ -93,9 +88,9 @@ export default function Login() {
             <View className="flex-row w-96 mt-1 items-baseline ">
               <Text
                 style={{
-                  textShadowColor: "#000",
-                  textShadowOffset: { width: 1, height: 1 },
-                  textShadowRadius: 5,
+                  textShadowColor: "#fffff",
+                  textShadowOffset: { width: 8, height: 1 },
+                  textShadowRadius: 10,
                 }}
                 className="text-9xl  tracking-tight text-foncyYellow uppercase font-bold "
               >
@@ -103,9 +98,9 @@ export default function Login() {
               </Text>
               <Text
                 style={{
-                  textShadowColor: "#000",
-                  textShadowOffset: { width: 1, height: 1 },
-                  textShadowRadius: 5,
+                  textShadowColor: "#fffff",
+                  textShadowOffset: { width: 8, height: 1 },
+                  textShadowRadius: 10,
                 }}
                 className="text-7xl tracking-widest text-bl lowercase font-bold"
               >
@@ -114,8 +109,8 @@ export default function Login() {
             </View>
             <Text
               style={{
-                textShadowColor: "#000",
-                textShadowOffset: { width: 1, height: 1 },
+                textShadowColor: "#fffff",
+                textShadowOffset: { width: 5, height: 3 },
                 textShadowRadius: 5,
               }}
               className="text-4xl font-medium text-white mb-10 text-shadow-sm shadow-red-500"
@@ -136,28 +131,43 @@ export default function Login() {
               handleChange,
               handleBlur,
               handleSubmit,
+              setFieldTouched,
               values,
               errors,
               touched,
             }) => (
               <View className="w-full items-center ">
                 <View className="relative w-10/12 h-20 my-2 self-center ">
-                  <Icoon
-                    name="user"
-                    color="#C4C4C4"
-                    size={30}
-                    className="absolute left-14 top-6  text-2xl font-bold "
-                  />
+                  {focusedInput !== "email" && (
+                    <Icoon
+                      name="user"
+                      color="#C4C4C4"
+                      size={30}
+                      className="absolute left-14 top-6  text-2xl font-bold "
+                    />
+                  )}
+
                   <TextInput
-                    className=" absolute w-full h-full text-white text-2xl font-medium border-2 border-white rounded-full pl-28 py-2"
+                    className={`${
+                      focusedInput === "email" ? "px-10" : "pl-28"
+                    } w-full h-full text-white text-2xl font-medium border-2 border-white rounded-full py-2 `}
                     value={values.email}
                     onChangeText={handleChange("email")}
-                    onFocus={() => setEmailError("")}
+                    onFocus={() => {
+                      setFocusedInput("email");
+                      setEmailError("");
+                      setFieldTouched("email", false);
+                    }}
+                    onBlur={() => {
+                      if (values.email === "") {
+                        setFocusedInput(null);
+                      }
+                      handleBlur("email");
+                    }}
                     autoCapitalize="none"
                     keyboardType="email-address"
                     placeholder="Email "
                     placeholderTextColor="#C4C4C4"
-                    scrollEnabled
                   />
                 </View>
 
@@ -173,18 +183,31 @@ export default function Login() {
                 ) : null}
 
                 <View className="relative w-10/12 h-20 my-2 self-center ">
-                  <Icon
-                    name="locked"
-                    color="#C4C4C4"
-                    size={28}
-                    className="absolute left-16 top-6  text-2xl font-bold "
-                  />
+                  {focusedInput !== "password" && (
+                    <Icon
+                      name="locked"
+                      color="#C4C4C4"
+                      size={28}
+                      className="absolute left-16 top-6  text-2xl font-bold "
+                    />
+                  )}
+
                   <TextInput
-                    className=" absolute w-full h-full text-white text-2xl font-medium border-2 border-white rounded-full pl-28  py-2"
+                    className={`${
+                      focusedInput === "password" ? "px-10" : "pl-28"
+                    } w-full h-full text-white text-2xl font-medium border-2 border-white rounded-full py-2 `}
                     value={values.password}
                     onChangeText={handleChange("password")}
                     onFocus={() => {
+                      setFocusedInput("password");
                       setPasswordError("");
+                      setFieldTouched("password", false);
+                    }}
+                    onBlur={() => {
+                      if (values.password === "") {
+                        setFocusedInput(null);
+                      }
+                      handleBlur("password");
                     }}
                     secureTextEntry
                     placeholder="Password"
@@ -219,9 +242,9 @@ export default function Login() {
                   {/* Login Button */}
                   <TouchableOpacity
                     onPress={handleSubmit as any}
-                    className="bg-specialGreen p-6 rounded-full w-full max-w-sm  shadow-md shadow-black"
+                    className="bg-specialGreen p-6 rounded-full w-full max-w-sm  shadow-xl shadow-black"
                   >
-                    <Text className="text-white text-center font-bold text-xl">
+                    <Text className="text-white text-center font-bold text-2xl">
                       Login
                     </Text>
                   </TouchableOpacity>
