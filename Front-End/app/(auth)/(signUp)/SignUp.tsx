@@ -30,6 +30,22 @@ import * as Linking from "expo-linking";
 export default function SignUp() {
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
   const router = useRouter();
+  //Foucused Input : To hidden the Icon
+  const [usernameFocusedInput, setUsernameFocusedInputt] = useState<
+    string | null
+  >(null);
+  const [emailFocusedInput, setEmailFocusedInput] = useState<string | null>(
+    null
+  );
+  const [phonenumberFocusedInput, setPhonenumberFocusedInput] = useState<
+    string | null
+  >(null);
+  const [passwordFocusedInput, setpasswordFocusedInput] = useState<
+    string | null
+  >(null);
+  const [retypepasswordFocusedInput, setRetypoepasswordFocusedInput] = useState<
+    string | null
+  >(null);
 
   // Validation schema using Yup
   const validationSchema = Yup.object({
@@ -44,7 +60,10 @@ export default function SignUp() {
     email: Yup.string()
       .email("Invalid email address")
       .required("Email Is Required"),
-    phoneNumber: Yup.string(),
+    phoneNumber: Yup.string().matches(
+      /^0(5|6|7)[0-9]{8}$/,
+      "Invalid  phone number"
+    ),
     password: Yup.string()
       .required("Password is required")
       .matches(
@@ -59,12 +78,12 @@ export default function SignUp() {
       .required("You Must Agrre to The Terms"),
   });
 
+  // handSignUp
   const [usernameError, setUsernameError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [phoneNumberError, setPhoneNumberError] = useState("");
 
-  // handSignUp
-  const handSignUp = async ({
+  const handlSignUp = async ({
     username,
     email,
     phoneNumber,
@@ -91,7 +110,7 @@ export default function SignUp() {
         alert(
           "Check Your Email, We have sent you a verification link. Click on it to confirm your account."
         );
-        router.push("/OtherInformation");
+        router.replace("/OtherInformation");
       } else {
         alert(
           "en error occurred with the submitted data. Please check your inputs."
@@ -220,7 +239,7 @@ export default function SignUp() {
             }}
             validationSchema={validationSchema}
             onSubmit={(values) => {
-              handSignUp({
+              handlSignUp({
                 username: values.username,
                 password: values.password,
                 phoneNumber: values.phoneNumber,
@@ -233,24 +252,39 @@ export default function SignUp() {
               handleChange,
               handleBlur,
               handleSubmit,
+              setFieldTouched,
               errors,
               touched,
               setFieldValue,
             }) => (
               <View className="w-full flex-1 justify-center items-center  ">
                 <View className="relative w-10/12 h-20 my-2 self-center">
-                  <FontAwesome6
-                    name="user-large"
-                    color="#396F65"
-                    size={28}
-                    className="absolute left-14 top-6 text-2xl font-bold"
-                  />
+                  {usernameFocusedInput !== "username" && (
+                    <FontAwesome6
+                      name="user-large"
+                      color="#396F65"
+                      size={28}
+                      className="absolute left-14 top-6 text-2xl font-bold"
+                    />
+                  )}
+
                   <TextInput
-                    className="absolute w-full h-full text-specialGreen text-2xl font-medium border-2 border-specialGreen rounded-full pl-28 py-2"
+                    className={`${
+                      usernameFocusedInput === "username" ? "px-10" : "pl-28"
+                    } w-full h-full text-specialGreen text-2xl font-medium border-2 border-specialGreen rounded-full py-2 `}
                     value={values.username}
                     onChangeText={handleChange("username")}
-                    onBlur={handleBlur("username")}
-                    onFocus={() => setUsernameError("")}
+                    onBlur={() => {
+                      if (values.username === "") {
+                        setUsernameFocusedInputt(null);
+                      }
+                      handleBlur("username");
+                    }}
+                    onFocus={() => {
+                      setUsernameFocusedInputt("username");
+                      setUsernameError("");
+                      setFieldTouched("username", false);
+                    }}
                     placeholder="User Name"
                     placeholderTextColor="#4C8479"
                   />
@@ -263,18 +297,32 @@ export default function SignUp() {
                 ) : null}
 
                 <View className="relative w-10/12 h-20 my-2 self-center">
-                  <MaterialCommunityIcons
-                    name="email"
-                    color="#396F65"
-                    size={28}
-                    className="absolute left-14 top-6 text-2xl font-bold"
-                  />
+                  {emailFocusedInput !== "email" && (
+                    <MaterialCommunityIcons
+                      name="email"
+                      color="#396F65"
+                      size={28}
+                      className="absolute left-14 top-6 text-2xl font-bold"
+                    />
+                  )}
+
                   <TextInput
-                    className="absolute w-full h-full text-specialGreen text-2xl font-medium border-2 border-specialGreen rounded-full pl-28 py-2"
+                    className={`${
+                      emailFocusedInput === "email" ? "px-10" : "pl-28"
+                    } w-full h-full text-specialGreen text-2xl font-medium border-2 border-specialGreen rounded-full py-2 `}
                     value={values.email}
                     onChangeText={handleChange("email")}
-                    onBlur={handleBlur("email")}
-                    onFocus={() => setEmailError("")}
+                    onBlur={() => {
+                      if (values.email === "") {
+                        setEmailFocusedInput(null);
+                      }
+                      handleBlur("email");
+                    }}
+                    onFocus={() => {
+                      setEmailFocusedInput("email");
+                      setEmailError("");
+                      setFieldTouched("email", false);
+                    }}
                     placeholder="Email Address"
                     placeholderTextColor="#4C8479"
                     keyboardType="email-address"
@@ -288,18 +336,34 @@ export default function SignUp() {
                 ) : null}
 
                 <View className="relative w-10/12 h-20 my-2 self-center">
-                  <FontAwesome
-                    name="phone"
-                    color="#396F65"
-                    size={28}
-                    className="absolute left-16 top-6 text-2xl font-bold"
-                  />
+                  {phonenumberFocusedInput !== "phoenNumber" && (
+                    <FontAwesome
+                      name="phone"
+                      color="#396F65"
+                      size={28}
+                      className="absolute left-16 top-6 text-2xl font-bold"
+                    />
+                  )}
+
                   <TextInput
-                    className="absolute w-full h-full text-specialGreen text-2xl font-medium border-2 border-specialGreen rounded-full pl-28 py-2"
+                    className={`${
+                      phonenumberFocusedInput === "phoenNumber"
+                        ? "px-10"
+                        : "pl-28"
+                    } w-full h-full text-specialGreen text-2xl font-medium border-2 border-specialGreen rounded-full py-2 `}
                     value={values.phoneNumber}
                     onChangeText={handleChange("phoneNumber")}
-                    onBlur={handleBlur("phoneNumber")}
-                    onFocus={() => setPhoneNumberError("")}
+                    onBlur={() => {
+                      if (values.phoneNumber === "") {
+                        setPhonenumberFocusedInput(null);
+                      }
+                      handleBlur("phoenNumber");
+                    }}
+                    onFocus={() => {
+                      setPhonenumberFocusedInput("phoenNumber");
+                      setPhoneNumberError("");
+                      setFieldTouched("phoenNumber", false);
+                    }}
                     placeholder="Phone Number"
                     placeholderTextColor="#4C8479"
                     keyboardType="numeric"
@@ -313,17 +377,32 @@ export default function SignUp() {
                 ) : null}
 
                 <View className="relative w-10/12 h-20 my-2 self-center">
-                  <Icon
-                    name="locked"
-                    color="#396F65"
-                    size={28}
-                    className="absolute left-16 top-6 text-2xl font-bold"
-                  />
+                  {passwordFocusedInput !== "password" && (
+                    <Icon
+                      name="locked"
+                      color="#396F65"
+                      size={28}
+                      className="absolute left-16 top-6 text-2xl font-bold"
+                    />
+                  )}
+
                   <TextInput
-                    className="absolute w-full h-full text-specialGreen text-2xl font-medium border-2 border-specialGreen rounded-full pl-28 py-2"
+                    className={`${
+                      passwordFocusedInput === "password" ? "px-10" : "pl-28"
+                    } w-full h-full text-specialGreen text-2xl font-medium border-2 border-specialGreen rounded-full py-2 `}
                     value={values.password}
                     onChangeText={handleChange("password")}
-                    onBlur={handleBlur("password")}
+                    onBlur={() => {
+                      if (values.password === "") {
+                        setpasswordFocusedInput(null);
+                      }
+                      handleBlur("phoenNumber");
+                    }}
+                    onFocus={() => {
+                      setpasswordFocusedInput("password");
+                      setPhoneNumberError("");
+                      setFieldTouched("password", false);
+                    }}
                     placeholder="Password"
                     placeholderTextColor="#4C8479"
                     secureTextEntry
@@ -334,17 +413,34 @@ export default function SignUp() {
                 )}
 
                 <View className="relative w-10/12 h-20 my-2 self-center">
-                  <Icon
-                    name="locked"
-                    color="#396F65"
-                    size={28}
-                    className="absolute left-16 top-6 text-2xl font-bold"
-                  />
+                  {retypepasswordFocusedInput !== "retypePassword" && (
+                    <Icon
+                      name="locked"
+                      color="#396F65"
+                      size={28}
+                      className="absolute left-16 top-6 text-2xl font-bold"
+                    />
+                  )}
+
                   <TextInput
-                    className="absolute w-full h-full text-specialGreen text-2xl font-medium border-2 border-specialGreen rounded-full pl-28 py-2"
+                    className={`${
+                      retypepasswordFocusedInput === "retypePassword"
+                        ? "px-10"
+                        : "pl-28"
+                    } w-full h-full text-specialGreen text-2xl font-medium border-2 border-specialGreen rounded-full py-2 `}
                     value={values.retypePassword}
                     onChangeText={handleChange("retypePassword")}
-                    onBlur={handleBlur("retypePassword")}
+                    onBlur={() => {
+                      if (values.retypePassword === "") {
+                        setRetypoepasswordFocusedInput(null);
+                      }
+                      handleBlur("retypePassword");
+                    }}
+                    onFocus={() => {
+                      setRetypoepasswordFocusedInput("retypePassword");
+                      setPhoneNumberError("");
+                      setFieldTouched("retypePassword", false);
+                    }}
                     placeholder="Retype Password"
                     placeholderTextColor="#4C8479"
                     secureTextEntry

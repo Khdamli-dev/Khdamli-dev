@@ -13,21 +13,32 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/Fontisto";
 import AntDesign from "react-native-vector-icons/AntDesign";
-import Foundation from "react-native-vector-icons/Foundation";
+import { MaterialIcons, Foundation } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_URL } from "@env";
 import { KeyboardAvoidingView, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
-
+import WilayaDropdown from "@/Component/wilayaDropDown";
+import AddressDropdown from "@/Component/addressDropDown";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
+
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 import { LinearGradient } from "expo-linear-gradient";
 
 export default function OtherInformation() {
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
   const router = useRouter();
+  const [selectedWilaya, setSelectedWilaya] = useState<{
+    name: string;
+    id: number;
+  } | null>(null);
+  const [selectedMunicipality, setSelectedMunicipality] = useState<{
+    name: string;
+    id: number;
+  } | null>(null);
 
   //Creat validationSchema
   const validationSchema = Yup.object().shape({
@@ -42,13 +53,24 @@ export default function OtherInformation() {
   const handleOtherInfermation = async ({
     age,
     sex,
+    region,
+    city,
   }: {
-    age: number;
-    sex: number;
+    age: number | undefined;
+    sex: number | undefined;
+    region: number | undefined;
+    city: number | undefined;
   }) => {
+    const address = region
+      ? {
+          region,
+          city,
+        }
+      : null;
     const personalInfo = {
-      age,
-      sex,
+      age: age ? age : null,
+      sex: sex ? sex : null,
+      address,
     };
     // Retrieve userId from AsyncStorage
     const storedId = await AsyncStorage.getItem("userId");
@@ -75,6 +97,7 @@ export default function OtherInformation() {
     <SafeAreaView className="flex-1 bg-white">
       <KeyboardAvoidingView style={{ flex: 1 }}>
         <ScrollView
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={{
             flexGrow: 1,
             justifyContent: "center",
@@ -94,21 +117,7 @@ export default function OtherInformation() {
             className=" w-full mb-safe-offset-2 pt-6  pb-2  shadow-md shadow-black"
           >
             {/* Go back Icon & Skip Icon */}
-            <View className=" w-full h-20  flex-row justify-between items-center pr-6 ">
-              <View className="  items-start justify-start ">
-                <TouchableOpacity onPress={() => router.back()}>
-                  <AntDesign
-                    style={{
-                      textShadowColor: "#000",
-                      textShadowOffset: { width: 1, height: 1 },
-                      textShadowRadius: 5,
-                    }}
-                    name="left"
-                    size={60}
-                    color="white"
-                  />
-                </TouchableOpacity>
-              </View>
+            <View className=" w-full h-20  flex-row justify-end items-center pr-6 ">
               <View>
                 <TouchableOpacity
                   onPress={() => router.push("/selectionRole")}
@@ -152,14 +161,6 @@ export default function OtherInformation() {
             </View>
           </LinearGradient>
 
-          <View className="flex items-center justify-center  w-full h-24 mb-8 ">
-            <Text className="text-xl font-medium">
-              This Step Is Optional ,But You Must Be {"\n"}
-              {"  "}18 Or Older To Proceed,You Can Edit{"\n"}
-              {"       "}It Later On your Personal Page
-            </Text>
-          </View>
-
           <Formik
             initialValues={{ age: "", sex: 0 }}
             validationSchema={validationSchema}
@@ -167,6 +168,8 @@ export default function OtherInformation() {
               handleOtherInfermation({
                 age: Number(values.age),
                 sex: values.sex,
+                region: selectedWilaya?.id,
+                city: selectedMunicipality?.id,
               });
             }}
           >
@@ -179,8 +182,21 @@ export default function OtherInformation() {
               touched,
               setFieldValue,
             }) => (
-              <View className="flex-1 w-full items-center  justify-center">
-                <View className=" relative w-80 h-20 mt-2 mb-7 self-center ">
+              <View className="flex-1 w-full items-center   justify-center">
+                <View className="flex-1 items-center justify-center relative">
+                  <WilayaDropdown
+                    selectedWilaya={selectedWilaya}
+                    onSelectWilaya={(wilaya) => setSelectedWilaya(wilaya)}
+                  />
+                  <AddressDropdown
+                    selectedCity={selectedWilaya} // Pass the object, not just selectedWilaya?.name
+                    onSelectMunicipality={(municipality) =>
+                      setSelectedMunicipality(municipality)
+                    }
+                  />
+                </View>
+
+                <View className=" relative w-9/12 h-20 mt-6 mb-7 self-center ">
                   <AntDesign
                     name="idcard"
                     color="#ffffff"
@@ -205,58 +221,48 @@ export default function OtherInformation() {
                   </Text>
                 )}
 
-                <View className="relative  w-96 h-20 rounded-full mt-6 mb-4 border-2 border-specialGreen shadow-neutral-950  ">
-                  <Foundation
-                    name="female-symbol"
-                    color="#F8A100"
-                    size={40}
-                    className="absolute left-80 top-2    font-bold p-5 "
-                  />
-                  <Foundation
-                    name="male-symbol"
-                    color="black"
-                    size={40}
-                    className="absolute right-3 bottom-[0] p-5"
-                  />
-                  <Text className="text-specialGreen absolute top-6 left-4 text-2xl font-semibold">
-                    Please Select Your Gender{" "}
-                  </Text>
+                <View className="flex-row  w-10/12 pb-4 pt-2 items-center justify-between ">
+                  <View className="flex-col  ">
+                    <TouchableOpacity
+                      onPress={() => setFieldValue("sex", 2)}
+                      className={`${
+                        values.sex === 2 ? "bg-specialGreen" : "bg-white"
+                      } rounded-full w-40 h-40 border-2 border-specialGreen items-center justify-center mb-3 `}
+                    >
+                      <Foundation
+                        name="female-symbol"
+                        color="#F8A100"
+                        size={70}
+                      />
+                    </TouchableOpacity>
+                    <View className="items-center justify-center">
+                      <Text className="text-2xl text-black font-medium">
+                        Female
+                      </Text>
+                    </View>
+                  </View>
+                  <View className="flex-col ">
+                    <TouchableOpacity
+                      onPress={() => setFieldValue("sex", 1)}
+                      className={`${
+                        values.sex === 1 ? "bg-specialGreen" : "bg-white"
+                      } rounded-full w-40 h-40 border-2 border-specialGreen items-center justify-center mb-3 `}
+                    >
+                      <Foundation
+                        name="male-symbol"
+                        color="#F8A100"
+                        size={70}
+                      />
+                    </TouchableOpacity>
+                    <View className="items-center justify-center ">
+                      <Text className="text-2xl text-black font-medium">
+                        Male
+                      </Text>
+                    </View>
+                  </View>
                 </View>
 
-                <View className="flex-row w-full h-40  items-center justify-center ">
-                  <Pressable
-                    className="rounded-xl mr-5  h-10 bg-specialGreen  w-36 flex-row justify-between items-center px-4"
-                    onPress={() => setFieldValue("sex", 1)}
-                  >
-                    <Text className="text-white text-2xl font-bold">Male</Text>
-                    <Icon
-                      name={
-                        values.sex === 1
-                          ? "radio-btn-active"
-                          : "radio-btn-passive"
-                      }
-                      color="white"
-                      size={24}
-                    />
-                  </Pressable>
-                  <Pressable
-                    className="rounded-xl ml-5 h-10 bg-specialGreen  w-36 flex-row justify-between items-center px-3"
-                    onPress={() => setFieldValue("sex", 2)}
-                  >
-                    <Text className="text-white text-2xl font-bold">
-                      Female
-                    </Text>
-                    <Icon
-                      name={
-                        values.sex === 2
-                          ? "radio-btn-active"
-                          : "radio-btn-passive"
-                      }
-                      color="white"
-                      size={24}
-                    />
-                  </Pressable>
-                </View>
+                <View style={{ flex: 1 }} />
 
                 <View className="  flex-1 w-full items-center  justify-center pb-8 ">
                   <TouchableOpacity
