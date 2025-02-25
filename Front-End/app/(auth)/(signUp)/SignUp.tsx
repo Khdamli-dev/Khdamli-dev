@@ -97,7 +97,7 @@ export default function SignUp() {
     const credentials = {
       username: username,
       email,
-      phoneNumber: "+213" + phoneNumber,
+      phoneNumber: +phoneNumber,
       password,
     };
     try {
@@ -377,7 +377,7 @@ export default function SignUp() {
                 ) : null}
 
                 <View className="relative w-10/12 h-20 my-2 self-center">
-                  {phonenumberFocusedInput !== "password" && (
+                  {passwordFocusedInput !== "password" && (
                     <Icon
                       name="locked"
                       color="#396F65"
@@ -396,7 +396,7 @@ export default function SignUp() {
                       if (values.password === "") {
                         setpasswordFocusedInput(null);
                       }
-                      handleBlur("password");
+                      handleBlur("phoenNumber");
                     }}
                     onFocus={() => {
                       setpasswordFocusedInput("password");
@@ -479,7 +479,7 @@ export default function SignUp() {
 
                 {/* Sign Up Button */}
                 <TouchableOpacity
-                  onPress={() => router.push("/OtherInformation")}
+                  onPress={handleSubmit as any}
                   className="bg-specialGreen p-6 mb-3 rounded-full w-full max-w-sm  shadow-md shadow-black mt-10"
                 >
                   <Text className="text-white text-center text-4xl font-medium">

@@ -52,7 +52,7 @@ export default function Login() {
       if (response.data.success) {
         const id: number = response.data.userId;
         await AsyncStorage.setItem("userId", JSON.stringify(id));
-        router.push("/(auth)/(signUp)/selectionRole"); //
+        router.push("/OtherInformation"); //
       } else {
         alert("There is problem");
       }

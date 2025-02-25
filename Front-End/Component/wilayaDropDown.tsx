@@ -10,21 +10,42 @@ import {
   Animated,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import { twMerge } from "tailwind-merge";
-interface wilaya {
+
+interface Wilaya {
   name: string;
   id: number;
 }
 
-const WilayaDropdown = () => {
-  const [wilayas, setWilaya] = useState<wilaya[]>([]);
+interface WilayaDropdownProps {
+  selectedWilaya: Wilaya | null;
+  onSelectWilaya: (wilaya: Wilaya) => void;
+}
+
+const WilayaDropdown: React.FC<WilayaDropdownProps> = ({
+  selectedWilaya,
+  onSelectWilaya,
+}) => {
+  const [wilayas, setWilayas] = useState<Wilaya[]>([]);
+  const [filteredWilayas, setFilteredWilayas] = useState<Wilaya[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedWilaya, setSelectedWilaya] = useState<wilaya>({
-    name: "",
-    id: 0,
-  });
   const [search, setSearch] = useState("");
   const rotateAnim = useState(new Animated.Value(0))[0];
+
+  const fetchRegions = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/address/regions`, {
+        params: { country: 1 },
+      });
+      setWilayas(response.data.regions);
+      setFilteredWilayas(response.data.regions);
+    } catch (error) {
+      console.error("Error fetching regions:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchRegions();
+  }, []);
 
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
@@ -34,31 +55,24 @@ const WilayaDropdown = () => {
       useNativeDriver: true,
     }).start();
   };
-  const fetchRegions = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/address/regions`, {
-        params: { country: 1 },
-      });
-      //console.log(response.data.regions);
-      setWilaya(response.data.regions);
-    } catch (error) {
-      console.error("Error fetching regions:", error);
+
+  const handleSearch = (text: string) => {
+    setSearch(text);
+    if (text === "") {
+      setFilteredWilayas(wilayas);
+    } else {
+      setFilteredWilayas(
+        wilayas.filter((item) =>
+          item.name.toLowerCase().includes(text.toLowerCase())
+        )
+      );
     }
   };
-  useEffect(() => {
-    const fetchData = async () => {
-      await fetchRegions(); // Call the async function
-    };
 
-    fetchData();
-  }, []);
-
-  const handleSelect = (wilaya: wilaya) => {
-    setSelectedWilaya(wilaya);
+  const handleSelect = (wilaya: Wilaya) => {
+    onSelectWilaya(wilaya); // Update parent state
     setIsOpen(false);
   };
-
-  //const filteredWilayas = wilayas.filter(w => w.toLowerCase().includes(search.toLowerCase()));
 
   const arrowRotation = rotateAnim.interpolate({
     inputRange: [0, 1],
@@ -68,15 +82,12 @@ const WilayaDropdown = () => {
   return (
     <View className="items-center w-full">
       <TouchableOpacity
-        className="relative flex-row items-center justify-between w-80 h-16 border-2 border-specialGreen rounded-full px-4"
-        onPress={() => {
-          toggleDropdown;
-          setIsOpen(!isOpen);
-        }}
+        className="relative flex-row items-center justify-between w-9/12 h-20 border-2 border-specialGreen rounded-full px-4"
+        onPress={toggleDropdown}
       >
         <Icon name="location-pin" color="#396F65" size={30} />
         <Text className="text-xl text-specialGreen font-bold">
-          {selectedWilaya.name || "Enter your Wilaya"}
+          {selectedWilaya?.name || "Enter your Wilaya"}
         </Text>
         <Animated.View style={{ transform: [{ rotate: arrowRotation }] }}>
           <Icon name="keyboard-arrow-down" color="#396F65" size={30} />
@@ -84,32 +95,35 @@ const WilayaDropdown = () => {
       </TouchableOpacity>
       {isOpen && (
         <View
-          className="absolute top-20 w-80 bg-white border border-gray-300 rounded-lg shadow-lg p-2"
+          className="absolute top-20 w-80 bg-white border border-gray-300 rounded-lg shadow-xl p-2 z-50"
           style={{
+            maxHeight: 200,
             position: "absolute",
-            top: 60, // adjust as needed
-            left: 0,
+            top: 70,
+            left: 10,
             right: 0,
-            zIndex: 1000,
+            zIndex: 50,
           }}
         >
           <TextInput
             className="border border-gray-300 rounded-md p-2 mb-2"
             placeholder="Search Wilaya..."
             value={search}
-            onChangeText={setSearch}
+            onChangeText={handleSearch}
           />
           <FlatList
             style={{ flex: 1 }}
-            data={wilayas}
-            keyExtractor={(item: wilaya) => item.id.toString()} // Convert id to string if it's a number
-            renderItem={({ item }: { item: wilaya }) => (
+            nestedScrollEnabled
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            data={filteredWilayas}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
               <TouchableOpacity
                 className="p-3 border-b border-gray-200"
                 onPress={() => handleSelect(item)}
               >
                 <Text className="text-lg">{item.name}</Text>
-                {/* Display Wilaya Name */}
               </TouchableOpacity>
             )}
           />
