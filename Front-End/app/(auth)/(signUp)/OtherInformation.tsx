@@ -43,10 +43,9 @@ export default function OtherInformation() {
   //Creat validationSchema
   const validationSchema = Yup.object().shape({
     age: Yup.number()
-      .required("Age is required")
       .min(18, "You must be at least 18 years old")
       .max(100, "Age cannot be more than 100 years old"),
-    sex: Yup.number().required("Gender is required"),
+    sex: Yup.number(),
   });
 
   // handleOtherInfermation
@@ -186,13 +185,17 @@ export default function OtherInformation() {
                 <View className="flex-1 items-center justify-center relative">
                   <WilayaDropdown
                     selectedWilaya={selectedWilaya}
-                    onSelectWilaya={(wilaya) => setSelectedWilaya(wilaya)}
+                    onSelectWilaya={(wilaya) => {
+                      console.log(wilaya);
+                      setSelectedWilaya(wilaya);
+                    }}
                   />
                   <AddressDropdown
-                    selectedCity={selectedWilaya} // Pass the object, not just selectedWilaya?.name
+                    selectedCity={selectedMunicipality} // Pass the object, not just selectedWilaya?.name
                     onSelectMunicipality={(municipality) =>
                       setSelectedMunicipality(municipality)
                     }
+                    wilaya={selectedWilaya}
                   />
                 </View>
 
