@@ -112,7 +112,7 @@ export const emailConfirmationMail = ((token : string) => {
         .btn {
             display: inline-block;
             background: #28a745;
-            color: #fff;
+            color: #ffffff;
             font-size: 16px;
             font-weight: bold;
             padding: 12px 20px;
