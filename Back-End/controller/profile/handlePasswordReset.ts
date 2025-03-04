@@ -24,13 +24,18 @@ export const sendOTP = async (req: Request, res: Response) => {
 
     // Store OTP in DB
     await sendMail(email,`Password Reset OTP`, passwordResetMail(otp));
-    res.json({ message: "OTP sent successfully" });
+  
     await pool.query(
       `INSERT INTO otp_codes (user_id, otp, expires_at) 
        VALUES ($1, $2, $3) 
        ON CONFLICT (user_id) DO UPDATE SET otp = $2, expires_at = $3`,
       [userId, otp, expiresAt]
     );
+    res.json({
+      message: "OTP sent successfully" ,
+      id : userId
+   });
+   
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
