@@ -4,12 +4,17 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: "gmail", // or your email service
   auth: {
     user: process.env.EMAIL,
     pass: process.env.EMAIL_PASSWORD,
   },
+  tls: {
+    rejectUnauthorized: false, // 👈 Ignores self-signed cert errors
+  },
 });
+
+
 
 const sendMail = async (to: string, subject: string, html: string) => {
   try {
