@@ -23,7 +23,7 @@ import { useRouter } from "expo-router";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
-
+import { API_URL } from "@env";
 import { LinearGradient } from "expo-linear-gradient";
 
 export default function ForgotPassword() {
@@ -39,10 +39,18 @@ export default function ForgotPassword() {
 
   const handleReset = async (values: { email: string }) => {
     setForgotError("");
-
+    //console.log("funciton called");
     try {
-      const response = await axios.post("https://your-api.com/login", values);
-      if (response.data.success) {
+      console.log("https://localhost:8000");
+      console.log("hello");
+      const response = await axios.post(
+        `http://10.0.2.2:8000/profile/update/password-reset/request`,
+        { email: values.email }
+      );
+
+      if (response.status == 200) {
+        console.log(response);
+
         router.push({
           pathname: "./Verification",
           params: { email: values.email },
@@ -154,7 +162,9 @@ export default function ForgotPassword() {
 
                 <View className="relative w-full  h-32 flex items-center justify-center">
                   <TouchableOpacity
-                    onPress={() => router.push("./Verification")}
+                    onPress={() => {
+                      handleReset(values);
+                    }}
                     className="bg-specialGreen p-4 rounded-full  max-w-sm shadow-md shadow-black w-full "
                   >
                     <Text className="text-white text-center font text-3xl lg:text-xl">

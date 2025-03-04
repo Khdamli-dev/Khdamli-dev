@@ -91,7 +91,10 @@ export default function SelectRole() {
           <View className="flex-1 w-full flex items-center justify-center my-6 h-full ">
             {/* Worker Card */}
             <TouchableOpacity
-              onPress={handleWorkerRole as any}
+              onPress={
+                /* handleWorkerRole as any */
+                () => router.push("/(auth)/(signUp)/InformationWork")
+              }
               className="bg-white w-96 rounded-2xl shadow-lg p-6 mb-16"
             >
               <View className="flex items-center">

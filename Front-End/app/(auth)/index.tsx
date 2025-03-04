@@ -48,7 +48,10 @@ export default function Login() {
 
   const handleLogin = async (values: { email: string; password: string }) => {
     try {
-      const response = await axios.post(`${API_URL}/auth/login`, values);
+      const response = await axios.post(
+        `http://10.0.2.2:8000/auth/login`,
+        values
+      );
       if (response.data.success) {
         const id: number = response.data.userId;
         await AsyncStorage.setItem("userId", JSON.stringify(id));

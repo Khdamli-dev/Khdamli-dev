@@ -3,9 +3,11 @@ import Credentials from "../../interface/credentials";
 import { Request, Response } from "express";
 import confirmationEmail from "./confirmationEmail";
 import encryptPassword from "../../utils/authentication/encryptPassword";
+import { log } from "console";
 
 const createUser = async (req: Request, res: Response) => {
   try {
+    console.log("hello world");
     const { phoneNumber, email, password, username }: Credentials =
       req.body.credentials;
     const role = 1; // default role is client

@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { useNavigation } from '@react-navigation/native';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  SafeAreaView, 
+import React, { useState, useEffect } from "react";
+import { useNavigation } from "@react-navigation/native";
+import {
+  View,
+  Text,
+  TextInput,
+  BackHandler,
+  TouchableOpacity,
+  SafeAreaView,
+  Image,
   Dimensions,
   Pressable,
 } from "react-native";
@@ -26,15 +28,8 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 
 import { LinearGradient } from "expo-linear-gradient";
 
-export default function LocationInformation() {
-  const [Age, setAge] = useState('');
-  const [checkedMale, setCheckedMale] = useState(false);
-  const [checkedFemale, setcheckedFemale] = useState(false);
-  const [selectedGender, setSelectedGender] = useState("");
-  const navigation = useNavigation();
-  const [Years, setYears] = useState("");
-  const [checkedItemsWilaya, setcheckedItemsWilaya] = useState(false);
-  const { width: screenWidth } = Dimensions.get("window");
+export default function OtherInformation() {
+  const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
   const router = useRouter();
   const [selectedWilaya, setSelectedWilaya] = useState<{
     name: string;
@@ -142,9 +137,26 @@ export default function LocationInformation() {
               </View>
             </View>
 
-            <View className="w-full h-16 px-2 items-center justify-center bg-yellow-600 mb-1">
-              <Text className="text-xl font-medium">
-                you can edit it later
+            <View className="px-10 py-8  ">
+              <Text
+                style={{
+                  textShadowColor: "#000",
+                  textShadowOffset: { width: 1, height: 1 },
+                  textShadowRadius: 5,
+                }}
+                className=" mb-4 text-6xl  font-semibold text-white"
+              >
+                Other
+              </Text>
+              <Text
+                style={{
+                  textShadowColor: "#000",
+                  textShadowOffset: { width: 1, height: 1 },
+                  textShadowRadius: 5,
+                }}
+                className=" text-6xl  font-semibold text-white"
+              >
+                Information
               </Text>
             </View>
           </LinearGradient>
@@ -254,7 +266,11 @@ export default function LocationInformation() {
 
                 <View className="  flex-1 w-full items-center  justify-center pb-8 ">
                   <TouchableOpacity
-                    onPress={handleSubmit as any}
+                    onPress={
+                      /* handleSubmit as any */
+
+                      () => router.push("/(auth)/(signUp)/selectionRole")
+                    }
                     className="flex items-center justify-center rounded-full w-80 h-20 bg-specialGreen"
                   >
                     <Text className="text-white font-medium text-3xl">
@@ -263,21 +279,10 @@ export default function LocationInformation() {
                   </TouchableOpacity>
                 </View>
               </View>
-            </View>
-
-            <View style={{ flex: 1 }} />
-            <View className="w-full items-center justify-center bg-blue-600 p-6">
-              <TouchableOpacity className="rounded-full w-80 h-16 bg-specialGreen items-center justify-center">
-                <Text className="text-white text-3xl">Next</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+            )}
+          </Formik>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
-
-
-
-

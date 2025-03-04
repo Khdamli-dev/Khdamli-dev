@@ -101,9 +101,12 @@ export default function SignUp() {
       password,
     };
     try {
-      const response = await axios.post(`${API_URL}/auth/signup/credentials`, {
-        credentials,
-      });
+      const response = await axios.post(
+        `http://10.0.2.2:8000/auth/signup/credentials`,
+        {
+          credentials,
+        }
+      );
       if (response?.status === 201) {
         const id: number = response.data.userId;
         await AsyncStorage.setItem("userId", JSON.stringify(id));
@@ -479,7 +482,10 @@ export default function SignUp() {
 
                 {/* Sign Up Button */}
                 <TouchableOpacity
-                  onPress={handleSubmit as any}
+                  onPress={
+                    handleSubmit as any
+                    /* router.push("/(auth)/(signUp)/selectionRole") */
+                  }
                   className="bg-specialGreen p-6 mb-3 rounded-full w-full max-w-sm  shadow-md shadow-black mt-10"
                 >
                   <Text className="text-white text-center text-4xl font-medium">

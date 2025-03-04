@@ -22,17 +22,26 @@ import { useLocalSearchParams } from "expo-router";
 export default function VerficationCode() {
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
   const [Code, setCode] = useState("");
+  const [NewPassword, setNewPassword] = useState("");
+  const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   //handleVerification
   const handleVerification = async () => {
     try {
-      const response = await axios.post("https://your-api.com/login", {
-        code: Code,
-      });
-      if (response.data.success) {
-        router.push("./Verification");
-      } else {
+      const response = await axios.post(
+        `http://10.0.2.2:8000/profile/update/password-reset/reset`,
+        {
+          otp: Code,
+          id: "11",
+          newPassword: "14042003Khalildjaidja.",
+        }
+      );
+
+      if (response.status == 400) {
         alert("Incorrect Code");
+      } else {
+        console.log("the response is good secsess ");
+        //router.push("./Verification");
       }
     } catch (error) {
       alert("Error");
