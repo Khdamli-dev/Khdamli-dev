@@ -70,7 +70,9 @@ const canSendOTP = async (req: Request, res: Response, next: NextFunction) => {
     console.log(err);
     res.status(500).json({
       message: 'internal server error',
-      success: false
+      success: false,
+      validEmail : null,
+      validAccount : null
     });
   }
 };
