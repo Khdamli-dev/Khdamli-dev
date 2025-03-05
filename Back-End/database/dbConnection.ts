@@ -12,11 +12,12 @@ const pool = new Pool({
   port: Number(process.env.DB_PORT),
 });
 
-/*const pool = new Pool({
-  connectionString: process.env.SUPABASE_DB_URL, // Use Supabase connection URL
-  ssl: {
-    rejectUnauthorized: false, // Required for Supabase SSL connections
-  },
-}); */
+// const pool = new Pool({
+//   connectionString: process.env.SUPABASE_DB_URL, // Use Supabase connection URL
+//   ssl: {
+//     rejectUnauthorized: false, // Required for Supabase SSL connections
+//   },
+// });
+
 
 export default pool;

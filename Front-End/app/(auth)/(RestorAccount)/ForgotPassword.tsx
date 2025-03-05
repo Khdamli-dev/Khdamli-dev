@@ -11,6 +11,7 @@ import {
   Alert,
   Platform,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import Icon from "react-native-vector-icons/Octicons";
 import Icoon from "react-native-vector-icons/AntDesign";
 
@@ -39,30 +40,31 @@ export default function ForgotPassword() {
 
   const handleReset = async (values: { email: string }) => {
     setForgotError("");
-    //console.log("funciton called");
+
     try {
-      console.log("https://localhost:8000");
-      console.log("hello");
       const response = await axios.post(
         `http://10.0.2.2:8000/profile/update/password-reset/request`,
-        { email: values.email }
+        { credentials: { email: values.email } }
       );
 
+      console.log("helow world");
       if (response.status == 200) {
-        console.log(response);
-
+        const id: number = response.data.userId;
+        await AsyncStorage.setItem("userId", JSON.stringify(id));
         router.push({
           pathname: "./Verification",
           params: { email: values.email },
         });
+        console.log("hhhhhhhhhhh111111");
         alert("Code sent successfully!");
       } else {
-        setForgotError("The Email  dosn't exist");
-        alert(ForgotError);
+        alert("The Email  dosn't exist");
+
+        console.log("hhhhhhhhh22222222");
       }
-    } catch (error) {
-      setForgotError("Error ");
-      alert(ForgotError);
+    } catch (error: any) {
+      alert("Error ");
+      console.log(error.response.data.message);
     }
   };
   return (

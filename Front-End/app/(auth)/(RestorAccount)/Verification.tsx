@@ -13,6 +13,7 @@ import {
 import Fontisto from "react-native-vector-icons/Fontisto";
 
 import AntDesign from "react-native-vector-icons/AntDesign";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 
 import { LinearGradient } from "expo-linear-gradient";
@@ -27,21 +28,21 @@ export default function VerficationCode() {
   const router = useRouter();
   //handleVerification
   const handleVerification = async () => {
+    const storedId = await AsyncStorage.getItem("userId");
+    const id: number = Number(storedId); // Convert string to number safely
     try {
       const response = await axios.post(
-        `http://10.0.2.2:8000/profile/update/password-reset/reset`,
+        `http://10.0.2.2:8000/profile/update/password-reset/verify`,
         {
           otp: Code,
-          id: "11",
-          newPassword: "14042003Khalildjaidja.",
+          id,
         }
       );
 
       if (response.status == 400) {
         alert("Incorrect Code");
       } else {
-        console.log("the response is good secsess ");
-        //router.push("./Verification");
+        router.push("./Verification");
       }
     } catch (error) {
       alert("Error");
