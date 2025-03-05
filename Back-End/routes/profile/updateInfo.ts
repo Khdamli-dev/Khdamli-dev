@@ -3,7 +3,7 @@ import { sendOTP , verifyOTP } from '../../controller/profile/handlePasswordRese
 import updateProfile from '../../controller/profile/updateProfile';
 import assignAddress from '../../middleware/assignAddress';
 import role from './role';
-import { canSendOTP } from '../../middleware/canSendOTP';
+import canSendOTP from '../../middleware/canSendOTP';
 
 const update: Router = express.Router();
 
