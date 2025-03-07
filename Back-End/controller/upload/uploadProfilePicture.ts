@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import upload from "../../utils/cloud/imageMulter";
-import { updateProfilePicture } from "../../utils/update/updateProfilePicture";
+import pool from "../../database/dbConnection";
 
 export const uploadProfilePicture = async (req: Request, res: Response) => {
     upload.single("file")(req, res, async (err) => {
@@ -21,12 +21,14 @@ export const uploadProfilePicture = async (req: Request, res: Response) => {
         return ;
       }
       const id : number = Number(req.params.id);
-      await updateProfilePicture(req.file.path , id);
+      await pool.query(`UPDATE "user"
+        SET profile_image =$1
+        WHERE id =$2;
+        `,[req.file.path , id]);
       res.status(201).json({
         message: "image uploaded successfully",
         success: true,
         fileUrl: req.file.path, // Cloudinary file URL
       });
     });
-
 };
