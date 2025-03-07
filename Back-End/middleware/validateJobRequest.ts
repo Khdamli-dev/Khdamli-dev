@@ -14,7 +14,7 @@ const validateJobRequest = (req: Request, res: Response, next: NextFunction) => 
   }: JobRequest = req.body;
 
   // Check for required fields
-  if (!client || !client_address || !working_time || !category || !payment || !description || !type) {
+  if (!client || !client_address || !working_time || !category || !payment || !type) {
     res.status(400).json({ 
       message: 'Missing required fields', 
       success : false   
@@ -41,14 +41,16 @@ const validateJobRequest = (req: Request, res: Response, next: NextFunction) => 
   }
 
   // validation : description length
-  if (description.trim().length < 5 || description.trim().length > 3000) {
-    res.status(400).json({ 
-      message: 'Description must be at least 5 characters long and 3000 characters at most',
-      success : false 
-    });
-    return;
+  if (description){
+    if (description.trim().length < 5 || description.trim().length > 3000) {
+      res.status(400).json({ 
+        message: 'Description must be at least 5 characters long and 3000 characters at most',
+        success : false 
+      });
+      return;
+    }
   }
-  
+
   next();
 };
 
