@@ -130,7 +130,7 @@ CREATE TABLE "user" (
   "address" INT,
   "role" SMALLINT NOT NULL,
   "registration_date" DATE,
-  "profile_image" VARCHAR(100),
+  "profile_image" TEXT,
   CONSTRAINT "unique_username"
   UNIQUE ("username"), -- query of check if username is already used is frequently
   CONSTRAINT "FK_user_address"
@@ -191,7 +191,7 @@ CREATE TABLE "category" (
   "id" SERIAL PRIMARY KEY,
   "name" VARCHAR(80) NOT NULL UNIQUE, -- the query of search category by its name is frequently
   "description" TEXT,
-  "logo" VARCHAR(100),
+  "logo" TEXT,
   "start_date" DATE NOT NULL DEFAULT CURRENT_DATE,
   "workers" INT NOT NULL,
   "sent_requests" INT NOT NULL,
@@ -352,7 +352,7 @@ CREATE TABLE "media_type" (
 CREATE TABLE "request_media" (
   "request" INTEGER NOT NULL,
   "media_type" smallint NOT NULL,
-  "url" VARCHAR(18) NOT NULL,
+  "url" TEXT NOT NULL,
   PRIMARY KEY("request","media_type","url"),
   CONSTRAINT "FK_request-medias_media_type"
     FOREIGN KEY ("media_type")
@@ -369,7 +369,7 @@ CREATE TABLE "request_media" (
 CREATE TABLE "worker_media" (
   "worker" INTEGER NOT NULL,
   "media_type" smallint NOT NULL,
-  "url" VARCHAR(21) NOT NULL,
+  "url" TEXT NOT NULL,
   PRIMARY KEY("worker","media_type","url"),
   CONSTRAINT "FK_worker_media.worker"
     FOREIGN KEY ("worker")
