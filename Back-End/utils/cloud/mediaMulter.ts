@@ -5,12 +5,12 @@ import cloudinary from "./cloudinary"; // Import Cloudinary instance
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
-    const fileType = file.mimetype.split("/")[0]; // Extract "image" or "video"
+    const fileType = file.mimetype.split("/")[0]; 
     
     return {
-      folder: fileType === "image" ? "images" : "videos", // Separate folders
-      format: file.mimetype.split("/")[1], // Keep original format
-      resource_type: fileType === "image" ? "image" : "video", // Ensure Cloudinary treats it correctly
+      folder :`request/${fileType === "image" ? "images" : "videos"}`, 
+      format: file.mimetype.split("/")[1], 
+      resource_type: fileType === "image" ? "image" : "video", 
     };
   },
 });

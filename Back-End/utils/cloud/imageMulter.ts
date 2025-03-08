@@ -5,11 +5,12 @@ import { Request } from "express";
 
 const storage = new CloudinaryStorage({
   cloudinary,
-  params: async (req : Request, file) => {
+  params: async (req: Request, file) => {
+    const id = req.params.id; 
     return {
-      folder: "images", // Store only in "images" folder
-      format: file.mimetype.split("/")[1], // Keep original format
-      resource_type: "image", // Ensure Cloudinary treats it as an image
+      folder: "profile pictures", 
+      public_id: id, 
+      resource_type: "image", 
     };
   },
 });
