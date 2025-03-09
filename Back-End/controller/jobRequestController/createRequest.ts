@@ -15,39 +15,27 @@ const createRequest = async (req: Request, res: Response) => {
       worker      // Optional: only required if type is private
     } : JobRequest = req.body;
 
-    // For public requests, worker should be null.
-    // For private requests (type = 2), worker must be provided.
-    const assignedWorker = type === 2 ? worker : null;
-
-    // Insert into the request table.
-    // Note: sent_time is set automatically via default.
     // We set status to "On Hold" (assuming its id is 3 in request_status)
-    const query = `
+    const { rows } = await pool.query(`
       INSERT INTO "request" 
         (worker, client, client_address, working_time, category, payment, description, type, status)
       VALUES 
         ($1, $2, $3, $4, $5, $6, $7, $8, 3)
       RETURNING *;
-    `;
-    const values = [
-      assignedWorker,
-      client,
-      client_address,
-      working_time,
-      category,
-      payment,
-      description,
-      type
-    ];
+    `, [worker, client, client_address, working_time, category, payment, description, type]);
 
-    const { rows } = await pool.query(query, values);
     res.status(201).json({
-      message: 'Job request created successfully',
-      request: rows[0].id
+      message : 'Job request created successfully',
+      requestId : rows[0].id, 
+      success : true
     });
   } catch (error) {
     console.error('Error creating job request:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ 
+      message: 'Internal server error',
+      requestId : null,
+      success : false
+    });
   }
 };
 
