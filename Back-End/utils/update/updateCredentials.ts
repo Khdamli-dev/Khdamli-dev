@@ -6,7 +6,8 @@ import updateEmail from "./updateEmail";
 
 const updateCredentials = async (req: Request, res: Response) => {
     try {
-        const {id, credentials}: {id : number, credentials : Credentials} = req.body;
+        const id : number = +req.params.id;
+        const {credentials}: {credentials : Credentials} = req.body;
         const { email, password, username , phoneNumber}: Credentials = credentials;
 
         // query formation

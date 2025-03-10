@@ -4,7 +4,8 @@ import PersonalInfo from '../../interface/personalInfo';
 
 const setPersonalInfo = async (req: Request, res: Response) => {
   try {
-    const {id, personalInfo} : {id : number, personalInfo : PersonalInfo} = req.body;
+    const id : number = +req.params.id;
+    const {personalInfo} : {personalInfo : PersonalInfo} = req.body;
     const { age, sex, address }: PersonalInfo = personalInfo;
 
     // query formation
