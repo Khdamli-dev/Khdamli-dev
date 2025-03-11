@@ -4,8 +4,10 @@ import crypto from 'crypto';
 import sendMail from '../../utils/mailer/sendMail';
 import { passwordResetMail } from '../../utils/mailer/emailBody';
 
+
 export const sendOTP = async (req: Request, res: Response) => {
   try {
+    
     const { email, userId } = req.body.credentials;
     if (!email || !userId) {
       res.status(400).json({ 

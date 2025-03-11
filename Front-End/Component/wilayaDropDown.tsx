@@ -1,4 +1,3 @@
-import { API_URL } from "@env";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import {
@@ -10,7 +9,7 @@ import {
   Animated,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
-
+import CONFIG from "@/config";
 interface Wilaya {
   name: string;
   id: number;
@@ -33,13 +32,13 @@ const WilayaDropdown: React.FC<WilayaDropdownProps> = ({
 
   const fetchRegions = async () => {
     try {
-      const response = await axios.get(`${API_URL}/address/regions`, {
+      const response = await axios.get(`${CONFIG.API_URL}/address/regions`, {
         params: { country: 1 },
       });
       setWilayas(response.data.regions);
       setFilteredWilayas(response.data.regions);
     } catch (error) {
-      console.error("Error fetching regions:", error);
+      
     }
   };
 
@@ -113,7 +112,7 @@ const WilayaDropdown: React.FC<WilayaDropdownProps> = ({
           />
           <FlatList
             style={{ flex: 1 }}
-            nestedScrollEnabled
+            nestedScrollEnabled={true}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             data={filteredWilayas}

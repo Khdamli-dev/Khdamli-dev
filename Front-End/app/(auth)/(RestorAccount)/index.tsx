@@ -11,19 +11,14 @@ import {
   Alert,
   Platform,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import Icon from "react-native-vector-icons/Octicons";
 import Icoon from "react-native-vector-icons/AntDesign";
-
-import { TouchableWithoutFeedback, Keyboard } from "react-native";
-
-import { StackNavigationProp } from "@react-navigation/stack";
-
+import CONFIG from "../../../config"
 import { useRouter } from "expo-router";
-
 import { Formik } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
-
 import { LinearGradient } from "expo-linear-gradient";
 
 export default function ForgotPassword() {
@@ -37,24 +32,44 @@ export default function ForgotPassword() {
     email: Yup.string().email("Invalid Email").required("Email Is Required"),
   });
 
-  const handleReset = async (values: { email: string }) => {
-    setForgotError("");
+  
 
+  const handleReset = async (values: { email: string }) => {
     try {
-      const response = await axios.post("https://your-api.com/login", values);
-      if (response.data.success) {
+      
+      const response = await axios.post(
+        `${CONFIG.API_URL}/profile/update/password-reset/request`,
+        { credentials: { email: values.email } }
+      );
+
+     
+      
+      if (response.status == 200) {
+        const id: number = response.data.userId;
+        await AsyncStorage.setItem("userId", JSON.stringify(id));
         router.push({
           pathname: "./Verification",
           params: { email: values.email },
         });
+
         alert("Code sent successfully!");
       } else {
         setForgotError("The Email  dosn't exist");
-        alert(ForgotError);
       }
-    } catch (error) {
-      setForgotError("Error ");
-      alert(ForgotError);
+    } catch (error: any) {
+      if (error.status === 404){
+        setForgotError("User not found")
+      }
+      else if(error.status === 403){
+        setForgotError("you need to validate your account first")
+      }
+      else if(error.status === 429){
+        setForgotError("OTP resend not allowed. Please wait until the previous OTP expires.")
+      }
+      else {
+        setForgotError("internal server error")
+      }
+      
     }
   };
   return (
@@ -102,20 +117,20 @@ export default function ForgotPassword() {
             </Text>
           </LinearGradient>
 
-          {/* Icon Section */}
+           {/* Icon !&& Text Section */}
+          <View className="felx items-center justify-center">
+         
           <View className="relative w-full  h-56 flex items-center justify-center">
             <Icon name="shield-lock" color="#4C8479" size={140} />
           </View>
-          <View className="relative w-full h-40 flex items-center justify-center ">
-            <Text className="font-normal text-2xl text-black leading-10">
+
+            <Text className=" w-9/12 text-center  font-normal text-2xl text-black leading-10">
               Enter your email and
-            </Text>
-            <Text className="font-normal text-2xl text-black leading-10">
+           
               we'll send you a code to reset your
-            </Text>
-            <Text className="font-normal text-2xl text-black leading-10">
               password
             </Text>
+         
           </View>
 
           <Formik
@@ -129,33 +144,43 @@ export default function ForgotPassword() {
               handleChange,
               handleBlur,
               handleSubmit,
+              setFieldTouched,
               values,
               errors,
               touched,
             }) => (
-              <View>
+              <View className="flex justify-center items-center">
                 <View className="relative w-full  h-32 flex items-center justify-center">
                   <TextInput
-                    className="w-9/12 h-16 text-black text-2xl font-bold  border-0 rounded-full px-8 py-2 bg-white"
+                    className={`w-9/12 h-16 text-2xl  border-red-600 border-0 ${ ForgotError ||(errors.email && touched.email ) ? " border-2":""} rounded-full px-8 py-2 bg-white`}
                     value={values.email}
                     onChangeText={handleChange("email")}
-                    autoCapitalize="none"
                     keyboardType="email-address"
                     placeholder="Email"
-                    scrollEnabled
                     placeholderTextColor="#C4C4C4"
+                    onFocus={() => {
+                     
+                      setForgotError("");
+                      setFieldTouched("email", false);
+                    }}
+                    onBlur={() => {
+                      
+                      handleBlur("email");
+                    }}
                   />
                 </View>
                 {touched.email && errors.email && (
-                  <Text className="text-center" style={{ color: "red" }}>
+                  <Text className="text-center text-red-600 text-lg  w-9/12">
                     {errors.email}
                   </Text>
                 )}
-
+                {ForgotError && (<Text className="text-center text-red-600 text-lg  w-9/12">
+                    {ForgotError}
+                  </Text>)}
                 <View className="relative w-full  h-32 flex items-center justify-center">
                   <TouchableOpacity
-                    onPress={() => router.push("./Verification")}
-                    className="bg-specialGreen p-4 rounded-full  max-w-sm shadow-md shadow-black w-full "
+                    onPress={handleSubmit as any}
+                    className="bg-specialGreen p-4 rounded-full  max-w-sm shadow-md shadow-black w-11/12 "
                   >
                     <Text className="text-white text-center font text-3xl lg:text-xl">
                       Reset Password
@@ -168,7 +193,7 @@ export default function ForgotPassword() {
           <View className="relative w-full  h-32 flex items-center justify-center">
             <TouchableOpacity
               onPress={() => router.back()}
-              className="bg-specialGreen p-4 rounded-full  max-w-sm shadow-md shadow-black w-full "
+              className="bg-specialGreen p-4 w-11/12 rounded-full  max-w-sm shadow-md shadow-black  "
             >
               <Text className="text-white text-center font text-3xl lg:text-xl">
                 Back To Login

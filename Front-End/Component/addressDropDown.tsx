@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import axios from "axios";
-import { API_URL } from "@env";
+import CONFIG from "@/config";
 
 interface City {
   name: string;
@@ -36,14 +36,14 @@ const AddressDropdown: React.FC<AddressDropdownProps> = ({
 
   const fetchMunicipalities = async (wilayaId: number) => {
     try {
-      const response = await axios.get(`${API_URL}/address/cities`, {
+      const response = await axios.get(`${CONFIG.API_URL}/address/cities`, {
         params: { region: wilayaId },
       });
       // Assuming the API returns { municipalities: string[] }
       setMunicipalities(response.data.cities);
       setFilteredMunicipalities(response.data.cities);
     } catch (error) {
-      console.error("Error fetching municipalities:", error);
+      
     }
   };
 
@@ -129,7 +129,7 @@ const AddressDropdown: React.FC<AddressDropdownProps> = ({
             />
             <FlatList
               style={{ flex: 1 }}
-              nestedScrollEnabled
+              nestedScrollEnabled={true}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
               data={filteredMunicipalities}

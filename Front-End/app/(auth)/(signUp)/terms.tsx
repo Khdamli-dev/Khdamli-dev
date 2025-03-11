@@ -4,7 +4,7 @@ import {
     Alert, Platform
 } from 'react-native';
 
-
+import { AntDesign } from '@expo/vector-icons';
 
 import { useRouter } from "expo-router";
 
@@ -27,11 +27,11 @@ export default function ForgotPassword() {
 
         <SafeAreaView className="flex-1 bg-gray-200">
                 
-                    <View className="w-full flex-row justify-end items-center px-6 pt-6">
-                        <TouchableOpacity onPress={() => router.back()} className="flex-1 w-full flex items-end justify-end">
-                            <Text style={{ textShadowColor: '#000', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 5, color: "#F8A100" }} className="text-6xl  font-extrabold">X</Text>
-                        </TouchableOpacity>
-                    </View>
+                    <View className="w-full my-4 items-start justify-start ">
+                          <TouchableOpacity onPress={() => router.back()}>
+                            <AntDesign name="left" size={60} color="#F8A100" />
+                          </TouchableOpacity>
+                        </View>
 
                 <ScrollView contentContainerStyle={{ flexGrow: 1,paddingHorizontal:20 }}>
                     
@@ -105,10 +105,10 @@ export default function ForgotPassword() {
                         jurisdiction.
                     </Text>
 
-                    <Text  className="text-sm leading-5">
+                    <Text  className="text-sm leading-5 mb-10">
                     
-                    <Text  style={{color:"#BD7D06"}}  className="font-bold">For More Information : </Text> If you have any questions about these terms, you can contact us via email at:
-                     <Text className='font-medium'>[khdamliapp@gmail.com]</Text> .
+                    <Text  style={{color:"#BD7D06"}}  className="font-bold  ">For More Information : </Text> If you have any questions about these terms, you can contact us via email at:
+                     <Text className='font-medium '>[khdamliapp@gmail.com]</Text> .
                     Make sure all information accurately reflects the nature of your app and that you consult with a legal professional before officially publishing these terms.
                         
                     </Text>
