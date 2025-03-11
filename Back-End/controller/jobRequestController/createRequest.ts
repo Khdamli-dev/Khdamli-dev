@@ -1,8 +1,8 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import pool from '../../database/dbConnection';
 import JobRequest from '../../interface/jobRequest';
 
-const createRequest = async (req: Request, res: Response) => {
+const createRequest = async (req: Request, res: Response , next : NextFunction) => {
   try {
     const {
       client,
@@ -23,12 +23,12 @@ const createRequest = async (req: Request, res: Response) => {
         ($1, $2, $3, $4, $5, $6, $7, $8, 3)
       RETURNING *;
     `, [worker, client, client_address, working_time, category, payment, description, type]);
-
     res.status(201).json({
       message : 'Job request created successfully',
-      requestId : rows[0].id, 
-      success : true
+      success : true ,
+      reqestId : rows[0].id
     });
+    
   } catch (error) {
     console.error('Error creating job request:', error);
     res.status(500).json({ 
@@ -36,6 +36,7 @@ const createRequest = async (req: Request, res: Response) => {
       requestId : null,
       success : false
     });
+    return;
   }
 };
 
