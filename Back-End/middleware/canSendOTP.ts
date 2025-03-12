@@ -4,6 +4,7 @@ import pool from '../database/dbConnection';
 
 const canSendOTP = async (req: Request, res: Response, next: NextFunction) => {
   try {
+   
     const { email }: Credentials = req.body.credentials;
     if (!email) {
       res.status(400).json({

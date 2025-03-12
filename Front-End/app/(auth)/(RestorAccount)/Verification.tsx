@@ -11,28 +11,62 @@ import {
   TouchableOpacity,
 } from "react-native";
 import Fontisto from "react-native-vector-icons/Fontisto";
-
+import { CodeField, Cursor, useBlurOnFulfill, useClearByFocusCell } from 'react-native-confirmation-code-field';
 import AntDesign from "react-native-vector-icons/AntDesign";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-
+import CONFIG from "../../../config"
 import { LinearGradient } from "expo-linear-gradient";
 import axios from "axios";
 import { useLocalSearchParams } from "expo-router";
 
 export default function VerficationCode() {
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
-  const [Code, setCode] = useState("");
+
+  //Code schema
+  const CELL_COUNT = 6;
+ 
+    const [code, setCode] = useState('');
+    const ref = useBlurOnFulfill({  value: code, cellCount: CELL_COUNT });
+    const [props, getCellOnLayoutHandler] = useClearByFocusCell({ value: code,
+      setValue: setCode, });
+      const [Error, setError] = useState('');
+
+      const handleTextChange = (text: any) => {
+       
+        if (/^\d*$/.test(text)) {
+          setCode(text);
+          setError('');
+          setInValidCode("");
+        } else {
+          setError("Please enter only numbers");
+        }
+      };
+      
+ 
+  
   const router = useRouter();
+
   //handleVerification
+  const [ inValidCode, setInValidCode ] = useState("");
+
   const handleVerification = async () => {
+    const storedId = await AsyncStorage.getItem("userId");
+    const id: number = Number(storedId); // Convert string to number safely
     try {
-      const response = await axios.post("https://your-api.com/login", {
-        code: Code,
-      });
-      if (response.data.success) {
-        router.push("./Verification");
+      const response = await axios.post(
+        `${CONFIG.API_URL}/profile/update/password-reset/verify`,
+        {
+          otp: code,
+          id,
+        }
+      );
+
+      if (response.status === 400) {
+        setInValidCode("Incorrect Code");
       } else {
-        alert("Incorrect Code");
+        router.push("./newPassword");
+        setInValidCode("")
       }
     } catch (error) {
       alert("Error");
@@ -50,15 +84,22 @@ export default function VerficationCode() {
     }
   }, [timer]);
 
+  const [ resendCode, setresendCode ] = useState("");
+  const [ resendSuccess, setresendSuccess ] = useState(false);
+
+
   const handelResendCode = async () => {
     if (timer > 0) return;
     const { email } = useLocalSearchParams(); //Get the Email
     try {
-      await axios.post("https://your-api.com/resend-code", { email });
-      alert("Code sent successfully!");
+      await axios.post(`${CONFIG.API_URL}/profile/update/password-reset/request`,
+         { credentials: { email: email} });
+         setresendSuccess(true)
+         setresendCode("Code sent successfully!");
       setTimer(120);
     } catch (error) {
-      alert("Failed to resend code");
+      setresendCode("Failed to resend code");
+      setresendSuccess(false)
     }
   };
 
@@ -121,34 +162,54 @@ export default function VerficationCode() {
             </>
           </LinearGradient>
 
-          {/* Icon Section */}
+          {/* Icon && Text Section */}
+          <View className="flex justify-center items-center">
           <View className="relative w-full  h-56 flex items-center justify-center ">
             <Fontisto name="key" color="#4C8479" size={100} />
           </View>
-          <View className="relative w-full h-40 flex items-center justify-center ">
-            <Text className="font-medium text-4xl  leading-10 pb-2">
+          
+            <Text className="font-medium text-4xl w-11/12 text-center  leading-10 pb-2">
               Please Enter
-            </Text>
-            <Text className="font-medium text-4xl  leading-10">
               The Code That Was Sent
             </Text>
           </View>
+         
+        
           <View className="relative w-full  h-32 flex items-center justify-center   ">
-            <TextInput
-              className="w-9/12 h-16 text-specialGreen text-2xl font-bold  border-0 rounded-full pl-9 py-2 bg-white"
-              value={Code}
-              onChangeText={setCode}
-              inputMode="numeric"
-              placeholder="Enter the code"
-              placeholderTextColor="#C4C4C4"
-              keyboardType="numeric"
-            />
+          <CodeField
+            ref={ref}
+            {...props}
+            value={code}
+            onChangeText={handleTextChange}
+            cellCount={CELL_COUNT}
+            keyboardType="number-pad"
+            textContentType="oneTimeCode"
+            renderCell={({ index, symbol, isFocused }) => (
+                <View
+                key={index}
+                className={`border-2 mx-1 rounded-xl ${
+                  symbol ? 'border-specialGreen' : isFocused ? 'border-specialGreen' : inValidCode ? "border-red-600": 'border-black'
+                } w-10 h-12 flex items-center justify-center`}
+
+                onLayout={getCellOnLayoutHandler(index)}
+            >
+                  <Text  className="text-2xl text-center text-foncyYellow">
+                  {symbol || (isFocused ? '•' : '')}
+                  </Text>
+                 
+              </View>
+    )}
+/>
+      {Error ? <Text className="text-center text-red-600 text-lg  w-9/12">{Error}</Text> : null}
+      {inValidCode ? <Text className="text-center text-red-600 text-lg  w-9/12">{inValidCode}</Text> : null}
+
+          
           </View>
 
           <View className="relative w-full  h-48 flex items-center justify-center    ">
             <TouchableOpacity
               onPress={handleVerification}
-              className="bg-specialGreen p-4 rounded-full  max-w-96 shadow-md shadow-black w-full "
+              className="bg-specialGreen p-4 rounded-full  max-w-96 shadow-md shadow-black w-11/12 "
             >
               <Text className="text-white text-center font text-3xl lg:text-xl ">
                 Confirm
@@ -159,7 +220,7 @@ export default function VerficationCode() {
               className="pt-4"
             >
               <Text style={{ color: "#8F8F8F" }}>Didn't Receive Code? </Text>
-              <TouchableOpacity onPress={handelResendCode} disabled={timer > 0}>
+              <TouchableOpacity onPress={()=>router.push("/newPassword")} disabled={timer > 0}>
                 <Text
                   style={{
                     color: timer > 0 ? "#ff0000" : "#000",
@@ -170,6 +231,9 @@ export default function VerficationCode() {
                   {timer > 0 ? ` RESEND IN ${timer}s` : " RESEND NOW"}
                 </Text>
               </TouchableOpacity>
+              {resendCode ? (
+                <Text className={`text-center ${resendSuccess? "text-specialGreen": "text-red-600"}  text-lg  w-9/12 `}>{resendCode}</Text>
+               ) : null}
             </View>
           </View>
         </ScrollView>
