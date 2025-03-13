@@ -35,7 +35,7 @@ const AppStartUp = () => {
        */
       setTimeout(() => {
         if (true) {
-          router.push('./(auth)'); // الانتقال إلى الصفحة الرئيسية
+          router.replace('./(auth)'); // الانتقال إلى الصفحة الرئيسية
         } else {
           router.replace('./(tabs)'); // الانتقال إلى صفحة تسجيل الدخول
         }

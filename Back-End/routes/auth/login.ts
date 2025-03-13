@@ -5,10 +5,12 @@ import authenticatePassword from "../../utils/authentication/authenticatePasswor
 import dotenv from "dotenv";
 import produceTokens from "../../utils/authentication/produceTokens";
 
+
 dotenv.config();
 
 const login = async (req: Request, res: Response) => {
   try {
+   
     const { email, password }: Credentials = req.body;
     if (!email || !password) {
       res.status(400).json({

@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/Fontisto";
 import Icoon from "react-native-vector-icons/AntDesign";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import {
   KeyboardAvoidingView,
   ScrollView,
@@ -17,21 +18,21 @@ import {
   Keyboard,
 } from "react-native";
 import { useRouter } from "expo-router";
-
 import { Formik } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFonts } from "expo-font";
-import { API_URL } from "@env";
+import CONFIG from "../../config"
 
 export default function Login() {
   const router = useRouter();
-
+  
   const [focusedInput, setFocusedInput] = useState<string | null>(null); // Track focused input
   const [passwordFocusedInput, setPasswordFocusedInput] = useState<
     string | null
   >(null); // Track focused input
+  const [showPassword, setShowPassword] = useState(false);
+  
 
   // Data
   const loginSchema = Yup.object().shape({
@@ -48,7 +49,8 @@ export default function Login() {
 
   const handleLogin = async (values: { email: string; password: string }) => {
     try {
-      const response = await axios.post(`${API_URL}/auth/login`, values);
+      
+      const response = await axios.post(`${CONFIG.API_URL}/auth/login`, values);
       if (response.data.success) {
         const id: number = response.data.userId;
         await AsyncStorage.setItem("userId", JSON.stringify(id));
@@ -69,6 +71,8 @@ export default function Login() {
         }
       } else {
         alert("Server is busy, please try again later");
+        
+        
       }
     }
   };
@@ -88,14 +92,10 @@ export default function Login() {
               source={require("../../assets/images/photo_2025-02-04_10-16-04.jpg")}
               className="w-96 h-60 rounded-full mb-6 mt-14 "
             />
-            <View className="flex-row w-96 mt-1 items-baseline ">
+            <View className="flex-row w-10/12 mt-1 items-baseline justify-center ">
               <Text
-                style={{
-                  textShadowColor: "#fffff",
-                  textShadowOffset: { width: 8, height: 1 },
-                  textShadowRadius: 10,
-                }}
-                className="text-9xl  tracking-tight text-foncyYellow uppercase font-bold "
+                
+                className="text-9xl text-shadow-custom tracking-tight text-foncyYellow uppercase font-bold "
               >
                 KH
               </Text>
@@ -153,7 +153,7 @@ export default function Login() {
                   <TextInput
                     className={`${
                       focusedInput === "email" ? "px-10" : "pl-28"
-                    } w-full h-full text-white text-2xl font-medium border-2 border-white rounded-full py-2 `}
+                    } w-full h-full text-white text-2xl font-medium border-2 ${ emailError ||(errors.email && touched.email ) ? "border-red-600":"border-white"} rounded-full py-2 `}
                     value={values.email}
                     onChangeText={handleChange("email")}
                     onFocus={() => {
@@ -175,12 +175,12 @@ export default function Login() {
                 </View>
 
                 {touched.email && errors.email && (
-                  <Text className="text-center w-9/12" style={{ color: "red" }}>
+                  <Text className="text-center text-red-600 text-lg  w-9/12" >
                     {errors.email}
                   </Text>
                 )}
                 {emailError ? (
-                  <Text className="text-red-500 text-center w-9/12 ">
+                  <Text className="text-center text-red-600 text-lg  w-9/12 ">
                     {emailError}
                   </Text>
                 ) : null}
@@ -197,8 +197,8 @@ export default function Login() {
 
                   <TextInput
                     className={`${
-                      passwordFocusedInput === "password" ? "px-10" : "pl-28"
-                    } w-full h-full text-white text-2xl font-medium border-2 border-white rounded-full py-2 `}
+                      passwordFocusedInput === "password" ? "pl-10" : "pl-28"
+                    } w-full h-full pr-14 text-white text-2xl font-medium border-2 ${ passwordError ||(errors.password && touched.password ) ? "border-red-600":"border-white"} rounded-full py-2 `}
                     value={values.password}
                     onChangeText={handleChange("password")}
                     onFocus={() => {
@@ -212,19 +212,22 @@ export default function Login() {
                       }
                       handleBlur("password");
                     }}
-                    secureTextEntry
+                    secureTextEntry={!showPassword}
                     placeholder="Password"
                     placeholderTextColor="#C4C4C4"
                   />
+                  <TouchableOpacity onPress={()=>setShowPassword(!showPassword)} className="absolute right-4 top-1/4">
+                                                      <MaterialCommunityIcons name="eye" color={showPassword ? '#fff' : '#BED2D0'} size={35}  />
+                 </TouchableOpacity>
                 </View>
 
                 {touched.password && errors.password && (
-                  <Text className="text-center w-9/12" style={{ color: "red" }}>
+                  <Text className="text-center text-red-600 text-lg  w-9/12" >
                     {errors.password}
                   </Text>
                 )}
                 {passwordError ? (
-                  <Text className="text-red-500 text-center w-9/12 ">
+                  <Text className="text-center text-red-600 text-lg  w-9/12 ">
                     {passwordError}
                   </Text>
                 ) : null}
@@ -234,7 +237,7 @@ export default function Login() {
                   {/* Forgot Password */}
                   <TouchableOpacity
                     onPress={() =>
-                      router.push("/(auth)/(RestorAccount)/ForgotPassword")
+                      router.push("/(auth)/(RestorAccount)")
                     }
                   >
                     <Text className="text-specialGreen mb-6 text-lg font-bold">
@@ -245,7 +248,7 @@ export default function Login() {
                   {/* Login Button */}
                   <TouchableOpacity
                     onPress={handleSubmit as any}
-                    className="bg-specialGreen p-6 rounded-full w-full max-w-sm  shadow-xl shadow-black"
+                    className="bg-specialGreen p-6 rounded-full w-11/12 max-w-sm  shadow-xl shadow-black"
                   >
                     <Text className="text-white text-center font-bold text-2xl">
                       Login
@@ -261,8 +264,8 @@ export default function Login() {
                   {/* Sign Up Button  */}
 
                   <TouchableOpacity
-                    onPress={() => router.push("/(auth)/(signUp)/SignUp")}
-                    className="bg-specialGray p-6 rounded-full w-full max-w-sm shadow-md shadow-black mb-8"
+                    onPress={() => router.push("/(auth)/(signUp)")}
+                    className="bg-specialGray p-6 rounded-full w-11/12 max-w-sm shadow-md shadow-black mb-8"
                   >
                     <Text className="text-foncyGreen text-center font-medium text-3xl">
                       Create an account
