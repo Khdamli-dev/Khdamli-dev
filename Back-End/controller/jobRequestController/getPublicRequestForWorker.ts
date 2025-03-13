@@ -1,13 +1,14 @@
-import { Request, Response } from 'express';
-import pool from '../../database/dbConnection';
+import { Request, Response } from "express";
+import pool from "../../database/dbConnection";
 
 const getPublicRequestsForWorker = async (req: Request, res: Response) => {
   try {
-    // Get worker ID from query param
-    const workerId = parseInt(req.query.id as string);
-    
+    // Get worker ID from path param
+    const workerId = parseInt(req.params.id);
     if (isNaN(workerId)) {
-      res.status(400).json({ message: 'Invalid or missing worker ID', requests: null });
+      res
+        .status(400)
+        .json({ message: "Invalid or missing worker ID", requests: null });
       return;
     }
 
@@ -16,50 +17,59 @@ const getPublicRequestsForWorker = async (req: Request, res: Response) => {
     const limit = 20;
     const offset = (page - 1) * limit;
 
-    // Category from body (optional)
-    const { category } = req.body;
+    // Category from query param (optional)
+    const category = req.query.category
+      ? parseInt(req.query.category as string)
+      : null;
 
     // Step 1: Get worker's categories and address
-    const workerData = await pool.query(`
+    const workerData = await pool.query(
+      `
       SELECT wc.category, a.region, a.city
       FROM worker_category wc
       JOIN "user" u ON u.id = wc.worker
       LEFT JOIN address a ON a.id = u.address
       WHERE wc.worker = $1
-    `, [workerId]);
+    `,
+      [workerId]
+    );
 
     if (!workerData.rows.length) {
-      res.status(404).json({ message: 'Worker not found or no categories assigned', requests: null });
+      res.status(404).json({
+        message: "Worker not found or no categories assigned",
+        requests: null,
+        success: false,
+      });
       return;
     }
 
-    const workerCategories = workerData.rows.map(row => row.category);
+    const workerCategories = workerData.rows.map((row) => row.category);
     const workerRegion = workerData.rows[0].region;
     const workerCity = workerData.rows[0].city;
 
     // Step 2: Validate category if provided
-    let selectedCategory = null;
-    if (category) {
-      if (!workerCategories.includes(category)) {
-        res.status(400).json({ message: 'Invalid category for this worker', requests: null });
-        return;
-      }
-      selectedCategory = category;
+    if (category && !workerCategories.includes(category)) {
+      res.status(400).json({
+        message: "Category not assigned to this worker",
+        requests: null,
+        success: false,
+      });
+      return;
     }
 
     // Step 3: Build the query
     const conditions = [
-      'r.type = 1', // Public requests
-      'r.status = 3', // On Hold
-      selectedCategory ? 'r.category = $1' : 'r.category = ANY($1)',
+      "r.type = 1", // Public requests
+      "r.status = 3", // On Hold
+      category ? "r.category = $1" : "r.category = ANY($1)",
     ];
 
-    const values: any[] = [selectedCategory || workerCategories];
+    const values: any[] = [category || workerCategories];
     const query = `
       SELECT r.*, a.region AS client_region, a.city AS client_city
       FROM request r
       JOIN address a ON a.id = r.client_address
-      WHERE ${conditions.join(' AND ')}
+      WHERE ${conditions.join(" AND ")}
       ORDER BY 
         CASE WHEN a.city = $2 THEN 0 ELSE 1 END,
         CASE WHEN a.region = $3 THEN 0 ELSE 1 END,
@@ -72,14 +82,15 @@ const getPublicRequestsForWorker = async (req: Request, res: Response) => {
 
     // Step 4: Send clean response
     res.status(200).json({
-      message: 'Public requests fetched successfully',
+      message: "Public requests fetched successfully",
       requests: rows,
       page,
       limit,
+      success: true,
     });
   } catch (error) {
-    console.error('Error fetching public requests for worker:', error);
-    res.status(500).json({ message: 'Internal server error', requests: null });
+    console.error("Error fetching public requests for worker:", error);
+    res.status(500).json({ message: "Internal server error", requests: null });
   }
 };
 
