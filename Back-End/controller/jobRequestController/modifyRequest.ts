@@ -2,8 +2,15 @@ import { NextFunction, Request, Response } from 'express';
 import pool from '../../database/dbConnection';
 import JobRequest from '../../interface/jobRequest';
 
-const modifyRequest = async (req: Request, res: Response , next : NextFunction) => {
+const modifyRequest = async (req: Request, res: Response) => {
   try {
+    if (Number.isNaN(+req.params.requestId)){
+      res.status(400).json({
+      message: 'Please provide request id',
+      success : false
+      });
+      return;
+      }
     const requestId = +req.params.requestId;
     const{
       client_address,

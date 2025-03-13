@@ -4,23 +4,28 @@ import pool from "../../database/dbConnection";
 
 export const updateRequestStatus = async (req : Request , res : Response) => {
     try {
+        if (Number.isNaN(+req.params.requestId)){
+          res.status(400).json({
+          message: 'Please provide request id',
+          success : false
+          });
+          return;
+          }
         const requestId : number = +req.params.requestId;
-        const status = (req.body.status === 'Accepted' || req.body.status === 'Rejected') ? 
-      (req.body.status === 'Accepted' ? 1 : 2) : null; 
+        const status = req.body.status;
       if (status === null) {
         res.status(401).json({
-            message : 'decision is of wrong format',
+            message : 'status is of wrong format',
             success : false
         });
         return;
       }
-        const {worker} : JobRequest = req.body;
         const { rows } = await pool.query(
             `UPDATE request 
-             SET status = $3 
-             WHERE id = $1 AND worker = $2 
+             SET status = $2 
+             WHERE id = $1 
              RETURNING *;`,
-            [requestId, worker, status]
+            [requestId, status]
           );
           
           if (rows.length === 0) {
@@ -42,7 +47,6 @@ export const updateRequestStatus = async (req : Request , res : Response) => {
             error
         })
         console.log(error)
-        
         return;
     }
 }
