@@ -5,8 +5,10 @@ const getPublicRequestsForWorker = async (req: Request, res: Response) => {
   try {
     // Get worker ID from query param
     const workerId = parseInt(req.query.id as string);
+    
     if (isNaN(workerId)) {
-      return res.status(400).json({ message: 'Invalid or missing worker ID', requests: null });
+      res.status(400).json({ message: 'Invalid or missing worker ID', requests: null });
+      return;
     }
 
     // Pagination from query param (default page 1)
@@ -27,7 +29,8 @@ const getPublicRequestsForWorker = async (req: Request, res: Response) => {
     `, [workerId]);
 
     if (!workerData.rows.length) {
-      return res.status(404).json({ message: 'Worker not found or no categories assigned', requests: null });
+      res.status(404).json({ message: 'Worker not found or no categories assigned', requests: null });
+      return;
     }
 
     const workerCategories = workerData.rows.map(row => row.category);
@@ -38,7 +41,8 @@ const getPublicRequestsForWorker = async (req: Request, res: Response) => {
     let selectedCategory = null;
     if (category) {
       if (!workerCategories.includes(category)) {
-        return res.status(400).json({ message: 'Invalid category for this worker', requests: null });
+        res.status(400).json({ message: 'Invalid category for this worker', requests: null });
+        return;
       }
       selectedCategory = category;
     }
