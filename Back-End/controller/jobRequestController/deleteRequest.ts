@@ -4,7 +4,7 @@ import { Request , Response } from "express";
 const deleteRequest = async (req : Request , res : Response) => {
     try {
         
-        if (Number.isNaN(req.params.requestId)){
+        if (Number.isNaN(+req.params.requestId)){
           res.status(400).json({
           message: 'Please provide request id',
           success : false
