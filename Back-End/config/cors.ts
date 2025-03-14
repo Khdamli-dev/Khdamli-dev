@@ -15,10 +15,11 @@ const whiteList : string[] = [
 
 const corsOption : cors.CorsOptions = {
    origin : (origin, cb) => {
-    if (origin && whiteList.indexOf(origin) !== -1)
-        cb(null, true);
+    // If no origin is provided (like in Postman), allow the request
+    if (!origin || whiteList.indexOf(origin) !== -1)
+      cb(null, true);
     else
-        cb(new Error("not allowed by cors"));
+      cb(new Error("not allowed by cors"));
    },
    methods : ["GET", "POST", "PUT", "DELETE"],
    allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers
