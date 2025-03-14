@@ -12,8 +12,8 @@ export const updateRequestStatus = async (req : Request , res : Response) => {
           return;
           }
         const requestId : number = +req.params.requestId;
-        const status = req.body.status;
-      if (status === null) {
+        const status : number = +req.body.status;
+      if (status != 1 && status != 2) {
         res.status(401).json({
             message : 'status is of wrong format',
             success : false
