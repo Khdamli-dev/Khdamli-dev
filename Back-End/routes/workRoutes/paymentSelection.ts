@@ -5,7 +5,7 @@ import addWorkerPayment from '../../controller/profile/addWorkerPayment';
 const payment: Router = express.Router();
 
 // Endpoint to fetch all available payment methods
-payment.get('/get-payment', getPaymentMethods);
+payment.get('/', getPaymentMethods);
 
 // Endpoint to add selected payment methods for a worker
 payment.post('/add-payment', addWorkerPayment);

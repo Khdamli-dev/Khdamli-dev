@@ -7,7 +7,10 @@ const getPaymentMethods = async (req: Request, res: Response) => {
       SELECT id, name 
       FROM payment_method
     `);
-    res.status(200).json(result);
+    res.status(200).json({
+      message : "select payment methods with success",
+      paymentMethods : result
+    });
   } catch (error) {
     console.error('Error fetching payment methods:', error);
     res.status(500).json({ message: 'Internal server error' });
