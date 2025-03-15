@@ -9,10 +9,16 @@ import {
   Pressable,
   Platform,
 } from "react-native";
-import { AntDesign,FontAwesome5,Fontisto,FontAwesome,MaterialCommunityIcons } from "@expo/vector-icons";
+import {
+  AntDesign,
+  FontAwesome5,
+  Fontisto,
+  FontAwesome,
+  MaterialCommunityIcons,
+} from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { KeyboardAvoidingView, ScrollView } from "react-native";
-import CONFIG from "../../../config"
+import CONFIG from "../../../config";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { useRouter } from "expo-router";
@@ -75,8 +81,7 @@ export default function SignUp() {
   const [usernameError, setUsernameError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [phoneNumberError, setPhoneNumberError] = useState("");
-    const [showPassword, setShowPassword] = useState(false);
-  
+  const [showPassword, setShowPassword] = useState(false);
 
   const handlSignUp = async ({
     username,
@@ -96,11 +101,12 @@ export default function SignUp() {
       password,
     };
     try {
-      const response = await axios.post(`${CONFIG.API_URL}/auth/signup/credentials`, {
-        credentials,
-      });
-     
-      
+      const response = await axios.post(
+        `${CONFIG.API_URL}/auth/signup/credentials`,
+        {
+          credentials,
+        }
+      );
       if (response?.status === 201) {
         const id: number = response.data.userId;
         await AsyncStorage.setItem("userId", JSON.stringify(id));
@@ -108,10 +114,6 @@ export default function SignUp() {
           "Check Your Email, We have sent you a verification link. Click on it to confirm your account."
         );
         router.replace("/OtherInformation");
-      } else {
-        alert(
-          "en error occurred with the submitted data. Please check your inputs."
-        );
       }
     } catch (error: any) {
       if (error.response?.status === 400 && error.response.data) {
@@ -129,8 +131,6 @@ export default function SignUp() {
         setEmailError("");
         setPhoneNumberError("");
         alert("Server is busy, please try again later");
-        console.log(error);
-        
       }
     }
   };
@@ -186,10 +186,10 @@ export default function SignUp() {
             className=" w-full mb-safe-offset-2 pt-12  pb-2  shadow-md shadow-black"
           >
             <View className="w-full mb-4 items-start justify-start ">
-                          <TouchableOpacity onPress={() => router.back()}>
-                            <AntDesign name="left" size={60} color="white" />
-                          </TouchableOpacity>
-                        </View>
+              <TouchableOpacity onPress={() => router.back()}>
+                <AntDesign name="left" size={60} color="white" />
+              </TouchableOpacity>
+            </View>
             <View className="px-10 pb-5 pt-5">
               <Text
                 style={{
@@ -258,7 +258,7 @@ export default function SignUp() {
                   <TextInput
                     className={`${
                       usernameFocusedInput === "username" ? "px-10" : "pl-28"
-                    } w-full h-full  text-2xl font-medium border-2 ${ usernameError ||(errors.username && touched.username ) ? "border-red-600":"border-specialGreen"}  rounded-full py-2 `}
+                    } w-full h-full  text-2xl font-medium border-2 ${usernameError || (errors.username && touched.username) ? "border-red-600" : "border-specialGreen"}  rounded-full py-2 `}
                     value={values.username}
                     onChangeText={handleChange("username")}
                     onBlur={() => {
@@ -277,10 +277,14 @@ export default function SignUp() {
                   />
                 </View>
                 {errors.username && touched.username && (
-                  <Text className="text-center text-red-600 text-lg  w-9/12">{errors.username}</Text>
+                  <Text className="text-center text-red-600 text-lg  w-9/12">
+                    {errors.username}
+                  </Text>
                 )}
                 {usernameError ? (
-                  <Text className="text-center text-red-600 text-lg  w-9/12">{usernameError}</Text>
+                  <Text className="text-center text-red-600 text-lg  w-9/12">
+                    {usernameError}
+                  </Text>
                 ) : null}
 
                 <View className="relative w-10/12 h-20 my-2 self-center">
@@ -296,7 +300,7 @@ export default function SignUp() {
                   <TextInput
                     className={`${
                       emailFocusedInput === "email" ? "px-10" : "pl-28"
-                    } w-full h-full  text-2xl font-medium border-2 ${ emailError ||(errors.email && touched.email ) ? "border-red-600":"border-specialGreen"}  rounded-full py-2 `}
+                    } w-full h-full  text-2xl font-medium border-2 ${emailError || (errors.email && touched.email) ? "border-red-600" : "border-specialGreen"}  rounded-full py-2 `}
                     value={values.email}
                     onChangeText={handleChange("email")}
                     onBlur={() => {
@@ -316,10 +320,14 @@ export default function SignUp() {
                   />
                 </View>
                 {errors.email && touched.email && (
-                  <Text className="ttext-center text-red-600 text-lg  w-9/12">{errors.email}</Text>
+                  <Text className="text-center text-red-600 text-lg  w-9/12">
+                    {errors.email}
+                  </Text>
                 )}
                 {emailError ? (
-                  <Text className="ttext-center text-red-600 text-lg  w-9/12">{emailError}</Text>
+                  <Text className="text-center text-red-600 text-lg  w-9/12">
+                    {emailError}
+                  </Text>
                 ) : null}
 
                 <View className="relative w-10/12 h-20 my-2 self-center">
@@ -334,8 +342,10 @@ export default function SignUp() {
 
                   <TextInput
                     className={`${
-                      phonenumberFocusedInput === "phoneNumber" ? "px-10": "pl-28"
-                    } w-full h-full text-2xl font-medium border-2 ${ phoneNumberError ||(errors.phoneNumber && touched.phoneNumber ) ? "border-red-600":"border-specialGreen"}  rounded-full py-2 `}
+                      phonenumberFocusedInput === "phoneNumber"
+                        ? "px-10"
+                        : "pl-28"
+                    } w-full h-full text-2xl font-medium border-2 ${phoneNumberError || (errors.phoneNumber && touched.phoneNumber) ? "border-red-600" : "border-specialGreen"}  rounded-full py-2 `}
                     value={values.phoneNumber}
                     onChangeText={handleChange("phoneNumber")}
                     onBlur={() => {
@@ -355,10 +365,14 @@ export default function SignUp() {
                   />
                 </View>
                 {errors.phoneNumber && touched.phoneNumber && (
-                  <Text className="text-center text-red-600 text-lg  w-9/12">{errors.phoneNumber}</Text>
+                  <Text className="text-center text-red-600 text-lg  w-9/12">
+                    {errors.phoneNumber}
+                  </Text>
                 )}
                 {phoneNumberError ? (
-                  <Text className="text-center text-red-600 text-lg  w-9/12">{phoneNumberError}</Text>
+                  <Text className="text-center text-red-600 text-lg  w-9/12">
+                    {phoneNumberError}
+                  </Text>
                 ) : null}
 
                 <View className="relative w-10/12 h-20 my-2 self-center">
@@ -374,7 +388,7 @@ export default function SignUp() {
                   <TextInput
                     className={`${
                       passwordFocusedInput === "password" ? "pl-10" : "pl-28"
-                    } w-full h-full  text-2xl pr-14 font-medium border-2 ${ errors.password && touched.password  ? "border-red-600":"border-specialGreen"}  rounded-full py-2 `}
+                    } w-full h-full  text-2xl pr-14 font-medium border-2 ${errors.password && touched.password ? "border-red-600" : "border-specialGreen"}  rounded-full py-2 `}
                     value={values.password}
                     onChangeText={handleChange("password")}
                     onBlur={() => {
@@ -385,19 +399,28 @@ export default function SignUp() {
                     }}
                     onFocus={() => {
                       setpasswordFocusedInput("password");
-                      
+
                       setFieldTouched("password", false);
                     }}
                     placeholder="Password"
                     placeholderTextColor="#4C8479"
                     secureTextEntry={!showPassword}
                   />
-                  <TouchableOpacity onPress={()=>setShowPassword(!showPassword)} className="absolute right-4 top-1/4">
-                                    <MaterialCommunityIcons name="eye" color={showPassword ? '#4C8479' : '#BED2D0'} size={35}  />
-                                    </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/4"
+                  >
+                    <MaterialCommunityIcons
+                      name="eye"
+                      color={showPassword ? "#4C8479" : "#BED2D0"}
+                      size={35}
+                    />
+                  </TouchableOpacity>
                 </View>
                 {errors.password && touched.password && (
-                  <Text className="text-center text-red-600 text-lg  w-9/12">{errors.password}</Text>
+                  <Text className="text-center text-red-600 text-lg  w-9/12">
+                    {errors.password}
+                  </Text>
                 )}
 
                 <View className="relative w-10/12 h-20 my-2 self-center">
@@ -415,7 +438,7 @@ export default function SignUp() {
                       retypepasswordFocusedInput === "retypePassword"
                         ? "px-10"
                         : "pl-28"
-                    } w-full h-full  text-2xl font-medium border-2 ${ errors.retypePassword && touched.retypePassword ? "border-red-600":"border-specialGreen"}  rounded-full py-2 `}
+                    } w-full h-full  text-2xl font-medium border-2 ${errors.retypePassword && touched.retypePassword ? "border-red-600" : "border-specialGreen"}  rounded-full py-2 `}
                     value={values.retypePassword}
                     onChangeText={handleChange("retypePassword")}
                     onBlur={() => {
@@ -426,7 +449,7 @@ export default function SignUp() {
                     }}
                     onFocus={() => {
                       setRetypoepasswordFocusedInput("retypePassword");
-                     
+
                       setFieldTouched("retypePassword", false);
                     }}
                     placeholder="Retype Password"
@@ -435,7 +458,9 @@ export default function SignUp() {
                   />
                 </View>
                 {errors.retypePassword && touched.retypePassword && (
-                  <Text className="text-center text-red-600 text-lg  w-9/12">{errors.retypePassword}</Text>
+                  <Text className="text-center text-red-600 text-lg  w-9/12">
+                    {errors.retypePassword}
+                  </Text>
                 )}
 
                 {/* Terms and Conditions */}
@@ -462,7 +487,9 @@ export default function SignUp() {
                   </TouchableOpacity>
                 </View>
                 {errors.terms && touched.terms && (
-                  <Text className="text-center text-red-600 text-lg  w-9/12">{errors.terms}</Text>
+                  <Text className="text-center text-red-600 text-lg  w-9/12">
+                    {errors.terms}
+                  </Text>
                 )}
 
                 {/* Sign Up Button */}

@@ -22,6 +22,7 @@ import CONFIG from "../../../config"
 
 
 import { LinearGradient } from "expo-linear-gradient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function NewPassword() {
   const { width: screenWidth } = Dimensions.get("window");
@@ -42,29 +43,28 @@ export default function NewPassword() {
 
   const [showePassword, setShowePassword] = useState(false);
   
-
-  const handleReset = async (values: {
+  const [error, setError] = useState("");
+  const handleNewPassword = async (values: {
     newPassword: string;
-    confirmPassword: string;
+    confirmPassword:string;
   }) => {
     try {
+      const storedId = await AsyncStorage.getItem("userId");
+      const id: number = Number(storedId);
       
       const response = await axios.post(
         `${CONFIG.API_URL}/profile/update/user-info`,
-        { credentials: { password: values.newPassword } }
+        { credentials: { password: values.newPassword },id }
       );
      
-      if (response.status === 200) {
-        router.push({
-          pathname: "/(auth)/(signUp)/terms",
-          params: { newPassword: values.newPassword },
-        });
+      if (response.status == 200) {
         
-      } else {
-
-      }
+        router.back();
+        alert("Your password has been changed successfully");
+      } 
     } catch (error: any) {
-      
+      setError("Internal server error");
+      setTimeout(() => setError(""), 50000); 
     }
   };
 
@@ -126,7 +126,9 @@ export default function NewPassword() {
           <Formik
             initialValues={{ newPassword: "", confirmPassword: "" }}
             validationSchema={validationSchema}
-            onSubmit={handleReset}
+            onSubmit={(values) => {
+              handleNewPassword(values);
+            }}
           >
             {({
               handleChange,
@@ -190,6 +192,11 @@ export default function NewPassword() {
                       Confirm
                     </Text>
                   </TouchableOpacity>
+                  {error && (
+                  <Text className="my-2 text-center text-red-600 text-lg  w-9/12" >
+                    {error}
+                  </Text>
+                )}
                 
               </View>
             )}

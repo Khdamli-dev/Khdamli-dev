@@ -4,7 +4,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  FlatList,
+  ScrollView,
   Animated,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -39,15 +39,11 @@ const AddressDropdown: React.FC<AddressDropdownProps> = ({
       const response = await axios.get(`${CONFIG.API_URL}/address/cities`, {
         params: { region: wilayaId },
       });
-      // Assuming the API returns { municipalities: string[] }
       setMunicipalities(response.data.cities);
       setFilteredMunicipalities(response.data.cities);
-    } catch (error) {
-      
-    }
+    } catch (error) {}
   };
 
-  // Fetch municipalities whenever selectedWilaya changes
   useEffect(() => {
     if (wilaya) fetchMunicipalities(wilaya.id);
     else {
@@ -59,9 +55,6 @@ const AddressDropdown: React.FC<AddressDropdownProps> = ({
 
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
-    //console.log(filteredMunicipalities);
-    if (!wilaya) setNotSelectedWilaya(true);
-    else setNotSelectedWilaya(false);
     Animated.timing(rotateAnim, {
       toValue: isOpen ? 0 : 1,
       duration: 200,
@@ -69,9 +62,8 @@ const AddressDropdown: React.FC<AddressDropdownProps> = ({
     }).start();
   };
 
-  const [notSelectedWilaya, setNotSelectedWilaya] = useState<boolean>(false);
   const handleSelect = (city: City) => {
-    onSelectMunicipality(city); // Update parent state
+    onSelectMunicipality(city);
     setIsOpen(false);
   };
 
@@ -93,65 +85,53 @@ const AddressDropdown: React.FC<AddressDropdownProps> = ({
     outputRange: ["0deg", "180deg"],
   });
 
-  return (
-    <>
-      <View className="items-center">
-        <TouchableOpacity
-          className="relative flex-row items-center justify-between w-9/12 h-20 mt-6 border-2 border-specialGreen rounded-full px-4 bg-white shadow-md"
-          onPress={toggleDropdown}
-        >
-          <Icon name="location-city" color="#396F65" size={30} />
-          <Text className="text-xl text-specialGreen font-bold">
-            {selectedCity?.name || "Enter your City"}
-          </Text>
-          <Animated.View style={{ transform: [{ rotate: arrowRotation }] }}>
-            <Icon name="keyboard-arrow-down" color="#396F65" size={30} />
-          </Animated.View>
-        </TouchableOpacity>
+  const renderButton = () => (
+    <TouchableOpacity
+      className="flex-row items-center justify-between w-9/12 h-20 border-2 border-specialGreen rounded-full px-4 bg-white shadow-md"
+      onPress={toggleDropdown}
+    >
+      <Icon name="location-city" color="#396F65" size={30} />
+      <Text className="text-xl text-specialGreen font-bold">
+        {selectedCity?.name || "Enter your City"}
+      </Text>
+      <Animated.View style={{ transform: [{ rotate: arrowRotation }] }}>
+        <Icon name="keyboard-arrow-down" color="#396F65" size={30} />
+      </Animated.View>
+    </TouchableOpacity>
+  );
 
-        {isOpen && wilaya && (
-          <View
-            className="absolute  top-16 w-80 bg-white border border-gray-300 rounded-2xl shadow-xl p-2 z-50"
-            style={{
-              maxHeight: 200,
-              position: "absolute",
-              top: 90,
-              left: 10,
-              right: 0,
-              zIndex: 20,
-            }}
+  return (
+    <View className="items-center justify-center w-full mt-6">
+      {renderButton()}
+      {isOpen && wilaya && (
+        <View className="w-9/12 bg-white border border-gray-300  shadow-2xl py-4 mt-2">
+          <TextInput
+            className="border-b-2 border-gray-400 p-3 mb-3 text-lg"
+            placeholder="Search Municipality..."
+            value={search}
+            onChangeText={handleSearch}
+          />
+          <ScrollView
+            style={{ maxHeight: 200 }}
+            nestedScrollEnabled={true}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
-            <TextInput
-              className="w-full rounded-md border-b-2 border-specialGreen p-2 mb-2"
-              placeholder="Search Municipality..."
-              value={search}
-              onChangeText={handleSearch}
-            />
-            <FlatList
-              style={{ flex: 1 }}
-              nestedScrollEnabled={true}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-              data={filteredMunicipalities}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  className="p-3 border-b border-gray-200"
-                  onPress={() => handleSelect(item)}
-                >
-                  <Text className="text-lg">{item.name}</Text>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        )}
-      </View>
-      {/* {notSelectedWilaya && (
-        <Text className="text-red-700 text-center w-9/12">
-          you must select wilaya first
-        </Text>
-      )} */}
-    </>
+            {filteredMunicipalities.map((item) => (
+              <TouchableOpacity
+                key={item.id.toString()}
+                className="py-3 h-14  px-4 border-2 mx-2 border-gray-300 rounded-md mb-2 bg-white justify-center items-center"
+                onPress={() => handleSelect(item)}
+              >
+                <Text className="text-lg font-semibold text-gray-700">
+                  {item.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+    </View>
   );
 };
 
