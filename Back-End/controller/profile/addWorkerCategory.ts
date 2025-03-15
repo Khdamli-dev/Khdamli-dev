@@ -13,8 +13,8 @@ const addWorkerCategory = async (req: Request, res: Response) => {
   try {
     // we use Promise.all to throw error for the first error in inserting
     await Promise.all(
-      categories.map(async (categoryId : number) => {
-        await pool.query(
+      categories.map((categoryId : number) => {
+        pool.query(
           `INSERT INTO worker_category (worker, category) 
           VALUES ($1, $2) 
           `,[workerId, categoryId]);

@@ -15,8 +15,8 @@ const addWorkerPayment = async (req: Request, res: Response) => {
     // For each selected payment method, insert an entry in worker_payment
     // we use Promise.all to throw error for the first error in inserting
     await Promise.all(
-      payments.map(async (paymentId: number) => {
-        await pool.query(
+      payments.map((paymentId: number) => {
+        pool.query(
           `INSERT INTO worker_payment (worker, payment)
            VALUES ($1, $2)
            `,
