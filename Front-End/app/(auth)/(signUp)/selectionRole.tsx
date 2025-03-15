@@ -9,11 +9,10 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { MaterialCommunityIcons, AntDesign } from "@expo/vector-icons";
-
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import axios from "axios";
-import { API_URL } from "@env";
+import CONFIG from "../../../config"
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function SelectRole() {
@@ -27,10 +26,10 @@ export default function SelectRole() {
       const id: number = Number(storedId);
 
       const response = await axios.post(
-        `${API_URL}/profile/update/role/worker`,
+        `${CONFIG.API_URL}/profile/update/role/worker`,
         { userId: id }
       );
-      router.replace("/+not-found");
+      router.replace("/(auth)/(signUp)/workerInfo");
     } catch (error: any) {
       alert("Server is busy, please try again later");
     }
@@ -124,7 +123,7 @@ export default function SelectRole() {
 
             {/* Clients Card */}
             <TouchableOpacity
-              onPress={() => router.push("/+not-found")}
+              onPress={() => router.replace("/(auth)/(signUp)/terms")}
               className="bg-white w-96 rounded-2xl shadow-lg p-6 "
             >
               <View className="flex items-center ">

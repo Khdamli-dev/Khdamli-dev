@@ -11,7 +11,9 @@
     "ios": {
       "supportsTablet": true
     },
+    "entryPoint": "node_modules/expo-router/entry",
     "android": {
+      "newArchEnabled": false,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"

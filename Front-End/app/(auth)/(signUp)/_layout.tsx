@@ -5,10 +5,10 @@ export default function SignUpLayout() {
 
   return (
     <Stack  screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Step1" options={{ title: "الخطوة 1" }} />
-      <Stack.Screen name="Step2" options={{ title: "الخطوة 2" }} />
-      <Stack.Screen name="Step3" options={{ title: "الخطوة 3" }} />
-      <Stack.Screen name="Step4" options={{ title: "الخطوة 4" }} />
+      <Stack.Screen name="index" options={{ title: "الخطوة 1" }} />
+      <Stack.Screen name="OtherInformation" options={{ title: "الخطوة 2" }} />
+      <Stack.Screen name="selectionRole" options={{ title: "الخطوة 3" }} />
+      <Stack.Screen name="terms" options={{ title: "الخطوة 4" }} />
     </Stack>
   );
 }

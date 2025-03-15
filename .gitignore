@@ -33,7 +33,7 @@ Back-End/build/
 
 # Frontend-specific ignores (React Native)
 Front-End/node_modules/
-Front-End/.env
+Front-End/config.js
 Front-End/android/.gradle/
 Front-End/android/app/build/
 Front-End/ios/Pods/
