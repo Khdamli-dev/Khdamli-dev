@@ -4,11 +4,11 @@ import category from '../workRoutes/categorySelection';
 import payment from '../workRoutes/paymentSelection';
 import workingHours from '../workRoutes/workingHours';
 
-const worker: Router = express.Router();
+const work: Router = express.Router();
 
-worker.use('/job-request', jobRequestRoutes);
-worker.use('/categories', category);
-worker.use('/payment', payment);
-worker.use('/working-hours', workingHours);
+work.use('/job-request', jobRequestRoutes);
+work.use('/categories', category);
+work.use('/payment', payment);
+work.use('/working-hours', workingHours);
 
-export default worker;
+export default work;
