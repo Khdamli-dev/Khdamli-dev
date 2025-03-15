@@ -30,7 +30,7 @@ const createRequest = async (req: Request, res: Response) => {
 
     res.status(201).json({
       message : 'Job request created successfully',
-      requestId : rows[0], 
+      request : rows[0], 
       success : true
     });
   } catch (error) {
