@@ -20,17 +20,15 @@ export default function RootLayout() {
  
 
   return (
-    <ThemeProvider value={ DefaultTheme}>
-      <SafeAreaView style={{ flex: 1, }}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" options={{ headerShown: false }} /> 
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      </Stack>
-      <StatusBar hidden={true} />
+    <ThemeProvider value={DefaultTheme}>
+      <SafeAreaView style={{ flex: 1 }}>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+         
+        </Stack>
+        <StatusBar hidden={true} />
       </SafeAreaView>
     </ThemeProvider>
-      
-      
-   
   );
 }
