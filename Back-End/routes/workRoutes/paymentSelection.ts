@@ -8,6 +8,6 @@ const payment: Router = express.Router();
 payment.get('/', getPaymentMethods);
 
 // Endpoint to add selected payment methods for a worker
-payment.post('/add-payment', addWorkerPayment);
+payment.post('/:workerId', addWorkerPayment);
 
 export default payment;
