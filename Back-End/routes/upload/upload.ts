@@ -4,7 +4,7 @@ import { uploadMedia } from "../../controller/upload/uploadMedia";
 
 const upload : Router= express.Router();
 
-upload.post(`/upload-profile-picture/:id`,uploadProfilePicture);
-upload.post('/upload-media',uploadMedia);
+upload.post(`/profile-picture/:id`,uploadProfilePicture);
+upload.post('/media',uploadMedia);
 
 export default upload;

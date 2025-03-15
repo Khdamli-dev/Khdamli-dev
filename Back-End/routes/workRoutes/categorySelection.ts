@@ -5,6 +5,6 @@ import addWorkerCategory from '../../controller/profile/addWorkerCategory';
 const category: Router = express.Router();
 
 category.get('/', getCategories);
-category.post('/', addWorkerCategory);
+category.post('/:workerId', addWorkerCategory);
 
 export default category;
