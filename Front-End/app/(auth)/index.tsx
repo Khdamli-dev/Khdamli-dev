@@ -7,23 +7,19 @@ import {
   SafeAreaView,
   Image,
   Platform,
+  ImageBackground,
 } from "react-native";
 import Icon from "react-native-vector-icons/Fontisto";
 import Icoon from "react-native-vector-icons/AntDesign";
-import {
-  KeyboardAvoidingView,
-  ScrollView,
-  TouchableWithoutFeedback,
-  Keyboard,
-} from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { KeyboardAvoidingView, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
-
 import { Formik } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFonts } from "expo-font";
-import { API_URL } from "@env";
+import CONFIG from "../../config";
+import { LinearGradient } from "expo-linear-gradient";
 
 export default function Login() {
   const router = useRouter();
@@ -32,6 +28,7 @@ export default function Login() {
   const [passwordFocusedInput, setPasswordFocusedInput] = useState<
     string | null
   >(null); // Track focused input
+  const [showPassword, setShowPassword] = useState(false);
 
   // Data
   const loginSchema = Yup.object().shape({
@@ -45,16 +42,18 @@ export default function Login() {
   });
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [error, setError] = useState("");
 
   const handleLogin = async (values: { email: string; password: string }) => {
+     setError("");
     try {
-      const response = await axios.post(`${API_URL}/auth/login`, values);
+      const response = await axios.post(`${CONFIG.API_URL}/auth/login`, values);
       if (response.data.success) {
         const id: number = response.data.userId;
         await AsyncStorage.setItem("userId", JSON.stringify(id));
-        router.push("/OtherInformation"); //
+        router.replace("/(auth)/(signUp)/terms"); //
       } else {
-        alert("There is problem");
+        
       }
     } catch (error: any) {
       if (error.response?.status === 403 && error.response.data) {
@@ -65,10 +64,12 @@ export default function Login() {
           if (error.response.data.validPassword === false)
             setPasswordError("Password is wrong");
           if (error.response.data.validAccount === false)
-            alert("your account is not valid, you need to confirm your email");
+            setError(
+              "your account is not valid, you need to confirm your email"
+            );
         }
       } else {
-        alert("Server is busy, please try again later");
+        setError("Server is busy, please try again later");
       }
     }
   };
@@ -83,20 +84,22 @@ export default function Login() {
         <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
           {/* Main Login Section */}
           <View className="bg-specialGreen flex-1 items-center px-4 ">
-            {/* Profile Image */}
-            <Image
-              source={require("../../assets/images/photo_2025-02-04_10-16-04.jpg")}
-              className="w-96 h-60 rounded-full mb-6 mt-14 "
-            />
-            <View className="flex-row w-96 mt-1 items-baseline ">
-              <Text
-                style={{
-                  textShadowColor: "#fffff",
-                  textShadowOffset: { width: 8, height: 1 },
-                  textShadowRadius: 10,
-                }}
-                className="text-9xl  tracking-tight text-foncyYellow uppercase font-bold "
-              >
+            {/* Image */}
+
+            
+            <View className="relative w-11/12 h-72 top-12 mb-6">
+              <Image
+                source={require("../../assets/images/bgLogologin.jpg")}
+                className="absolute w-full h-full   "
+              />
+              <Image
+                source={require("../../assets/images/photo_2025-02-04_10-16-04.jpg")}
+                className="absolute top-6 left-4 w-11/12 h-52 rounded-full"
+              />
+            </View>
+
+            <View className="flex-row w-10/12 mt-1 items-baseline justify-center ">
+              <Text className="text-9xl text-shadow-custom tracking-tight text-foncyYellow uppercase font-bold ">
                 KH
               </Text>
               <Text
@@ -153,13 +156,14 @@ export default function Login() {
                   <TextInput
                     className={`${
                       focusedInput === "email" ? "px-10" : "pl-28"
-                    } w-full h-full text-white text-2xl font-medium border-2 border-white rounded-full py-2 `}
+                    } w-full h-full text-white text-2xl font-medium border-2 ${emailError || (errors.email && touched.email) ? "border-red-600" : "border-white"} rounded-full py-2 `}
                     value={values.email}
                     onChangeText={handleChange("email")}
                     onFocus={() => {
                       setFocusedInput("email");
                       setEmailError("");
                       setFieldTouched("email", false);
+                      setError("");
                     }}
                     onBlur={() => {
                       if (values.email === "") {
@@ -175,12 +179,12 @@ export default function Login() {
                 </View>
 
                 {touched.email && errors.email && (
-                  <Text className="text-center w-9/12" style={{ color: "red" }}>
+                  <Text className="text-center text-red-600 text-lg  w-9/12">
                     {errors.email}
                   </Text>
                 )}
                 {emailError ? (
-                  <Text className="text-red-500 text-center w-9/12 ">
+                  <Text className="text-center text-red-600 text-lg  w-9/12 ">
                     {emailError}
                   </Text>
                 ) : null}
@@ -197,8 +201,8 @@ export default function Login() {
 
                   <TextInput
                     className={`${
-                      passwordFocusedInput === "password" ? "px-10" : "pl-28"
-                    } w-full h-full text-white text-2xl font-medium border-2 border-white rounded-full py-2 `}
+                      passwordFocusedInput === "password" ? "pl-10" : "pl-28"
+                    } w-full h-full pr-14 text-white text-2xl font-medium border-2 ${passwordError || (errors.password && touched.password) ? "border-red-600" : "border-white"} rounded-full py-2 `}
                     value={values.password}
                     onChangeText={handleChange("password")}
                     onFocus={() => {
@@ -212,20 +216,36 @@ export default function Login() {
                       }
                       handleBlur("password");
                     }}
-                    secureTextEntry
+                    secureTextEntry={!showPassword}
                     placeholder="Password"
                     placeholderTextColor="#C4C4C4"
                   />
+                  <TouchableOpacity
+                    onPress={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/4"
+                  >
+                    <MaterialCommunityIcons
+                      name="eye"
+                      color={showPassword ? "#fff" : "#BED2D0"}
+                      size={35}
+                    />
+                  </TouchableOpacity>
                 </View>
 
                 {touched.password && errors.password && (
-                  <Text className="text-center w-9/12" style={{ color: "red" }}>
+                  <Text className="text-center text-red-600 text-lg  w-9/12">
                     {errors.password}
                   </Text>
                 )}
                 {passwordError ? (
-                  <Text className="text-red-500 text-center w-9/12 ">
+                  <Text className="text-center text-red-600 text-lg  w-9/12 ">
                     {passwordError}
+                  </Text>
+                ) : null}
+                {/* Errors */}
+                {error ? (
+                  <Text className="text-center text-red-600 text-lg  w-9/12 ">
+                    {error}
                   </Text>
                 ) : null}
 
@@ -233,9 +253,7 @@ export default function Login() {
                 <View className=" bg-white p-3 w-full items-center rounded-tl-[50px] mt-10  rounded-tr-[50px] shadow-xl">
                   {/* Forgot Password */}
                   <TouchableOpacity
-                    onPress={() =>
-                      router.push("/(auth)/(RestorAccount)/ForgotPassword")
-                    }
+                    onPress={() => router.push("/(auth)/(RestorAccount)")}
                   >
                     <Text className="text-specialGreen mb-6 text-lg font-bold">
                       Forgot Password ?
@@ -245,7 +263,7 @@ export default function Login() {
                   {/* Login Button */}
                   <TouchableOpacity
                     onPress={handleSubmit as any}
-                    className="bg-specialGreen p-6 rounded-full w-full max-w-sm  shadow-xl shadow-black"
+                    className="bg-specialGreen p-6 rounded-full w-11/12 max-w-sm  shadow-xl shadow-black"
                   >
                     <Text className="text-white text-center font-bold text-2xl">
                       Login
@@ -261,8 +279,8 @@ export default function Login() {
                   {/* Sign Up Button  */}
 
                   <TouchableOpacity
-                    onPress={() => router.push("/(auth)/(signUp)/SignUp")}
-                    className="bg-specialGray p-6 rounded-full w-full max-w-sm shadow-md shadow-black mb-8"
+                    onPress={() => router.push("/(auth)/(signUp)")}
+                    className="bg-specialGray p-6 rounded-full w-11/12 max-w-sm shadow-md shadow-black mb-8"
                   >
                     <Text className="text-foncyGreen text-center font-medium text-3xl">
                       Create an account

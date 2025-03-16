@@ -1,4 +1,3 @@
-import { API_URL } from "@env";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import {
@@ -6,10 +5,11 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  FlatList,
+  ScrollView,
   Animated,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
+import CONFIG from "@/config";
 
 interface Wilaya {
   name: string;
@@ -33,14 +33,12 @@ const WilayaDropdown: React.FC<WilayaDropdownProps> = ({
 
   const fetchRegions = async () => {
     try {
-      const response = await axios.get(`${API_URL}/address/regions`, {
+      const response = await axios.get(`${CONFIG.API_URL}/address/regions`, {
         params: { country: 1 },
       });
       setWilayas(response.data.regions);
       setFilteredWilayas(response.data.regions);
-    } catch (error) {
-      console.error("Error fetching regions:", error);
-    }
+    } catch (error) {}
   };
 
   useEffect(() => {
@@ -70,7 +68,7 @@ const WilayaDropdown: React.FC<WilayaDropdownProps> = ({
   };
 
   const handleSelect = (wilaya: Wilaya) => {
-    onSelectWilaya(wilaya); // Update parent state
+    onSelectWilaya(wilaya);
     setIsOpen(false);
   };
 
@@ -79,54 +77,50 @@ const WilayaDropdown: React.FC<WilayaDropdownProps> = ({
     outputRange: ["0deg", "180deg"],
   });
 
+  const renderButton = () => (
+    <TouchableOpacity
+      className="flex-row items-center justify-between w-9/12 h-20 border-2 border-specialGreen rounded-full px-4"
+      onPress={toggleDropdown}
+    >
+      <Icon name="location-pin" color="#396F65" size={30} />
+      <Text className="text-xl text-specialGreen font-bold">
+        {selectedWilaya?.name || "Enter your Wilaya"}
+      </Text>
+      <Animated.View style={{ transform: [{ rotate: arrowRotation }] }}>
+        <Icon name="keyboard-arrow-down" color="#396F65" size={30} />
+      </Animated.View>
+    </TouchableOpacity>
+  );
+
   return (
-    <View className="items-center w-full">
-      <TouchableOpacity
-        className="relative flex-row items-center justify-between w-9/12 h-20 border-2 border-specialGreen rounded-full px-4"
-        onPress={toggleDropdown}
-      >
-        <Icon name="location-pin" color="#396F65" size={30} />
-        <Text className="text-xl text-specialGreen font-bold">
-          {selectedWilaya?.name || "Enter your Wilaya"}
-        </Text>
-        <Animated.View style={{ transform: [{ rotate: arrowRotation }] }}>
-          <Icon name="keyboard-arrow-down" color="#396F65" size={30} />
-        </Animated.View>
-      </TouchableOpacity>
+    <View className="items-center justify-center w-full mt-10">
+      {renderButton()}
       {isOpen && (
-        <View
-          className="absolute top-20 w-80 bg-white border border-gray-300 rounded-lg shadow-xl p-2 z-50"
-          style={{
-            maxHeight: 200,
-            position: "absolute",
-            top: 70,
-            left: 10,
-            right: 0,
-            zIndex: 50,
-          }}
-        >
+        <View className="w-9/12 bg-white border border-gray-300 rounded-lg shadow-xl py-4  mt-2">
           <TextInput
-            className="border border-gray-300 rounded-md p-2 mb-2"
+            className="border-b-2  border-gray-400 rounded-lg p-3 mb-3 text-lg"
             placeholder="Search Wilaya..."
             value={search}
             onChangeText={handleSearch}
           />
-          <FlatList
-            style={{ flex: 1 }}
-            nestedScrollEnabled
+          <ScrollView
+            style={{ maxHeight: 200 }}
+            nestedScrollEnabled={true}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
-            data={filteredWilayas}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
+          >
+            {filteredWilayas.map((item) => (
               <TouchableOpacity
-                className="p-3 border-b border-gray-200"
+                key={item.id.toString()}
+                className="py-3 h-14 px-4 border-2 mx-2 border-gray-300 rounded-md mb-2 bg-white justify-center items-center"
                 onPress={() => handleSelect(item)}
               >
-                <Text className="text-lg">{item.name}</Text>
+                <Text className="text-lg font-semibold text-gray-700">
+                  {item.name}
+                </Text>
               </TouchableOpacity>
-            )}
-          />
+            ))}
+          </ScrollView>
         </View>
       )}
     </View>

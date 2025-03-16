@@ -1,4 +1,4 @@
-import { View, Text } from 'react-native';
+import { View, Text, Image } from 'react-native';
 import React, { useEffect, useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Animated, Easing } from 'react-native';
@@ -11,6 +11,7 @@ const AppStartUp = () => {
 
   const leftAnim = useRef(new Animated.Value(-200)).current;
   const rightAnim = useRef(new Animated.Value(200)).current;
+  const imageAnim = useRef(new Animated.Value(200)).current;
 
   useEffect(() => {
     // تشغيل الأنيميشن
@@ -27,17 +28,21 @@ const AppStartUp = () => {
         easing: Easing.ease,
         useNativeDriver: true,
       }),
+      Animated.timing(imageAnim, {
+        toValue: 0,
+        duration: 500,
+        easing: Easing.ease,
+        useNativeDriver: true,
+      }),
     ]).start();
 
     // التحقق من تسجيل الدخول بعد 3 ثوانٍ
     const checkLoginStatus = async () => {
-      /*  const userToken = await AsyncStorage.getItem("userToken");
-       */
       setTimeout(() => {
         if (true) {
-          router.push('./(auth)'); // الانتقال إلى الصفحة الرئيسية
+          router.replace('./(auth)');
         } else {
-          router.replace('./(tabs)'); // الانتقال إلى صفحة تسجيل الدخول
+          router.replace('./(tabs)');
         }
       }, 3000);
     };
@@ -48,23 +53,33 @@ const AppStartUp = () => {
   return (
     <SafeAreaView className="bg-specialGreen flex-1">
       <View className="flex-1 justify-center items-center">
-        <View className="flex-row items-baseline">
+      <View className="flex-row items-end ">
           <Animated.Text
-            className="text-9xl tracking-tight text-foncyYellow uppercase font-bold"
+              className="text-9xl tracking-tight pt-8  text-foncyYellow uppercase font-bold"
+              style={{
+                transform: [{ translateX: leftAnim }],
+              }}
+            >
+              KH
+        </Animated.Text>
+        <View className=" items-end flex-col">
+          <Animated.Image
+            source={require('../assets/images/startUpPhoto.jpg')}
+            className="w-full h-32"
             style={{
-              transform: [{ translateX: leftAnim }],
+              transform: [{ translateX: imageAnim }],
             }}
-          >
-            KH
-          </Animated.Text>
+            
+          />
           <Animated.Text
-            className="text-7xl tracking-widest text-bl lowercase font-bold "
-            style={{
-              transform: [{ translateX: rightAnim }],
-            }}
-          >
-            damli
-          </Animated.Text>
+              className="text-7xl pt-2 pb-2 tracking-widest text-bl lowercase font-bold"
+              style={{
+                transform: [{ translateX: rightAnim }],
+              }}
+            >
+              damli
+            </Animated.Text>
+          </View>
         </View>
       </View>
     </SafeAreaView>

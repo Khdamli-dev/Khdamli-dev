@@ -6,41 +6,31 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 import "../global.css";
-import { useColorScheme } from '@/hooks/useColorScheme';
- import { SafeAreaView } from 'react-native-safe-area-context';
 
-SplashScreen.preventAutoHideAsync();
+ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+
+
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    Itim: require('../assets/fonts/Itim-Regular.ttf'),
-  });
-
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
-  }
+  
+  
+ 
+ 
   
  
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: colorScheme === "dark" ? "#000" : "#fff" }}>
+    <ThemeProvider value={ DefaultTheme}>
+      <SafeAreaView style={{ flex: 1, }}>
       <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="(sign)" options={{ headerShown: false }} />
-        
-        <Stack.Screen name="+not-found" />
+        <Stack.Screen name="index" options={{ headerShown: false }} /> 
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       </Stack>
       <StatusBar hidden={true} />
       </SafeAreaView>
-      
     </ThemeProvider>
+      
+      
+   
   );
 }

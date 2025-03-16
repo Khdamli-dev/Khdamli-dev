@@ -9,13 +9,12 @@ import {
   SafeAreaView,
   Image,
   Dimensions,
-  Pressable,
+  Platform,
 } from "react-native";
-import Icon from "react-native-vector-icons/Fontisto";
 import AntDesign from "react-native-vector-icons/AntDesign";
-import { MaterialIcons, Foundation } from "@expo/vector-icons";
+import {  Foundation } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { API_URL } from "@env";
+import CONFIG from "../../../config"
 import { KeyboardAvoidingView, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import WilayaDropdown from "@/Component/wilayaDropDown";
@@ -23,9 +22,6 @@ import AddressDropdown from "@/Component/addressDropDown";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
-
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-
 import { LinearGradient } from "expo-linear-gradient";
 
 export default function OtherInformation() {
@@ -39,7 +35,9 @@ export default function OtherInformation() {
     name: string;
     id: number;
   } | null>(null);
-
+   const [ageFocusedInput, setAgeFocusedInput] = useState<string | null>(
+      null
+    );
   //Creat validationSchema
   const validationSchema = Yup.object().shape({
     age: Yup.number()
@@ -76,17 +74,13 @@ export default function OtherInformation() {
     const id: number = Number(storedId); // Convert string to number safely
 
     try {
-      const response = await axios.post(`${API_URL}/profile/update/user-info`, {
+      const response = await axios.post(`${CONFIG.API_URL}/profile/update/user-info`, {
         personalInfo,
         id,
       });
       if (response) {
-        router.push("/+not-found");
-      } else {
-        alert(
-          "en error occurred with the submitted data. Please check your inputs"
-        );
-      }
+        router.replace("/selectionRole");
+      } 
     } catch (error) {
       alert("Server is busy, please try again later.");
     }
@@ -94,7 +88,7 @@ export default function OtherInformation() {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <KeyboardAvoidingView style={{ flex: 1 }}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "padding"}style={{ flex: 1 }}>
         <ScrollView
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{
@@ -153,7 +147,7 @@ export default function OtherInformation() {
                   textShadowOffset: { width: 1, height: 1 },
                   textShadowRadius: 5,
                 }}
-                className=" text-6xl  font-semibold text-white"
+                className=" text-5xl  font-semibold text-white"
               >
                 Information
               </Text>
@@ -176,17 +170,18 @@ export default function OtherInformation() {
               handleChange,
               handleBlur,
               handleSubmit,
+              setFieldTouched,
               values,
               errors,
               touched,
               setFieldValue,
             }) => (
               <View className="flex-1 w-full items-center   justify-center">
-                <View className="flex-1 items-center justify-center relative">
+                <View className="flex-1 items-center justify-center w-full">
                   <WilayaDropdown
                     selectedWilaya={selectedWilaya}
                     onSelectWilaya={(wilaya) => {
-                      console.log(wilaya);
+                     
                       setSelectedWilaya(wilaya);
                     }}
                   />
@@ -200,17 +195,31 @@ export default function OtherInformation() {
                 </View>
 
                 <View className=" relative w-9/12 h-20 mt-6 mb-7 self-center ">
+                {ageFocusedInput !== "age" && (
                   <AntDesign
                     name="idcard"
                     color="#ffffff"
                     size={28}
                     className="bg-specialGreen absolute left-6 top-6  text-2xl font-bold "
                   />
+                )}
                   <TextInput
-                    className=" absolute w-full h-full text-specialGreen text-xl font-bold border-2 border-specialGreen rounded-full pl-16 py-2"
+                    className={` ${
+                      ageFocusedInput === "age" ? "px-10" : "pl-16"
+                    } absolute w-full h-full  text-xl font-bold border-2 ${ errors.age && touched.age ? "border-red-600":"border-specialGreen"} rounded-full  py-2` }
                     value={values.age}
                     onChangeText={handleChange("age")}
-                    onBlur={handleBlur("age")}
+                    onBlur={() => {
+                      if (values.age === "") {
+                        setAgeFocusedInput(null);
+                      }
+                      handleBlur("age");
+                    }}
+                    onFocus={() => {
+                      setAgeFocusedInput("age");
+                     
+                      setFieldTouched("age", false);
+                    }}
                     keyboardType="numeric"
                     inputMode="numeric"
                     placeholder="Enter Your Age +18"
@@ -219,7 +228,7 @@ export default function OtherInformation() {
                   />
                 </View>
                 {touched.age && errors.age && (
-                  <Text className="text-red-500 text-sm mt-1">
+                  <Text className="text-center text-red-600 text-lg  w-9/12">
                     {errors.age}
                   </Text>
                 )}

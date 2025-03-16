@@ -12,7 +12,9 @@ module.exports = {
         foncyGreen:"#2B524A",
         foncyYellow:"#F8A100",
       },
-     
+      textShadow: {
+        custom: "8px 1px 10px #ffffff",
+      },
       
     },
   },
