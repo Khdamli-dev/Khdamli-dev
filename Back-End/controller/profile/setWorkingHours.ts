@@ -13,8 +13,8 @@ const setWorkingHours = async (req: Request, res: Response) => {
   try {
     // Loop over each day and insert/update the working hours for the worker
     await Promise.all(
-      workingHours.map(({day, begin, end} : {day : number, begin : string, end : string}) => {
-        pool.query(`
+      workingHours.map(async ({day, begin, end} : {day : number, begin : string, end : string}) => {
+        await pool.query(`
           INSERT INTO time_work(worker, day, "begin", "end")
           VALUES ($1, $2, $3, $4)
           ON CONFLICT (worker, day) 

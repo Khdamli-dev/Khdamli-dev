@@ -6,7 +6,6 @@ const payment: Router = express.Router();
 
 // Endpoint to fetch all available payment methods
 payment.get('/', getPaymentMethods);
-
 // Endpoint to add selected payment methods for a worker
 payment.post('/:workerId', addWorkerPayment);
 

@@ -6,7 +6,7 @@ import canSendOTP from '../../middleware/canSendOTP';
 
 const auth : Router = express.Router();
 
-auth.use("/signup", signup);
+auth.use('/signup', signup);
 auth.post("/login", login);
 auth.post('/password-reset/request',canSendOTP ,sendOTP); // Request OTP for password reset
 auth.post('/password-reset/verify', verifyOTP);
