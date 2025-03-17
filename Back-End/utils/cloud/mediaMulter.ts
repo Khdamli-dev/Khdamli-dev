@@ -5,12 +5,16 @@ import cloudinary from "./cloudinary"; // Import Cloudinary instance
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
-    const fileType = file.mimetype.split("/")[0]; 
-    
+    const fileType = file.mimetype.split("/")[0];
+    const requestId = req.body.requestId || req.params.requestId;
+    if (!req.body._fileIndex) req.body._fileIndex = 0;
+    req.body._fileIndex += 1; // Get the index from the request body
+
     return {
-      folder :`request/${fileType === "image" ? "images" : "videos"}`, 
-      format: file.mimetype.split("/")[1], 
-      resource_type: fileType === "image" ? "image" : "video", 
+      folder: `request/${fileType === "image" ? "images" : "videos"}`,
+      format: file.mimetype.split("/")[1],
+      resource_type: fileType === "image" ? "image" : "video",
+      public_id: `${requestId}.${req.body._fileIndex}`, // Set the public_id to requestId.index
     };
   },
 });

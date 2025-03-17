@@ -1,29 +1,39 @@
 import { Request, Response } from "express";
 import upload from "../../utils/cloud/mediaMulter";
+import pool from "../../database/dbConnection";
+import { updateRequestMedia } from "../../utils/update/updateRequestMedia";
 
-export const uploadMedia = (req: Request, res: Response) => {
-  upload.array("file", 5)(req, res, (err) => {
+export const uploadMedia = async (req: Request, res: Response) => {
+  const requestId: number = +req.params.requestId;
+  upload.array("file", 5)(req, res, async (err) => {
     if (err) {
+      console.log(err)
       return res.status(400).json({
         message: err.message || "Error uploading files",
         success: false,
+        requestId
       });
     }
 
     if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
-      return res.status(400).json({
-        message: "No files uploaded",
-        success: false,
+      return res.status(401).json({
+        message:'no media is provided',
+        requestId,
+        success: false
       });
     }
-
     const uploadedFiles = (req.files as Express.Multer.File[]).map((file) => ({
       fileUrl: file.path, // Cloudinary file URL
       fileType: file.mimetype.startsWith("image/") ? "image" : "video",
     }));
+    await pool.query('DELETE FROM "request_media" WHERE "request" = $1;',[requestId]);
+    uploadedFiles.forEach(async (File) => {
+      await updateRequestMedia(File , requestId);
+    })
 
     return res.status(201).json({
-      message: "Files uploaded successfully",
+      message: 'Media uploaded successfully',
+      requestId,
       success: true,
       files: uploadedFiles,
     });

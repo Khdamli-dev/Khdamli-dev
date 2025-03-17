@@ -11,9 +11,8 @@ import {
   Dimensions,
   Platform,
 } from "react-native";
-import Icon from "react-native-vector-icons/Fontisto";
 import AntDesign from "react-native-vector-icons/AntDesign";
-import { MaterialIcons, Foundation } from "@expo/vector-icons";
+import {  Foundation } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import CONFIG from "../../../config"
 import { KeyboardAvoidingView, ScrollView } from "react-native";
@@ -80,12 +79,8 @@ export default function OtherInformation() {
         id,
       });
       if (response) {
-        router.push("/selectionRole");
-      } else {
-        alert(
-          "en error occurred with the submitted data. Please check your inputs"
-        );
-      }
+        router.replace("/selectionRole");
+      } 
     } catch (error) {
       alert("Server is busy, please try again later.");
     }
@@ -152,7 +147,7 @@ export default function OtherInformation() {
                   textShadowOffset: { width: 1, height: 1 },
                   textShadowRadius: 5,
                 }}
-                className=" text-6xl  font-semibold text-white"
+                className=" text-5xl  font-semibold text-white"
               >
                 Information
               </Text>
@@ -182,7 +177,7 @@ export default function OtherInformation() {
               setFieldValue,
             }) => (
               <View className="flex-1 w-full items-center   justify-center">
-                <View className="flex-1 items-center justify-center relative">
+                <View className="flex-1 items-center justify-center w-full">
                   <WilayaDropdown
                     selectedWilaya={selectedWilaya}
                     onSelectWilaya={(wilaya) => {

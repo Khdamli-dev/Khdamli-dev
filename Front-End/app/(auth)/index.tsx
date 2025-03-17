@@ -7,32 +7,28 @@ import {
   SafeAreaView,
   Image,
   Platform,
+  ImageBackground,
 } from "react-native";
 import Icon from "react-native-vector-icons/Fontisto";
 import Icoon from "react-native-vector-icons/AntDesign";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import {
-  KeyboardAvoidingView,
-  ScrollView,
-  TouchableWithoutFeedback,
-  Keyboard,
-} from "react-native";
+import { KeyboardAvoidingView, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import CONFIG from "../../config"
+import CONFIG from "../../config";
+import { LinearGradient } from "expo-linear-gradient";
 
 export default function Login() {
   const router = useRouter();
-  
+
   const [focusedInput, setFocusedInput] = useState<string | null>(null); // Track focused input
   const [passwordFocusedInput, setPasswordFocusedInput] = useState<
     string | null
   >(null); // Track focused input
   const [showPassword, setShowPassword] = useState(false);
-  
 
   // Data
   const loginSchema = Yup.object().shape({
@@ -46,17 +42,18 @@ export default function Login() {
   });
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [error, setError] = useState("");
 
   const handleLogin = async (values: { email: string; password: string }) => {
+     setError("");
     try {
-      
       const response = await axios.post(`${CONFIG.API_URL}/auth/login`, values);
       if (response.data.success) {
         const id: number = response.data.userId;
         await AsyncStorage.setItem("userId", JSON.stringify(id));
-        router.push("/OtherInformation"); //
+        router.replace("/(auth)/(signUp)/terms"); //
       } else {
-        alert("There is problem");
+        
       }
     } catch (error: any) {
       if (error.response?.status === 403 && error.response.data) {
@@ -67,12 +64,12 @@ export default function Login() {
           if (error.response.data.validPassword === false)
             setPasswordError("Password is wrong");
           if (error.response.data.validAccount === false)
-            alert("your account is not valid, you need to confirm your email");
+            setError(
+              "your account is not valid, you need to confirm your email"
+            );
         }
       } else {
-        alert("Server is busy, please try again later");
-        
-        
+        setError("Server is busy, please try again later");
       }
     }
   };
@@ -87,16 +84,22 @@ export default function Login() {
         <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
           {/* Main Login Section */}
           <View className="bg-specialGreen flex-1 items-center px-4 ">
-            {/* Profile Image */}
-            <Image
-              source={require("../../assets/images/photo_2025-02-04_10-16-04.jpg")}
-              className="w-96 h-60 rounded-full mb-6 mt-14 "
-            />
+            {/* Image */}
+
+            
+            <View className="relative w-11/12 h-72 top-12 mb-6">
+              <Image
+                source={require("../../assets/images/bgLogologin.jpg")}
+                className="absolute w-full h-full   "
+              />
+              <Image
+                source={require("../../assets/images/photo_2025-02-04_10-16-04.jpg")}
+                className="absolute top-6 left-4 w-11/12 h-52 rounded-full"
+              />
+            </View>
+
             <View className="flex-row w-10/12 mt-1 items-baseline justify-center ">
-              <Text
-                
-                className="text-9xl text-shadow-custom tracking-tight text-foncyYellow uppercase font-bold "
-              >
+              <Text className="text-9xl text-shadow-custom tracking-tight text-foncyYellow uppercase font-bold ">
                 KH
               </Text>
               <Text
@@ -153,13 +156,14 @@ export default function Login() {
                   <TextInput
                     className={`${
                       focusedInput === "email" ? "px-10" : "pl-28"
-                    } w-full h-full text-white text-2xl font-medium border-2 ${ emailError ||(errors.email && touched.email ) ? "border-red-600":"border-white"} rounded-full py-2 `}
+                    } w-full h-full text-white text-2xl font-medium border-2 ${emailError || (errors.email && touched.email) ? "border-red-600" : "border-white"} rounded-full py-2 `}
                     value={values.email}
                     onChangeText={handleChange("email")}
                     onFocus={() => {
                       setFocusedInput("email");
                       setEmailError("");
                       setFieldTouched("email", false);
+                      setError("");
                     }}
                     onBlur={() => {
                       if (values.email === "") {
@@ -175,7 +179,7 @@ export default function Login() {
                 </View>
 
                 {touched.email && errors.email && (
-                  <Text className="text-center text-red-600 text-lg  w-9/12" >
+                  <Text className="text-center text-red-600 text-lg  w-9/12">
                     {errors.email}
                   </Text>
                 )}
@@ -198,7 +202,7 @@ export default function Login() {
                   <TextInput
                     className={`${
                       passwordFocusedInput === "password" ? "pl-10" : "pl-28"
-                    } w-full h-full pr-14 text-white text-2xl font-medium border-2 ${ passwordError ||(errors.password && touched.password ) ? "border-red-600":"border-white"} rounded-full py-2 `}
+                    } w-full h-full pr-14 text-white text-2xl font-medium border-2 ${passwordError || (errors.password && touched.password) ? "border-red-600" : "border-white"} rounded-full py-2 `}
                     value={values.password}
                     onChangeText={handleChange("password")}
                     onFocus={() => {
@@ -216,13 +220,20 @@ export default function Login() {
                     placeholder="Password"
                     placeholderTextColor="#C4C4C4"
                   />
-                  <TouchableOpacity onPress={()=>setShowPassword(!showPassword)} className="absolute right-4 top-1/4">
-                                                      <MaterialCommunityIcons name="eye" color={showPassword ? '#fff' : '#BED2D0'} size={35}  />
-                 </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/4"
+                  >
+                    <MaterialCommunityIcons
+                      name="eye"
+                      color={showPassword ? "#fff" : "#BED2D0"}
+                      size={35}
+                    />
+                  </TouchableOpacity>
                 </View>
 
                 {touched.password && errors.password && (
-                  <Text className="text-center text-red-600 text-lg  w-9/12" >
+                  <Text className="text-center text-red-600 text-lg  w-9/12">
                     {errors.password}
                   </Text>
                 )}
@@ -231,14 +242,18 @@ export default function Login() {
                     {passwordError}
                   </Text>
                 ) : null}
+                {/* Errors */}
+                {error ? (
+                  <Text className="text-center text-red-600 text-lg  w-9/12 ">
+                    {error}
+                  </Text>
+                ) : null}
 
                 {/* buttons */}
                 <View className=" bg-white p-3 w-full items-center rounded-tl-[50px] mt-10  rounded-tr-[50px] shadow-xl">
                   {/* Forgot Password */}
                   <TouchableOpacity
-                    onPress={() =>
-                      router.push("/(auth)/(RestorAccount)")
-                    }
+                    onPress={() => router.push("/(auth)/(RestorAccount)")}
                   >
                     <Text className="text-specialGreen mb-6 text-lg font-bold">
                       Forgot Password ?
