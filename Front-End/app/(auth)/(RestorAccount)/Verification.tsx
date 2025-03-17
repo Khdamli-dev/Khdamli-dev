@@ -62,14 +62,22 @@ export default function VerficationCode() {
         }
       );
 
-      if (response.status === 400) {
-        setInValidCode("Incorrect Code");
-      } else {
-        router.push("./newPassword");
+      if (response.status === 200) {
+        router.replace("./newPassword");
         setInValidCode("")
+      } else {
+        
       }
-    } catch (error) {
-      alert("Error");
+    } catch (error : any) {
+      if (error.status === 400 && !error.resend){
+        setInValidCode("Invalid Code");
+      }
+      else if (error.status === 400 && error.resend){
+        setInValidCode("Code has expired")
+      }
+      else if(error.status === 500){
+        setInValidCode("Internal server error")
+      }
     }
   };
 
