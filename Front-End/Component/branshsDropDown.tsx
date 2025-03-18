@@ -37,18 +37,18 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
         const response = await axios.get(
           `${CONFIG.API_URL}/work/category/get-category`
         );
-        setMainCategories(response.data);
+        setMainCategories(response.data.categories);
       } catch (error) {
         console.error("Error fetching categories:", error);
       }
     };
     fetchCategories();
   }, []);
-
+ 
   // Update categories based on selected categories prop
   useEffect(() => {
     setCategories(
-      mainCategories.filter((cat: Category) =>
+      (mainCategories).filter((cat: Category) =>
         selectCategories?.includes(cat.id ?? "")
       )
     );

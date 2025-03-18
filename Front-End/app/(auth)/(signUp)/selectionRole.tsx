@@ -123,7 +123,7 @@ export default function SelectRole() {
 
             {/* Clients Card */}
             <TouchableOpacity
-              onPress={() => router.replace("/(auth)/(signUp)/terms")}
+              onPress={() => router.replace("/(auth)/(signUp)/Home")}
               className="bg-white w-96 rounded-2xl shadow-lg p-6 "
             >
               <View className="flex items-center ">

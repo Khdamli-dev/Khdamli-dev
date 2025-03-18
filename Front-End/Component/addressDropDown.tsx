@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import axios from "axios";
-import CONFIG from "@/config";
+import CONFIG from "../config";
 
 interface City {
   name: string;

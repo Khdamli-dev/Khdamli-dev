@@ -9,7 +9,7 @@ import {
   Animated,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import CONFIG from "@/config";
+import CONFIG from "../config";
 
 interface Wilaya {
   name: string;

@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { useNavigation } from '@react-navigation/native';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  SafeAreaView, 
+import React, { useState, useEffect } from "react";
+import { useNavigation } from "@react-navigation/native";
+import {
+  View,
+  Text,
+  TextInput,
+  BackHandler,
+  TouchableOpacity,
+  SafeAreaView,
+  Image,
   Dimensions,
   Platform,
 } from "react-native";
@@ -22,15 +24,8 @@ import * as Yup from "yup";
 import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
 
-export default function LocationInformation() {
-  const [Age, setAge] = useState('');
-  const [checkedMale, setCheckedMale] = useState(false);
-  const [checkedFemale, setcheckedFemale] = useState(false);
-  const [selectedGender, setSelectedGender] = useState("");
-  const navigation = useNavigation();
-  const [Years, setYears] = useState("");
-  const [checkedItemsWilaya, setcheckedItemsWilaya] = useState(false);
-  const { width: screenWidth } = Dimensions.get("window");
+export default function OtherInformation() {
+  const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
   const router = useRouter();
   const [selectedWilaya, setSelectedWilaya] = useState<{
     name: string;
@@ -292,21 +287,10 @@ export default function LocationInformation() {
                   </TouchableOpacity>
                 </View>
               </View>
-            </View>
-
-            <View style={{ flex: 1 }} />
-            <View className="w-full items-center justify-center bg-blue-600 p-6">
-              <TouchableOpacity className="rounded-full w-80 h-16 bg-specialGreen items-center justify-center">
-                <Text className="text-white text-3xl">Next</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+            )}
+          </Formik>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
-
-
-
-

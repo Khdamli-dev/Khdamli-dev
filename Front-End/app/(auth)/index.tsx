@@ -21,7 +21,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import CONFIG from "../../config";
 import { LinearGradient } from "expo-linear-gradient";
 
-export default function Login() {
+export default function Login() { 
   const router = useRouter();
 
   const [focusedInput, setFocusedInput] = useState<string | null>(null); // Track focused input

@@ -107,6 +107,7 @@ export default function SignUp() {
           credentials,
         }
       );
+
       if (response?.status === 201) {
         const id: number = response.data.userId;
         await AsyncStorage.setItem("userId", JSON.stringify(id));
@@ -127,6 +128,8 @@ export default function SignUp() {
           !error.response.data.phoneNumber ? "Phone number is already used" : ""
         );
       } else {
+        console.log(error);
+
         setUsernameError("");
         setEmailError("");
         setPhoneNumberError("");

@@ -83,7 +83,7 @@ export default function Work_Information() {
         workerId: id,
         payments: paymentMethod,
       });
-       router.replace("/(auth)/(signUp)/terms");
+       router.replace("/(mainapp)/screens/Home");
     } catch (error) {
       setErrorSubmit("Error Failed to submit data");
       setTimeout(() => setErrorSubmit(""), 30000);
