@@ -9,15 +9,16 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { MaterialCommunityIcons, AntDesign } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { CommonActions, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import axios from "axios";
-import CONFIG from "../../../config"
+import CONFIG from "../../../config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
 
 export default function SelectRole() {
   const { width: screenWidth } = Dimensions.get("window");
-  const router = useRouter();
+  const navigation = useNavigation();
   // change the role of user if it is worker
   const handleWorkerRole = async () => {
     try {
@@ -29,10 +30,25 @@ export default function SelectRole() {
         `${CONFIG.API_URL}/profile/update/role/worker`,
         { userId: id }
       );
-      router.replace("/(auth)/(signUp)/workerInfo");
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: "/(tabs)" }],
+        })
+      );
+      
     } catch (error: any) {
       alert("Server is busy, please try again later");
     }
+  };
+
+  const handleClientRole = async () => {
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: "/(tabs)" }],
+      })
+    );
   };
 
   return (
@@ -123,7 +139,7 @@ export default function SelectRole() {
 
             {/* Clients Card */}
             <TouchableOpacity
-              onPress={() => router.replace("/(auth)/(signUp)/Home")}
+              onPress={handleClientRole}
               className="bg-white w-96 rounded-2xl shadow-lg p-6 "
             >
               <View className="flex items-center ">

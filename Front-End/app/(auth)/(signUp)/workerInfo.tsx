@@ -16,6 +16,7 @@ import WorkingDaysTimeSelector, { WorkingDay } from "@/Component/timeOfWork";
 import axios from "axios";
 import CONFIG from "@/config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { CommonActions, useNavigation } from "@react-navigation/native";
 
 export default function Work_Information() {
   // State to store the selected payment method
@@ -55,7 +56,8 @@ export default function Work_Information() {
   };
 
   //HandleSubmit
-  const [errorSubmit, setErrorSubmit] = useState("")
+  const navigation = useNavigation();
+  const [errorSubmit, setErrorSubmit] = useState("");
   const handleSubmit = async () => {
     try {
       const categories = selectedBranches.map(Number);
@@ -63,14 +65,21 @@ export default function Work_Information() {
         .filter((day) => day.selected)
         .map(({ day, begin, end }) => ({ day, begin, end }));
 
-      if (categories.length === 0) {
-        setErrorSubmit("You must select at least one category");
-        setTimeout(() => setErrorSubmit(""), 30000);
+      if (
+        categories.length === 0 ||
+        workingHours.length === 0 ||
+        paymentMethod.length === 0
+      ) {
+        setErrorSubmit(
+          "You must select at least one category, one working hour, and one payment method."
+        );
+        setTimeout(() => setErrorSubmit(""), 3000);
         return;
       }
+
       const storedId = await AsyncStorage.getItem("userId");
       const id: number = Number(storedId);
-      
+
       await axios.post(`${CONFIG.API_URL}/work/category/add-category`, {
         categories,
         workerId: id,
@@ -83,7 +92,12 @@ export default function Work_Information() {
         workerId: id,
         payments: paymentMethod,
       });
-       router.replace("/(mainapp)/screens/Home");
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: "/(tabs)" }],
+        })
+      );
     } catch (error) {
       setErrorSubmit("Error Failed to submit data");
       setTimeout(() => setErrorSubmit(""), 30000);
@@ -156,6 +170,11 @@ export default function Work_Information() {
           </View>
 
           {/* Submit button */}
+          {errorSubmit ? (
+            <Text className="text-center text-red-600 text-lg  w-9/12 mb-6">
+              {errorSubmit}
+            </Text>
+          ) : null}
           <TouchableOpacity
             onPress={handleSubmit as any}
             className="bg-specialGreen p-6 rounded-full w-11/12 max-w-sm shadow-2xl shadow-black mb-6"
@@ -164,11 +183,6 @@ export default function Work_Information() {
               Submit
             </Text>
           </TouchableOpacity>
-          {errorSubmit ? (
-            <Text className="text-center text-red-600 text-lg  w-9/12 ">
-              {errorSubmit}
-            </Text>
-          ) : null}
         </View>
       </ScrollView>
     </SafeAreaView>
