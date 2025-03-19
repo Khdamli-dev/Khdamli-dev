@@ -13,9 +13,9 @@ const CustomTabBarIcon = ({
   focused: boolean;
 }) => {
   return (
-    <View className="items-center justify-center">
+    <View  className="items-center justify-center">
       {focused ? (
-        <View className="relative bg-white w-24 h-16 justify-center rounded-b-full -top-3 items-center">
+        <View  className="relative border-b-8  w-24 h-16 justify-center rounded-b-full -top-3 items-center">
           <View className="bg-[#D9D9D9] h-12 w-12 rounded-full items-center justify-center shadow-2xl">
             <FontAwesome name={name} size={24} color="#F8A100" />
           </View>
@@ -45,7 +45,7 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="(home)"
         options={{
           tabBarLabel: ({ focused }) => (
             <Text
@@ -62,7 +62,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="requeste"
+        name="(requests)"
         options={{
           tabBarLabel: ({ focused }) => (
             <Text
@@ -83,7 +83,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="(profile)"
         options={{
           tabBarLabel: ({ focused }) => (
             <Text
@@ -100,7 +100,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="settings"
+        name="(settings)"
         options={{
           tabBarLabel: ({ focused }) => (
             <Text

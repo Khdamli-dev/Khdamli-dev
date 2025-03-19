@@ -33,7 +33,7 @@ export default function SelectRole() {
       navigation.dispatch(
         CommonActions.reset({
           index: 0,
-          routes: [{ name: "/(tabs)" }],
+          routes: [{ name: "/(tabs)/(home)" }],
         })
       );
       

@@ -26,7 +26,7 @@ const AddressDropdown: React.FC<AddressDropdownProps> = ({
   onSelectMunicipality,
   wilaya,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+ 
   const [municipalities, setMunicipalities] = useState<City[]>([]);
   const [filteredMunicipalities, setFilteredMunicipalities] = useState<City[]>(
     []
@@ -53,18 +53,10 @@ const AddressDropdown: React.FC<AddressDropdownProps> = ({
     setSearch("");
   }, [wilaya]);
 
-  const toggleDropdown = () => {
-    setIsOpen(!isOpen);
-    Animated.timing(rotateAnim, {
-      toValue: isOpen ? 0 : 1,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
-  };
+  
 
   const handleSelect = (city: City) => {
     onSelectMunicipality(city);
-    setIsOpen(false);
   };
 
   const handleSearch = (text: string) => {
@@ -85,26 +77,13 @@ const AddressDropdown: React.FC<AddressDropdownProps> = ({
     outputRange: ["0deg", "180deg"],
   });
 
-  const renderButton = () => (
-    <TouchableOpacity
-      className="flex-row items-center justify-between w-9/12 h-20 border-2 border-specialGreen rounded-full px-4 bg-white shadow-md"
-      onPress={toggleDropdown}
-    >
-      <Icon name="location-city" color="#396F65" size={30} />
-      <Text className="text-xl text-specialGreen font-bold">
-        {selectedCity?.name || "Enter your City"}
-      </Text>
-      <Animated.View style={{ transform: [{ rotate: arrowRotation }] }}>
-        <Icon name="keyboard-arrow-down" color="#396F65" size={30} />
-      </Animated.View>
-    </TouchableOpacity>
-  );
+  
 
   return (
-    <View className="items-center justify-center w-full mt-6">
-      {renderButton()}
-      {isOpen && wilaya && (
-        <View className="w-9/12 bg-white border border-gray-300  shadow-2xl py-4 mt-2">
+    <View className="items-center justify-center w-full ">
+      
+      
+        <View className="w-9/12 bg-white border-specialGreen rounded-xl border-2  shadow-2xl py-4 mt-2">
           <TextInput
             className="border-b-2 border-gray-400 p-3 mb-3 text-lg"
             placeholder="Search Municipality..."
@@ -130,7 +109,7 @@ const AddressDropdown: React.FC<AddressDropdownProps> = ({
             ))}
           </ScrollView>
         </View>
-      )}
+      
     </View>
   );
 };

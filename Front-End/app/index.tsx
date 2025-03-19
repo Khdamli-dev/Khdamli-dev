@@ -41,7 +41,7 @@
        const userId = await AsyncStorage.getItem("userId");
 
        if (userId) {
-         router.replace("./(tabs)"); // المستخدم مسجّل الدخول
+         router.replace("./(tabs)/(home)"); // المستخدم مسجّل الدخول
        } else {
          router.replace("./(auth)"); // المستخدم غير مسجّل الدخول
        }

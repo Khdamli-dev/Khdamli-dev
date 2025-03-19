@@ -7,7 +7,12 @@ import {
   Dimensions,
   ScrollView,
 } from "react-native";
-import { AntDesign } from "@expo/vector-icons";
+import {
+  AntDesign,
+  MaterialCommunityIcons,
+  MaterialIcons,
+  Entypo,
+} from "@expo/vector-icons";
 import CategorySelector from "@/Component/categorysDropDown";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -55,6 +60,18 @@ export default function Work_Information() {
     );
   };
 
+  const [isCategorysListOpen, setCategorysListOpen] = useState(false);
+  const toggleCategorysList = () => {
+    setCategorysListOpen(!isCategorysListOpen);
+    isBranshsListOpen ? setBranshsListOpen(!isBranshsListOpen) : null;
+  };
+
+  const [isBranshsListOpen, setBranshsListOpen] = useState(false);
+  const toggleBranshsList = () => {
+    setBranshsListOpen(!isBranshsListOpen);
+    isCategorysListOpen ? setCategorysListOpen(!isCategorysListOpen) : null;
+  };
+
   //HandleSubmit
   const navigation = useNavigation();
   const [errorSubmit, setErrorSubmit] = useState("");
@@ -70,6 +87,7 @@ export default function Work_Information() {
         workingHours.length === 0 ||
         paymentMethod.length === 0
       ) {
+
         setErrorSubmit(
           "You must select at least one category, one working hour, and one payment method."
         );
@@ -95,7 +113,7 @@ export default function Work_Information() {
       navigation.dispatch(
         CommonActions.reset({
           index: 0,
-          routes: [{ name: "/(tabs)" }],
+          routes: [{ name: "/(tabs)/(home)" }],
         })
       );
     } catch (error) {
@@ -136,14 +154,68 @@ export default function Work_Information() {
 
           {/* Category selection component */}
           <View className="flex-1">
-            <CategorySelector onSelectCategories={handleSelectedCategories} />
+            <TouchableOpacity
+              className="flex-row items-center justify-between rounded-full px-4 w-80 h-16 border-2 border-specialGreen mb-2"
+              onPress={toggleCategorysList}
+            >
+              <MaterialCommunityIcons
+                name="briefcase"
+                size={30}
+                color="#4C8479"
+              />
+              <Text className="text-specialGreen">
+                {selectedCategories.length > 0
+                  ? `Selected (${selectedCategories.length})`
+                  : "Select Your Category"}
+              </Text>
+              <MaterialIcons
+                name={
+                  isCategorysListOpen
+                    ? "keyboard-arrow-up"
+                    : "keyboard-arrow-down"
+                }
+                color="#4C8479"
+                size={40}
+              />
+            </TouchableOpacity>
+            {isCategorysListOpen && (
+              <CategorySelector
+                onSelectCategories={handleSelectedCategories}
+                categorys={selectedCategories}
+              />
+            )}
           </View>
 
           {/* Branch selection component based on selected categories */}
-          <Branshes
-            selectCategories={selectedCategories}
-            onSelectBranches={handleSelectedBranches}
-          />
+          <View className="flex-1 items-center">
+            <TouchableOpacity
+              className="flex-row items-center justify-between rounded-full px-4 w-80 h-16 border-2 border-specialGreen mb-2"
+              onPress={toggleBranshsList}
+            >
+              <Entypo name="flow-tree" size={30} color="#4C8479" />
+              <Text className="text-specialGreen">
+                {selectedBranches.length > 0
+                  ? `Selected Branches: ${selectedBranches.length}`
+                  : "Select Your Branches"}
+              </Text>
+              <MaterialIcons
+                name={
+                  isBranshsListOpen
+                    ? "keyboard-arrow-up"
+                    : "keyboard-arrow-down"
+                }
+                color="#4C8479"
+                size={40}
+              />
+            </TouchableOpacity>
+            {isBranshsListOpen && (
+              <Branshes
+                selectCategories={selectedCategories}
+                onSelectBranches={handleSelectedBranches}
+                branshss={selectedBranches}
+              />
+            )}
+          </View>
 
           {/* Working days selection component */}
           <View className="items-center mb-2 ">
@@ -176,7 +248,7 @@ export default function Work_Information() {
             </Text>
           ) : null}
           <TouchableOpacity
-            onPress={handleSubmit as any}
+            onPress={handleSubmit}
             className="bg-specialGreen p-6 rounded-full w-11/12 max-w-sm shadow-2xl shadow-black mb-6"
           >
             <Text className="text-white text-center font-bold text-2xl">

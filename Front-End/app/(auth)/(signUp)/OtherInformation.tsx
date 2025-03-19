@@ -4,7 +4,7 @@ import {
   View,
   Text,
   TextInput,
-  BackHandler,
+  Animated,
   TouchableOpacity,
   SafeAreaView,
   Image,
@@ -12,9 +12,9 @@ import {
   Platform,
 } from "react-native";
 import AntDesign from "react-native-vector-icons/AntDesign";
-import {  Foundation } from "@expo/vector-icons";
+import { Foundation, MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import CONFIG from "../../../config"
+import CONFIG from "../../../config";
 import { KeyboardAvoidingView, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import WilayaDropdown from "@/Component/wilayaDropDown";
@@ -27,6 +27,8 @@ import { LinearGradient } from "expo-linear-gradient";
 export default function OtherInformation() {
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
   const router = useRouter();
+  const rotateAnim = useState(new Animated.Value(0))[0];
+
   const [selectedWilaya, setSelectedWilaya] = useState<{
     name: string;
     id: number;
@@ -35,9 +37,7 @@ export default function OtherInformation() {
     name: string;
     id: number;
   } | null>(null);
-   const [ageFocusedInput, setAgeFocusedInput] = useState<string | null>(
-      null
-    );
+  const [ageFocusedInput, setAgeFocusedInput] = useState<string | null>(null);
   //Creat validationSchema
   const validationSchema = Yup.object().shape({
     age: Yup.number()
@@ -45,7 +45,30 @@ export default function OtherInformation() {
       .max(100, "Age cannot be more than 100 years old"),
     sex: Yup.number(),
   });
+  //WilayaDropDown
+  const [isWilayaOpen, setIsWilayaOpen] = useState(false);
+  const toggleDropdown = () => {
+    setIsWilayaOpen(!isWilayaOpen);
+    isAddressOpen ? setIsAddressOpen(!isAddressOpen) : null;
+  };
+  useEffect(() => {
+    setSelectedMunicipality(null);
+  }, [selectedWilaya]);
 
+  //AddressDropDown
+  const [isAddressOpen, setIsAddressOpen] = useState(false);
+  const toggleAddressDropdown = () => {
+    setIsAddressOpen(!isAddressOpen);
+    isWilayaOpen ? setIsWilayaOpen(!isWilayaOpen) : null;
+  };
+  const handleSelectedMunicipality = (municipalitie: any) => {
+    setSelectedMunicipality(municipalitie);
+    setIsAddressOpen(false);
+  };
+  const arrowRotation = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "180deg"],
+  });
   // handleOtherInfermation
   const handleOtherInfermation = async ({
     age,
@@ -72,15 +95,18 @@ export default function OtherInformation() {
     // Retrieve userId from AsyncStorage
     const storedId = await AsyncStorage.getItem("userId");
     const id: number = Number(storedId); // Convert string to number safely
-    console.log(id)
+    console.log(id);
     try {
-      const response = await axios.post(`${CONFIG.API_URL}/profile/update/user-info`, {
-        personalInfo,
-        id,
-      });
+      const response = await axios.post(
+        `${CONFIG.API_URL}/profile/update/user-info`,
+        {
+          personalInfo,
+          id,
+        }
+      );
       if (response) {
         router.replace("/selectionRole");
-      } 
+      }
     } catch (error) {
       alert("Server is busy, please try again later.");
     }
@@ -88,7 +114,10 @@ export default function OtherInformation() {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "padding"}style={{ flex: 1 }}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "padding"}
+        style={{ flex: 1 }}
+      >
         <ScrollView
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{
@@ -178,35 +207,85 @@ export default function OtherInformation() {
             }) => (
               <View className="flex-1 w-full items-center   justify-center">
                 <View className="flex-1 items-center justify-center w-full">
-                  <WilayaDropdown
-                    selectedWilaya={selectedWilaya}
-                    onSelectWilaya={(wilaya) => {
-                     
-                      setSelectedWilaya(wilaya);
-                    }}
-                  />
-                  <AddressDropdown
-                    selectedCity={selectedMunicipality} // Pass the object, not just selectedWilaya?.name
-                    onSelectMunicipality={(municipality) =>
-                      setSelectedMunicipality(municipality)
-                    }
-                    wilaya={selectedWilaya}
-                  />
+                  <TouchableOpacity
+                    className="flex-row items-center justify-between w-9/12 h-20 border-2 border-specialGreen rounded-full px-4"
+                    onPress={toggleDropdown}
+                  >
+                    <MaterialIcons
+                      name="location-pin"
+                      color="#396F65"
+                      size={30}
+                    />
+                    <Text className="text-xl text-specialGreen font-bold">
+                      {selectedWilaya?.name || "Enter your Wilaya"}
+                    </Text>
+                    <MaterialIcons
+                      name={
+                        isWilayaOpen
+                          ? "keyboard-arrow-up"
+                          : "keyboard-arrow-down"
+                      }
+                      color="#4C8479"
+                      size={30}
+                    />
+                  </TouchableOpacity>
+                  {isWilayaOpen && (
+                    <WilayaDropdown
+                      selectedWilaya={selectedWilaya}
+                      onSelectWilaya={(wilaya) => {
+                        setSelectedWilaya(wilaya);
+                        setIsWilayaOpen(false);
+                      }}
+                    />
+                  )}
+                </View>
+                <View className="flex-1 items-center mt-5 justify-center w-full">
+                  <TouchableOpacity
+                    className="flex-row items-center justify-between w-9/12 h-20 border-2 border-specialGreen rounded-full px-4 bg-white shadow-md"
+                    onPress={toggleAddressDropdown}
+                  >
+                    <MaterialIcons
+                      name="location-city"
+                      color="#396F65"
+                      size={30}
+                    />
+                    <Text className="text-xl text-specialGreen font-bold">
+                      {selectedMunicipality?.name || "Enter your City"}
+                    </Text>
+                    <MaterialIcons
+                      name={
+                        isAddressOpen
+                          ? "keyboard-arrow-up"
+                          : "keyboard-arrow-down"
+                      }
+                      color="#4C8479"
+                      size={30}
+                    />
+                  </TouchableOpacity>
+                  {isAddressOpen && selectedWilaya && (
+                    <AddressDropdown
+                      selectedCity={selectedMunicipality} // Pass the object, not just selectedWilaya?.name
+                      onSelectMunicipality={(municipality) =>
+                        handleSelectedMunicipality(municipality)
+                      }
+                      wilaya={selectedWilaya}
+                    />
+                  )}
                 </View>
 
                 <View className=" relative w-9/12 h-20 mt-6 mb-7 self-center ">
-                {ageFocusedInput !== "age" && (
-                  <AntDesign
-                    name="idcard"
-                    color="#ffffff"
-                    size={28}
-                    className="bg-specialGreen absolute left-6 top-6  text-2xl font-bold "
-                  />
-                )}
+                  {ageFocusedInput !== "age" && (
+                    <AntDesign
+                      name="idcard"
+                      color="#ffffff"
+                      size={28}
+                      className="bg-specialGreen absolute left-6 top-6  text-2xl font-bold "
+                    />
+                  )}
                   <TextInput
                     className={` ${
                       ageFocusedInput === "age" ? "px-10" : "pl-16"
-                    } absolute w-full h-full  text-xl font-bold border-2 ${ errors.age && touched.age ? "border-red-600":"border-specialGreen"} rounded-full  py-2` }
+                    } absolute w-full h-full  text-xl font-bold border-2 ${errors.age && touched.age ? "border-red-600" : "border-specialGreen"} rounded-full  py-2`}
                     value={values.age}
                     onChangeText={handleChange("age")}
                     onBlur={() => {
@@ -217,7 +296,7 @@ export default function OtherInformation() {
                     }}
                     onFocus={() => {
                       setAgeFocusedInput("age");
-                     
+
                       setFieldTouched("age", false);
                     }}
                     keyboardType="numeric"

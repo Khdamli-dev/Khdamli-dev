@@ -15,20 +15,21 @@ interface Category {
 
 interface CategorySelectorProps {
   onSelectCategories: (selectedIds: string[]) => void;
+  categorys:string[]
 }
 
 const CategorySelector: React.FC<CategorySelectorProps> = ({
   onSelectCategories,
+  categorys,
 }) => {
   // State to hold fetched categories
   const [categories, setCategories] = useState<Category[]>([]);
   // State to hold selected category IDs
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  // State to control the visibility of the list
-  const [isListOpen, setIsListOpen] = useState(false);
 
   // Fetch categories from API on component mount
   useEffect(() => {
+    setSelectedCategories(categorys);
     const fetchCategories = async () => {
       try {
         const response = await axios.get(
@@ -62,66 +63,39 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
     onSelectCategories(updatedSelectedCategories);
   };
 
-  // Toggle the visibility of the category list
-  const toggleList = () => setIsListOpen(!isListOpen);
-
-  // Render the toggle button
-  const renderButton = () => (
-    <TouchableOpacity
-      className="flex-row items-center justify-between rounded-full px-4 w-80 h-16 border-2 border-specialGreen mb-2"
-      onPress={toggleList}
-    >
-      <MaterialCommunityIcons name="briefcase" size={30} color="#4C8479" />
-      <Text className="text-specialGreen">
-        {selectedCategories.length > 0
-          ? `Selected (${selectedCategories.length})`
-          : "Select Your Category"}
-      </Text>
-      <Icon1
-        name={isListOpen ? "keyboard-arrow-up" : "keyboard-arrow-down"}
-        color="#4C8479"
-        size={40}
-      />
-    </TouchableOpacity>
-  );
-
   // Render each category item using ScrollView mapping instead of FlatList
   const renderItem = (item: Category) => (
     <TouchableOpacity
       key={item.id}
-      className={`flex-row items-center justify-around h-16 border-2 border-gray-300 rounded-md ${
+      className={`flex-row items-center mx-2 mb-3 justify-around h-16 border-2 border-gray-300 rounded-md ${
         selectedCategories.includes(item.id)
           ? "bg-foncyYellow"
-          : "bg-specialGray"
+          : "bg-white"
       }`}
       onPress={() => handleSelectCategory(item.id)}
     >
       <Image
         source={{ uri: item.logo }}
         style={{ height: 36, width: 36 }}
-        className="rounded-full border-2"
+        className="rounded-full border-2 ml-2"
         resizeMode="contain"
       />
-      <Text style={{ width: 210 }} className="text-black text-center text-lg">
+      <Text style={{ width: 210 }} className="text-black text-center text-lg ">
         {item.name}
       </Text>
     </TouchableOpacity>
   );
 
   return (
-    <View className="flex-1 items-center mb-8 " >
-      {renderButton()}
-      {isListOpen && (
-        
-        <ScrollView
-          style={{ maxHeight: 300 ,}}
-          className="mt-1 w-80"
-          nestedScrollEnabled={true}
-          showsVerticalScrollIndicator={true}
-        >
-          {categories.map((category) => renderItem(category))}
-        </ScrollView>
-      )}
+    <View className="flex-1 items-center mb-8 ">
+      <ScrollView
+        style={{ maxHeight: 300 }}
+        className="mt-1 w-80 border-2 pt-2 border-specialGreen rounded-xl"
+        nestedScrollEnabled={true}
+        showsVerticalScrollIndicator={true}
+      >
+        {categories.map((category) => renderItem(category))}
+      </ScrollView>
     </View>
   );
 };
