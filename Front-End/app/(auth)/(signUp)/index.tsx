@@ -59,9 +59,10 @@ export default function SignUp() {
     email: Yup.string()
       .email("Invalid email address")
       .required("Email Is Required"),
-    phoneNumber: Yup.string()
-      .matches(/^0(5|6|7)[0-9]{8}$/, "Invalid  phone number")
-      .required("Phonenumber Is Required"),
+    phoneNumber: Yup.string().matches(
+      /^0(5|6|7)[0-9]{8}$/,
+      "Invalid  phone number"
+    ),
     password: Yup.string()
       .required("Password is required")
       .matches(
@@ -106,7 +107,6 @@ export default function SignUp() {
           credentials,
         }
       );
-      
       if (response?.status === 201) {
         const id: number = response.data.userId;
         await AsyncStorage.setItem("userId", JSON.stringify(id));
@@ -133,7 +133,6 @@ export default function SignUp() {
         setEmailError("");
         setPhoneNumberError("");
         alert("Server is busy, please try again later");
-        console.log(error);
       }
     }
   };

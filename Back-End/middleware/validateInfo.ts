@@ -8,7 +8,7 @@ import checkPassword from '../utils/validator/checkPassword';
 const validateInfo = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { username, email, phoneNumber, password }: Credentials = req.body.credentials;
-    
+
     // check if the info is already used
     // i make condition might be null because we will reuse middleware when update profile
     // if property exist we validate it else we give it true

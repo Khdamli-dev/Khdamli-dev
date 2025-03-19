@@ -72,7 +72,7 @@ export default function OtherInformation() {
     // Retrieve userId from AsyncStorage
     const storedId = await AsyncStorage.getItem("userId");
     const id: number = Number(storedId); // Convert string to number safely
-    console.log(id)
+
     try {
       const response = await axios.post(`${CONFIG.API_URL}/profile/update/user-info`, {
         personalInfo,

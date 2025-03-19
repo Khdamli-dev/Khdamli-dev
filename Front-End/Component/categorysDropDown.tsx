@@ -35,7 +35,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
           `${CONFIG.API_URL}/work/category/get-category`
         );
         // Filter categories to include only top-level categories
-        const filteredCategories = response?.data?.categories.filter(
+        const filteredCategories = response.data.filter(
           (category: Category) => category.parent_category === null
         );
         setCategories(filteredCategories);
