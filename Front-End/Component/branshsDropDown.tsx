@@ -37,7 +37,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
         const response = await axios.get(
           `${CONFIG.API_URL}/work/category/get-category`
         );
-        setMainCategories(response.data.categories);
+        setMainCategories(response.data);
       } catch (error) {
         console.error("Error fetching categories:", error);
       }
@@ -47,33 +47,12 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
  
   // Update categories based on selected categories prop
   useEffect(() => {
-    if (mainCategories.length > 0 && selectCategories) {
-      setCategories(
-        mainCategories.filter((cat: Category) =>
-          selectCategories.includes(cat.id ?? "")
-        )
-      );
-    }
-  }, [selectCategories, mainCategories]);
-
-  // Remove branches that don't have a parent in selected categories
-  useEffect(() => {
-    cleanUnparentedBranches();
-  }, [selectCategories]);
-
-  const cleanUnparentedBranches = () => {
-    if (!selectCategories) return;
-
-    const validBranches = branshes.filter((branch) =>
-      selectCategories.includes(branch.parent_category ?? "")
+    setCategories(
+      mainCategories.filter((cat: Category) =>
+        selectCategories?.includes(cat.id ?? "")
+      )
     );
-
-    if (validBranches.length !== branshes.length) {
-      setBranshes(validBranches);
-      setSelectedBranches(validBranches.map((b) => b.id));
-      onSelectBranches(validBranches.map((b) => b.id));
-    }
-  };
+  }, [selectCategories, mainCategories]);
 
   // Handle branch selection toggle
 
@@ -109,7 +88,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
 
     // Check if any category is missing a selected subcategory
     let perentCategorys: string[];
-    perentCategorys = categories.map((sub) => sub.id);
+    perentCategorys =categories.map((sub) => sub.id);
     const hasMissingCategories = perentCategorys.some(
       (id) => !selectedParents.has(id)
     );

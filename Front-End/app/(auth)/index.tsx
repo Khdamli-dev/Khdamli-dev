@@ -51,9 +51,9 @@ export default function Login() {
       if (response.data.success) {
         const id: number = response.data.userId;
         await AsyncStorage.setItem("userId", JSON.stringify(id));
-        router.replace("/(tabs)"); //
+        router.replace("/(auth)/(signUp)/terms"); //
       } else {
-         
+        
       }
     } catch (error: any) {
       if (error.response?.status === 403 && error.response.data) {
