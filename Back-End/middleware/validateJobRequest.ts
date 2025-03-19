@@ -12,7 +12,6 @@ const validateJobRequest = (req: Request, res: Response, next: NextFunction) => 
     type,
     worker
   }: JobRequest = req.body;
-
   // Check for required fields
   if (!client || !client_address || !working_time || !category || !payment || !type) {
     res.status(400).json({ 

@@ -127,6 +127,8 @@ export default function SignUp() {
           !error.response.data.phoneNumber ? "Phone number is already used" : ""
         );
       } else {
+        console.log(error);
+
         setUsernameError("");
         setEmailError("");
         setPhoneNumberError("");

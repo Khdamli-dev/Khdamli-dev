@@ -8,7 +8,11 @@ import {
   ScrollView,
   Animated,
 } from "react-native";
-import CONFIG from "@/config";
+
+
+import Icon from "react-native-vector-icons/MaterialIcons";
+import CONFIG from "../config";
+
 
 interface Wilaya {
   name: string;

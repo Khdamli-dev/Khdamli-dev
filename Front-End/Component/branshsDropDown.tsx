@@ -45,7 +45,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
     };
     fetchCategories();
   }, []);
-
+ 
   // Update categories based on selected categories prop
   useEffect(() => {
     if (mainCategories.length > 0 && selectCategories) {
