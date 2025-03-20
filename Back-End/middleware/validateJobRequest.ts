@@ -1,25 +1,36 @@
 import { Request, Response, NextFunction } from 'express';
 import JobRequest from '../interface/jobRequest';
+import PersonalInfo from '../interface/personalInfo';
+import assignAddress from './assignAddress';
 
-const validateJobRequest = (req: Request, res: Response, next: NextFunction) => {
+const validateJobRequest = async (req: Request, res: Response, next: NextFunction) => {
   const {
     client,
-    client_address,
+    region,
+    city,
     working_time,
     category,
     payment,
     description,
     type,
-    worker
+    worker,
   }: JobRequest = req.body;
+  
   // Check for required fields
-  if (!client || !client_address || !working_time || !category || !payment || !type) {
+  if (!client || !region || !working_time || !category || !payment || !type) {
     res.status(400).json({ 
       message: 'Missing required fields', 
       success : false   
     });
     return;
   }
+
+  // make address
+  req.body.personalInfo = {};
+  req.body.personalInfo.address = {region, city}
+  await assignAddress(req, res, () => {
+    req.body.client_address = req.body.personalInfo.address;
+  });
 
   // Validation: type (1 or 2)
   if (type !== 1 && type !== 2) {
