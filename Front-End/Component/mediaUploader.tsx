@@ -34,7 +34,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
       quality: 1,
     });
 
-    console.log("ImagePicker result:", result);
+   
 
     if (!result.canceled) {
       let newMedia: MediaItem[] = result.assets.map((item) => ({

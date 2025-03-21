@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import React from "react";
+import React, { useEffect } from "react";
 import { View, Text } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 
@@ -11,7 +11,7 @@ const CustomTabBarIcon = ({
   name: any;
   color: string;
   focused: boolean;
-}) => {
+  }) => {
   return (
     <View  className="items-center justify-center">
       {focused ? (

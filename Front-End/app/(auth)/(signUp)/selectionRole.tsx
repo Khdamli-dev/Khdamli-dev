@@ -9,16 +9,17 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { MaterialCommunityIcons, AntDesign } from "@expo/vector-icons";
-import { CommonActions, useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
-import axios from "axios";
-import CONFIG from "../../../config";
+import axios, { all } from "axios";
+import CONFIG from "../../../config"
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
+import { useNavigation, CommonActions } from "@react-navigation/native";
 
 export default function SelectRole() {
   const { width: screenWidth } = Dimensions.get("window");
-  const navigation = useNavigation();
+  const router = useRouter();
+   const navigation = useNavigation();
   // change the role of user if it is worker
   const handleWorkerRole = async () => {
     try {
@@ -30,25 +31,16 @@ export default function SelectRole() {
         `${CONFIG.API_URL}/profile/update/role/worker`,
         { userId: id }
       );
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: "/(tabs)/(home)" }],
-        })
-      );
+     router.replace("/(auth)/(signUp)/workerInfo")
       
     } catch (error: any) {
       alert("Server is busy, please try again later");
     }
   };
-
   const handleClientRole = async () => {
-    navigation.dispatch(
-      CommonActions.reset({
-        index: 0,
-        routes: [{ name: "/(tabs)" }],
-      })
-    );
+    router.dismissAll();
+    router.replace("/(tabs)/(home)");
+    router.replace("/(tabs)/(home)"); // Navigate to home  
   };
 
   return (
@@ -139,7 +131,7 @@ export default function SelectRole() {
 
             {/* Clients Card */}
             <TouchableOpacity
-              onPress={handleClientRole}
+              onPress={handleClientRole }
               className="bg-white w-96 rounded-2xl shadow-lg p-6 "
             >
               <View className="flex items-center ">

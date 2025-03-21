@@ -69,6 +69,10 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
 
   const cleanUnparentedBranches = () => {
     if (!selectCategories) return;
+
+    setBranshes(mainCategories.filter((bransh) => branshss.includes(bransh.id)));
+    console.log(branshes);
+    
     const validBranches = branshes.filter((branch) =>
       selectCategories.includes(branch.parent_category ?? "")
     );
@@ -111,7 +115,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
 
     // Check if any category is missing a selected subcategory
     let perentCategorys: string[];
-    perentCategorys = categories.map((sub) => sub.id);
+    perentCategorys =categories.map((sub) => sub.id);
     const hasMissingCategories = perentCategorys.some(
       (id) => !selectedParents.has(id)
     );

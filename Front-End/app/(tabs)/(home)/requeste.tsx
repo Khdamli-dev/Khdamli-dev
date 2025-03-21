@@ -67,7 +67,6 @@ const CreateRequestScreen = () => {
       id: string;
     } | null
   ) => {
-    console.log("Selected Category:", category);
     setSelectedCategory(category);
     setIsCategoryOpen(false);
   };

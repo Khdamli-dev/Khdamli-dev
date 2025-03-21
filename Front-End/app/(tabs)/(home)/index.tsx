@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, Text ,Button } from "react-native";
 import { router } from "expo-router";
+
+
 const HomeScreen = () => {
   return (
     <View className="flex-1 items-center bg-white justify-center">
