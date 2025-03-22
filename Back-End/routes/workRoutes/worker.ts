@@ -1,8 +1,8 @@
 import express, { Router } from 'express'
-import { getWorker } from '../../controller/workerController/getWorker';
+import { getWorkers } from '../../controller/workerController/getWorkers';
 
 
 
 const worker : Router= express.Router();
-worker.get('/',getWorker);
+worker.get('/',getWorkers);
 export default worker;
