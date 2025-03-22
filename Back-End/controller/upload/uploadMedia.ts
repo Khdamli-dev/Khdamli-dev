@@ -4,7 +4,7 @@ import pool from "../../database/dbConnection";
 import { updateRequestMedia } from "../../utils/update/updateRequestMedia";
 
 export const uploadMedia = async (req: Request, res: Response) => {
-  const requestId: number = +req.params.requestId;
+  const requestId: number = +req.body.requestId;
   upload.array("file", 5)(req, res, async (err) => {
     if (err) {
       console.log(err)

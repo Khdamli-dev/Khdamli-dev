@@ -13,10 +13,11 @@ const addWorkerCategory = async (req: Request, res: Response) => {
   try {
     categories.map(async (categoryId : number) => {
       await pool.query(
-        `INSERT INTO worker_category (worker, category) 
-         VALUES ($1, $2) 
+        `INSERT INTO worker_category (worker, category , unity) 
+         VALUES ($1, $2 , 1) 
          `,[workerId, categoryId]);
     });
+  
 
     res.status(201).json({ message: 'Categories added successfully' });
   } catch (error) {

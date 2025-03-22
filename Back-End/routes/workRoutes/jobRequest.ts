@@ -14,12 +14,11 @@ request.post("/create", validateJobRequest, createRequest);
 // this route used to get private requests for a client or a worker
 request.get("/get/private", getPrivateRequest);
 // this route used to get public requests of client
-
 request.get('/get/public/:client', getPublicRequest);
 
 request.delete('/:requestId', deleteRequest);
 
-request.put('/:requestId', modifyRequest );
+request.put('/:requestId', modifyRequest);
 
 request.put('/media/:requestId',uploadMedia);
 
