@@ -3,9 +3,9 @@ import pool from '../../database/dbConnection';
 
 const changeToWorkerRole = async (req: Request, res: Response) => {
   try {
-    const { userId }: { userId: number } = req.body;
-    if (!userId) {
-      res.status(400).json({ message: 'id is required' });
+    const userId : number = +req.params.id;
+    if (Number.isNaN(userId)) {
+      res.status(400).json({ message: 'user id is required' });
       return;
     }
 

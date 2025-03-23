@@ -3,8 +3,8 @@ import pool from "../../database/dbConnection";
 
 const getCities = async (req: Request, res: Response) => {
   try {
-    const { region } = req.query as { region?: string };
-    if (!region) {
+    const region = +req.params.region;
+    if (Number.isNaN(+region)) {
       res.status(400).json({ message: "region id is required" });
       return;
     }
@@ -15,7 +15,10 @@ const getCities = async (req: Request, res: Response) => {
         `,
       [region]
     );
-    res.status(200).json({ cities: regions });
+    res.status(200).json({ 
+      message : "select cities with success",
+      cities: regions 
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "internal error" });
