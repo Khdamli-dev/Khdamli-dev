@@ -238,6 +238,11 @@ export default function Work_Information() {
           </View>
 
           {/* Submit button */}
+          {errorSubmit ? (
+            <Text className="text-center text-red-600 text-lg  w-9/12 ">
+              {errorSubmit}
+            </Text>
+          ) : null}
           <TouchableOpacity
             onPress={handleSubmit}
             className="bg-specialGreen p-6 rounded-full w-11/12 max-w-sm shadow-2xl shadow-black mb-6"
@@ -246,11 +251,6 @@ export default function Work_Information() {
               Submit
             </Text>
           </TouchableOpacity>
-          {errorSubmit ? (
-            <Text className="text-center text-red-600 text-lg  w-9/12 ">
-              {errorSubmit}
-            </Text>
-          ) : null}
         </View>
       </ScrollView>
     </SafeAreaView>

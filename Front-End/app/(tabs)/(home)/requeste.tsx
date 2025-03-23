@@ -28,10 +28,20 @@ import AddressDropdown from "@/Component/addressDropDown";
 import PaymentMethod from "@/Component/paymentMethods";
 import TheTime from "@/Component/time";
 import DatePicker from "@/Component/date";
-import MediaUploader, {
-  MediaItem,
-  
-} from "@/Component/mediaUploader";
+import MediaUploader, { MediaItem } from "@/Component/mediaUploader";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import CONFIG from "@/config";
+
+interface JobRequest {
+  client: number;
+  working_time: Date;
+  category: number;
+  payment: number;
+  description: string;
+  type: number; // 1 for Public, 2 for Private
+  status: number; // 3 for "On Hold" on new requests
+}
 
 const CreateRequestScreen = () => {
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
@@ -51,7 +61,7 @@ const CreateRequestScreen = () => {
     name: string;
     id: number;
   } | null>(null);
-  const [date, setDate] = useState<string | null>("");
+  const [date, setDate] = useState<string | null>(""); // XX/XX/XXXX
   const [beginTime, setbeginTime] = useState<string | null>("08:00");
   const [endTime, setendTime] = useState<string | null>("16:00");
   const [description, setDescription] = useState("");
@@ -132,13 +142,72 @@ const CreateRequestScreen = () => {
   const [pickerOpen, setPickerOpen] = useState<boolean>(false);
   const handleMediaSelect = (media: any) => {
     setSelectedMedia(media);
-   
   };
   const handleOpenPicker = () => {
     setPickerOpen(true);
   };
   const handleClosePicker = () => {
     setPickerOpen(false);
+  };
+  //Handle Save ------------------------------------------------------------------------------------------
+   const [error, setError] = useState<string>("");
+  const handleSubmit = async () => {
+    // Basic validation: ensure required fields are provided.
+    if (
+      !selectedCategory ||
+      !selectedPaymentMethod ||
+      !date ||
+      !beginTime ||
+      !endTime ||
+      !description
+    ) {
+      setError("Please fill in all required fields.");
+      return;
+    }
+
+    // Validate description length (minimum 5 characters after trimming).
+    const trimmedDescription = description.trim();
+    if (trimmedDescription.length < 5) {
+      setError("Description must be at least 5 characters.");
+      return;
+    }
+
+    // Clear any previous error messages.
+    setError("");
+
+    // Create the working_time Date object by combining date and beginTime.
+    const working_time = new Date(`${date} ${beginTime}`);
+
+    try {
+      // Retrieve user id from AsyncStorage.
+      const storedId = await AsyncStorage.getItem("userId");
+      if (!storedId) {
+        setError("User ID not found.");
+        return;
+      }
+      const id: number = Number(storedId);
+
+      // Build the job request payload.
+      const jobRequest: JobRequest = {
+        client: id,
+        working_time: working_time,
+        category: Number(selectedCategory.id),
+        payment: selectedPaymentMethod.id,
+        description: trimmedDescription,
+        type: 1, // Assuming type 1 corresponds to Public
+        status: 3, // "On Hold" status for new requests
+      };
+
+      const response = await axios.post(
+        `${CONFIG.API_URL}/profile/update/user-info`,
+        jobRequest
+      );
+      console.log("Job request submitted successfully:", response.data);
+      // Optionally, clear the form or redirect the user here.
+    } catch (error) {
+      console.error("Error submitting job request:", error);
+      setError("There was an error submitting your request. Please try again.");
+    }
   };
 
   return (
@@ -433,6 +502,7 @@ const CreateRequestScreen = () => {
                   value={description}
                   onChangeText={setDescription}
                   multiline
+                  maxLength={3000}
                 />
               </View>
             </View>
@@ -468,12 +538,20 @@ const CreateRequestScreen = () => {
               />
             </View>
             <View className=" flex-row px-2 mt-6">
+              {error ? (
+                <Text className="text-center text-red-600 text-lg  w-9/12 ">
+                  {error}
+                </Text>
+              ) : null}
               <TouchableOpacity className="flex justify-center items-center w-1/2 bg-red-600  rounded-full">
                 <Text className=" text-center text-xl font-semibold text-white">
                   Cancel
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity className="flex justify-center items-center w-1/2 ml-1 bg-specialGreen h-16 rounded-full">
+              <TouchableOpacity
+                onPress={handleSubmit}
+                className="flex justify-center items-center w-1/2 ml-1 bg-specialGreen h-16 rounded-full"
+              >
                 <Text className=" text-center text-xl font-semibold text-white">
                   Save
                 </Text>
