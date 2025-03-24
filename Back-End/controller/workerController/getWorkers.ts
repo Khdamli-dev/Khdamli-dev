@@ -2,14 +2,16 @@ import { Request , Response } from "express";
 import pool from "../../database/dbConnection";
 
 
-export const getWorker = async (req : Request , res : Response) =>{
+export const getWorkers = async (req : Request , res : Response) =>{
     try {
         const {category , page } = req.query;
-        if (!category || isNaN(+category)) {
+        const userId = req.params.userId;
+        if (!userId || isNaN(+userId) ||!category || isNaN(+category)) {
             res.status(400).json({
-                message : 'category is not provided',
+                message : 'category or userId is not provided',
                 success : false
             });
+            console.log(userId , category)
             return
         }
         let parsedPage : number;
@@ -20,7 +22,6 @@ export const getWorker = async (req : Request , res : Response) =>{
         {
          parsedPage = parseInt(page as string, 10)
         }
-        let userId: number =0; // we should find a way to get the userId for this to work
         const {rows : workers} = await pool.query(`
              SELECT w.*
              FROM worker w
@@ -38,7 +39,7 @@ export const getWorker = async (req : Request , res : Response) =>{
              LIMIT 20 OFFSET $3;
 
              `
-            ,[+category ,userId ,parsedPage]);
+            ,[+category ,+userId ,parsedPage]);
         if (!workers.length) {
             res.status(404).json({
                 message : 'no workers fit this category',

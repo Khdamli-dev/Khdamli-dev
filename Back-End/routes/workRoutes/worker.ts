@@ -4,5 +4,5 @@ import { getWorkers } from '../../controller/workerController/getWorkers';
 
 
 const worker : Router= express.Router();
-worker.get('/',getWorkers);
+worker.get('/:userId/',getWorkers);
 export default worker;
