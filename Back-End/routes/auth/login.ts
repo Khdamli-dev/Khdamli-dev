@@ -69,7 +69,7 @@ const login = async (req: Request, res: Response) => {
       user[0].role
     );
 
-    const {returnedUser, password : _} = user[0];
+    const {password : _, ...returnedUser} = user[0];
     // success login
     res.status(200).json({
       success: true,
