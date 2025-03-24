@@ -6,6 +6,7 @@ import deleteRequest from '../../controller/jobRequestController/deleteRequest';
 import modifyRequest from '../../controller/jobRequestController/modifyRequest';
 import { uploadMedia } from '../../controller/upload/uploadMedia';
 import { updateRequestStatus } from '../../controller/jobRequestController/updateRequestStatus';
+import getWorkersByName from '../../controller/jobRequestController/getWorkerByName';
 
 const request: Router = express.Router();
 
@@ -21,5 +22,7 @@ request.put('/:requestId', modifyRequest );
 request.put('/media/:requestId',uploadMedia);
 
 request.put('/status/:requestId',updateRequestStatus)
+
+request.get('/worker', getWorkersByName);
 
 export default request;
