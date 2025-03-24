@@ -11,7 +11,6 @@ export const getWorkers = async (req : Request , res : Response) =>{
                 message : 'category or userId is not provided',
                 success : false
             });
-            console.log(userId , category)
             return
         }
         let parsedPage : number;
@@ -40,6 +39,7 @@ export const getWorkers = async (req : Request , res : Response) =>{
 
              `
             ,[+category ,+userId ,parsedPage]);
+
         if (!workers.length) {
             res.status(404).json({
                 message : 'no workers fit this category',

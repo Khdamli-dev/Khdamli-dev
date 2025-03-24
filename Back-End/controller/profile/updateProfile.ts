@@ -6,12 +6,12 @@ import updateCredentials from "../../utils/update/updateCredentials";
 import validateInfo from "../../middleware/validateInfo";
 
 const updateProfile = async (req: Request, res: Response) => {
-    const {id, personalInfo, credentials} : {id : number ,
-        personalInfo : PersonalInfo, credentials : Credentials} 
-        = req.body;
-    if (!id) {
-    res.status(400).json({ message: 'id is required' });
-    return;
+    const id : number = +req.params.id;
+    const {personalInfo, credentials} : { personalInfo : PersonalInfo, credentials : Credentials} = req.body;
+
+    if (Number.isNaN(+id)) {
+       res.status(400).json({ message: 'user id is required' });
+       return;
     }
     // in credentials first validating data before update it
     if (credentials){
@@ -19,8 +19,9 @@ const updateProfile = async (req: Request, res: Response) => {
             await updateCredentials(req,res);
         });
     }     
-    if (personalInfo)
+    if (personalInfo){
         await setPersonalInfo(req,res);
+    } 
 }
 
 export default updateProfile;

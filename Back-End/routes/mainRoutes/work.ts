@@ -8,9 +8,8 @@ import worker from '../workRoutes/worker';
 const work: Router = express.Router();
 
 work.use('/job-request', jobRequestRoutes);
-work.use('/category', category);
+work.use('/categories', category);
 work.use('/payment', payment);
-work.use('/working-hours', workingHours);
-work.use('/worker',worker);
+work.use('/working-time', workingHours);
 
 export default work;

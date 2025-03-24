@@ -17,10 +17,14 @@ const createUser = async (req: Request, res: Response) => {
             `,
       [username, email, phoneNumber, hash, role]
     );
+
+    // send confirmation email
     await confirmationEmail(result[0].id, email);
+
+    const {password : _, ...user} = result[0];
     res.status(201).json({
       message: "User added",
-      userId: result[0].id,
+      user,
     });
   } catch (error) {
     console.log(error);

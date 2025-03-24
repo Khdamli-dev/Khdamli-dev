@@ -4,7 +4,7 @@ import getCities from '../../utils/address/getCities';
 
 const address: Router = express.Router();
 
-address.get('/regions', getRegions);
-address.get('/cities', getCities);
+address.get('/regions/:country', getRegions);
+address.get('/cities/:region', getCities);
 
 export default address;

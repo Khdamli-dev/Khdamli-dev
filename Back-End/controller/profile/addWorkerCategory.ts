@@ -2,22 +2,24 @@ import { Request, Response } from 'express';
 import pool from '../../database/dbConnection';
 
 const addWorkerCategory = async (req: Request, res: Response) => {
-  const { workerId, categories } : {workerId : number, categories : number[]} 
-  = req.body;
+  const workerId : number = +req.params.workerId;
+  const { categories } : {categories : number[]} = req.body;
 
-  if (!workerId || !categories.length) {
+  if (Number.isNaN(+workerId) || !categories.length) {
     res.status(400).json({ message: 'Invalid worker ID or categories' });
     return;
   }
 
   try {
-    categories.map(async (categoryId : number) => {
-      await pool.query(
-        `INSERT INTO worker_category (worker, category , unity) 
-         VALUES ($1, $2 , 1) 
-         `,[workerId, categoryId]);
-    });
-  
+    // we use Promise.all to throw error for the first error in inserting
+    await Promise.all(
+      categories.map(async (categoryId : number) => {
+        await pool.query(
+          `INSERT INTO worker_category (worker, category) 
+          VALUES ($1, $2) 
+          `,[workerId, categoryId]);
+      })
+    );
 
     res.status(201).json({ message: 'Categories added successfully' });
   } catch (error) {

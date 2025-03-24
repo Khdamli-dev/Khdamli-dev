@@ -2,7 +2,9 @@ interface JobRequest {
     id: number;
     worker: number | null;
     client: number;
-    client_address: number;
+    region: number;
+    city : number | null;
+    client_address : number;
     sent_time: Date;
     working_time: Date;
     category: number;

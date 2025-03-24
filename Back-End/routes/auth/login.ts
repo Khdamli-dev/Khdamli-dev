@@ -23,7 +23,7 @@ const login = async (req: Request, res: Response) => {
     // search user
     const { rows: user } = await pool.query(
       `
-        SELECT id, password, role, registration_date from "user"
+        SELECT * from "user"
         WHERE email=$1
         `,
       [email]
@@ -62,20 +62,20 @@ const login = async (req: Request, res: Response) => {
       });
       return;
     }
-
     // produce jwt tokens
     const { accessToken, refreshToken } = produceTokens(
       user[0].id,
       user[0].role
     );
 
+    const {password : _, ...returnedUser} = user[0];
     // success login
     res.status(200).json({
       success: true,
       message: "login with success",
       accessToken,
       refreshToken,
-      userId: user[0].id,
+      user : returnedUser,
     });
   } catch (error) {
     console.log(error);
