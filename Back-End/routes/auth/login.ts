@@ -62,7 +62,6 @@ const login = async (req: Request, res: Response) => {
       });
       return;
     }
-
     // produce jwt tokens
     const { accessToken, refreshToken } = produceTokens(
       user[0].id,
