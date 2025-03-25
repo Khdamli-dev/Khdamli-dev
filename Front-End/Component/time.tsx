@@ -7,7 +7,7 @@ interface TimeProps {
   onSelectTime: (time: string) => void;
 }
 
-const PaymentMethod: React.FC<TimeProps> = ({ onSelectTime }) => {
+const TheTime: React.FC<TimeProps> = ({ onSelectTime }) => {
   // State to manage the selected time
   const [selectedTime, setSelectedTime] = useState(new Date());
 
@@ -41,4 +41,4 @@ const PaymentMethod: React.FC<TimeProps> = ({ onSelectTime }) => {
   );
 };
 
-export default PaymentMethod;
+export default TheTime;

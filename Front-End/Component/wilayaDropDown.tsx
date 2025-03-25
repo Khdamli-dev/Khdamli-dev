@@ -73,10 +73,10 @@ const WilayaDropdown: React.FC<WilayaDropdownProps> = ({
   
 
   return (
-    <View className="items-center justify-center w-full ">
+    
      
       
-        <View className="w-9/12 bg-white border-2 border-specialGreen rounded-xl shadow-xl py-4  mt-2">
+        <View className="w-10/12 bg-white border-2 border-specialGreen rounded-xl shadow-xl py-4  mt-2">
           <TextInput
             className="border-b-2  border-gray-400 rounded-lg p-3 mb-3 text-lg"
             placeholder="Search Wilaya..."
@@ -103,7 +103,7 @@ const WilayaDropdown: React.FC<WilayaDropdownProps> = ({
           </ScrollView>
         </View>
      
-    </View>
+ 
   );
 };
 

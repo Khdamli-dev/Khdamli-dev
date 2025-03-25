@@ -80,10 +80,8 @@ const AddressDropdown: React.FC<AddressDropdownProps> = ({
   
 
   return (
-    <View className="items-center justify-center w-full ">
       
-      
-        <View className="w-9/12 bg-white border-specialGreen rounded-xl border-2  shadow-2xl py-4 mt-2">
+        <View className="w-10/12 bg-white border-specialGreen rounded-xl border-2  shadow-2xl py-4 mt-2">
           <TextInput
             className="border-b-2 border-gray-400 p-3 mb-3 text-lg"
             placeholder="Search Municipality..."
@@ -110,7 +108,6 @@ const AddressDropdown: React.FC<AddressDropdownProps> = ({
           </ScrollView>
         </View>
       
-    </View>
   );
 };
 

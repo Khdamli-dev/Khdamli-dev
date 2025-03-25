@@ -45,12 +45,16 @@ export default function Login() {
   const [error, setError] = useState("");
 
   const handleLogin = async (values: { email: string; password: string }) => {
-     setError("");
+    setError("");
+    setEmailError("");
+    setPasswordError("");
     try {
       const response = await axios.post(`${CONFIG.API_URL}/auth/login`, values);
+      console.log(response.data);
       if (response.data.success) {
-        const id: number = response.data.userId;
-        await AsyncStorage.setItem("userId", JSON.stringify(id));
+        const user: any = response.data.user;
+        console.log(user);
+       await AsyncStorage.setItem("user", JSON.stringify(user));
         router.replace("/(tabs)/(home)"); //
       } else {
         

@@ -34,17 +34,26 @@ import axios from "axios";
 import CONFIG from "@/config";
 
 interface JobRequest {
-  client: number;
-  working_time: Date;
-  category: number;
-  payment: number;
-  description: string;
-  type: number; // 1 for Public, 2 for Private
-  status: number; // 3 for "On Hold" on new requests
+  client: number | null;
+  region: number | null;
+  city: number | null;
+  working_time: Date | null;
+  category: number | null;
+  payment: number | null;
+  description: string | null;
+  type: number | null; // 1 for Public, 2 for Private
+  status: number | null; // 3 for "On Hold" on new requests
 }
 
 const CreateRequestScreen = () => {
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
+ const getTodayDateString = () => {
+   const today = new Date();
+   const year = today.getFullYear();
+   const month = String(today.getMonth() + 1).padStart(2, "0");
+   const day = String(today.getDate()).padStart(2, "0");
+   return `${year}/${month}/${day}`;
+ };
   const [selectedCategory, setSelectedCategory] = useState<{
     name: string;
     id: string;
@@ -60,10 +69,9 @@ const CreateRequestScreen = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<{
     name: string;
     id: number;
-  } | null>(null);
-  const [date, setDate] = useState<string | null>(""); // XX/XX/XXXX
-  const [beginTime, setbeginTime] = useState<string | null>("08:00");
-  const [endTime, setendTime] = useState<string | null>("16:00");
+  } | null>({ name: "Cash", id: 1 });
+  const [date, setDate] = useState<string | null>(getTodayDateString()); // Initialize with today
+  const [beginTime, setbeginTime] = useState<string | null>("08:00"); // HH:MM
   const [description, setDescription] = useState("");
   const [selectedMedia, setSelectedMedia] = useState<MediaItem[]>([]);
   //Ctegory ------------------------------------------------------------------------------------------
@@ -112,21 +120,12 @@ const CreateRequestScreen = () => {
 
   //The Time --------------------------------------------------------------------------------------
   const [isBeginTimeOpen, setIsBeginTimeOpen] = useState(false);
-  const [isEndTimeOpen, setIsEndTimeOpen] = useState(false);
   const toggleBeginTimeDropdown = () => {
     setIsBeginTimeOpen(!isBeginTimeOpen);
   };
-  const toggleEndTimeDropdown = () => {
-    setIsEndTimeOpen(!isEndTimeOpen);
-  };
-
   const handleSelectedBeginTime = (time: any) => {
     setbeginTime(time);
     setIsBeginTimeOpen(false);
-  };
-  const handleSelectedEndTime = (time: any) => {
-    setendTime(time);
-    setIsEndTimeOpen(false);
   };
 
   //The Date  ------------------------------------------------------------------------------------------
@@ -149,61 +148,130 @@ const CreateRequestScreen = () => {
   const handleClosePicker = () => {
     setPickerOpen(false);
   };
+  //convertToDate ------------------------------------------------------------------------------------------
+  const convertToDate = (): Date | null => {
+    // Check if date or beginTime is null/empty
+    if (!date || !beginTime) return null;
+
+    // Split date into [MM, DD, YYYY] (adjust based on your actual date format)
+    const [year, month, day] = date.split("/");
+    // Split time into [HH, MM]
+    const [hours, minutes] = beginTime.split(":");
+
+    // Ensure all parts exist
+    if (!month || !day || !year || !hours || !minutes) return null;
+    // Create Date object (months are 0-indexed in JavaScript)
+    const dateObject = new Date(
+      parseInt(year),
+      parseInt(month) - 1, // Subtract 1 for month
+      parseInt(day),
+      parseInt(hours),
+      parseInt(minutes)
+    );
+    return dateObject;
+  };
+  //UploaderMedia ------------------------------------------------------------------------------------------
+const uploadSelectedMedia = async (requestId: number = 14) => {
+  if (!selectedMedia.length) {
+    console.warn("❌ No media selected to upload.");
+    return;
+  }
+
+  const formData = new FormData();
+
+  selectedMedia.forEach((item, index) => {
+    const fileExtension = item.type === "image" ? "jpg" : "mp4";
+    formData.append("file", {
+      uri: item.uri,
+      name: `media-${index}.${fileExtension}`,
+      type: item.type === "image" ? "image/jpeg" : "video/mp4",
+    } as any);
+  });
+
+  console.log("📤 FormData being sent:", formData);
+
+  try {
+    const response = await axios.put(
+      `${CONFIG.API_URL}/work/job-request/media/${14}`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    console.log("✅ Media uploaded successfully:", response.data);
+  } catch (error: any) {
+    console.error(
+      "❌ Error uploading media:",
+      error.response?.data || error.message
+    );
+  }
+};
+
   //Handle Save ------------------------------------------------------------------------------------------
-   const [error, setError] = useState<string>("");
+  const [error, setError] = useState<string>("");
   const handleSubmit = async () => {
-    // Basic validation: ensure required fields are provided.
+    // Basic validation
     if (
       !selectedCategory ||
       !selectedPaymentMethod ||
+      !selectedWilaya || // Region is required
+      !selectedMunicipality || // City is required
       !date ||
       !beginTime ||
-      !endTime ||
       !description
     ) {
       setError("Please fill in all required fields.");
       return;
     }
 
-    // Validate description length (minimum 5 characters after trimming).
+    // Validate description length
     const trimmedDescription = description.trim();
     if (trimmedDescription.length < 5) {
       setError("Description must be at least 5 characters.");
       return;
     }
 
-    // Clear any previous error messages.
+    // Clear any previous errors
     setError("");
 
-    // Create the working_time Date object by combining date and beginTime.
-    const working_time = new Date(`${date} ${beginTime}`);
-
+    // Convert date and time to a valid Date object
+    const working_time = convertToDate();
     try {
-      // Retrieve user id from AsyncStorage.
-      const storedId = await AsyncStorage.getItem("userId");
-      if (!storedId) {
-        setError("User ID not found.");
-        return;
-      }
-      const id: number = Number(storedId);
+      // Retrieve user ID from AsyncStorage
+      // const storedId = await AsyncStorage.getItem("userId");
+      // if (!storedId) {
+      //   setError("User ID not found.");
+      //   return;
+      // }
+      // const id: number = Number(storedId);
 
-      // Build the job request payload.
+      // Build the job request payload
       const jobRequest: JobRequest = {
-        client: id,
-        working_time: working_time,
-        category: Number(selectedCategory.id),
-        payment: selectedPaymentMethod.id,
+        client: 23,
+        region: selectedWilaya.id, // Convert Wilaya ID to number
+        city: selectedMunicipality.id, // Convert Municipality ID to number
+        working_time,
+        category: Number(selectedCategory.id), // Convert to number
+        payment: selectedPaymentMethod.id, // Already a number
         description: trimmedDescription,
-        type: 1, // Assuming type 1 corresponds to Public
-        status: 3, // "On Hold" status for new requests
+        type: 1, // Public request
+        status: 3, // "On Hold"
       };
 
       const response = await axios.post(
-        `${CONFIG.API_URL}/profile/update/user-info`,
+        `${CONFIG.API_URL}/work/job-request/create`,
         jobRequest
       );
-      console.log("Job request submitted successfully:", response.data);
-      // Optionally, clear the form or redirect the user here.
+      
+      if (response.status === 201) {
+        const requestId: number = response.data.id;
+        console.log("Job request submitted successfully:", response.data);
+        router.back();
+      }
+      // Optionally, clear form or redirect user
     } catch (error) {
       console.error("Error submitting job request:", error);
       setError("There was an error submitting your request. Please try again.");
@@ -366,7 +434,7 @@ const CreateRequestScreen = () => {
                   />
                 </TouchableOpacity>
               </View>
-              <View className="items-center justify-center mt-1 ml-4">
+              <View className=" mt-1 ml-4 items-end justify-end">
                 {isWilayaOpen && (
                   <WilayaDropdown
                     selectedWilaya={selectedWilaya}
@@ -407,7 +475,7 @@ const CreateRequestScreen = () => {
                   />
                 </TouchableOpacity>
               </View>
-              <View className="items-center justify-center mt-1 ml-4">
+              <View className="items-end mt-1 ml-4">
                 {isAddressOpen && selectedWilaya && (
                   <AddressDropdown
                     selectedCity={selectedMunicipality} // Pass the object, not just selectedWilaya?.name
@@ -458,13 +526,7 @@ const CreateRequestScreen = () => {
                 <View className="flex-row w-9/12 ml-4 flex-grow items-center justify-start border-b-2 border-foncyYellow">
                   <TouchableOpacity onPress={toggleBeginTimeDropdown}>
                     <Text className="text-xl font-bold">
-                      {beginTime ? `${beginTime}` : "Begin Time"}
-                    </Text>
-                  </TouchableOpacity>
-                  <Text className="mx-1">-</Text>
-                  <TouchableOpacity onPress={toggleEndTimeDropdown}>
-                    <Text className="text-xl font-bold">
-                      {endTime ? `${endTime}` : "End Time"}
+                      {beginTime ? `${beginTime}` : "Time"}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -472,9 +534,6 @@ const CreateRequestScreen = () => {
               <View className="items-center justify-center mt-1 ml-4">
                 {isBeginTimeOpen && (
                   <TheTime onSelectTime={handleSelectedBeginTime} />
-                )}
-                {isEndTimeOpen && (
-                  <TheTime onSelectTime={handleSelectedEndTime} />
                 )}
               </View>
             </View>
@@ -537,19 +596,22 @@ const CreateRequestScreen = () => {
                 onClose={handleClosePicker}
               />
             </View>
+            {error ? (
+              <Text className="text-center text-red-600 text-lg  w-9/12 ">
+                {error}
+              </Text>
+            ) : null}
             <View className=" flex-row px-2 mt-6">
-              {error ? (
-                <Text className="text-center text-red-600 text-lg  w-9/12 ">
-                  {error}
-                </Text>
-              ) : null}
-              <TouchableOpacity className="flex justify-center items-center w-1/2 bg-red-600  rounded-full">
+              <TouchableOpacity
+                onPress={() => router.back()}
+                className="flex justify-center items-center w-1/2 bg-red-600  rounded-full"
+              >
                 <Text className=" text-center text-xl font-semibold text-white">
                   Cancel
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={handleSubmit}
+                onPress={uploadSelectedMedia as any}
                 className="flex justify-center items-center w-1/2 ml-1 bg-specialGreen h-16 rounded-full"
               >
                 <Text className=" text-center text-xl font-semibold text-white">

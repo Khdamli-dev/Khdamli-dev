@@ -108,16 +108,16 @@ export default function SignUp() {
         }
       );
       if (response?.status === 201) {
-        const id: number = response.data.userId;
-        await AsyncStorage.setItem("userId", JSON.stringify(id));
+        const user: any = response.data.user;
+        await AsyncStorage.setItem("user", JSON.stringify(user));
         alert(
           "Check Your Email, We have sent you a verification link. Click on it to confirm your account."
         );
         router.replace("/OtherInformation");
       }
     } catch (error: any) {
-      console.log(error );
-      
+      console.log(error);
+
       if (error.response?.status === 400 && error.response.data) {
         setUsernameError(
           !error.response.data.username ? "Username is already used" : ""
