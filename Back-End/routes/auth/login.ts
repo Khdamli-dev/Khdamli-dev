@@ -47,7 +47,7 @@ const login = async (req: Request, res: Response) => {
         success: false,
         message: "password is wrong",
         validEmail: true,
-        validPassword: false,
+        validPassword: false
       });
       return;
     }

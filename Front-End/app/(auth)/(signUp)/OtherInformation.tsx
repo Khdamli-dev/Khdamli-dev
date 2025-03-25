@@ -47,7 +47,7 @@ export default function OtherInformation() {
   });
 
   // handleOtherInfermation
-  const handleOtherInfermation = async ({
+  const handleOtherInformation = async ({
     age,
     sex,
     region,
@@ -74,9 +74,8 @@ export default function OtherInformation() {
     const id: number = Number(storedId); // Convert string to number safely
 
     try {
-      const response = await axios.post(`${CONFIG.API_URL}/profile/update/user-info`, {
-        personalInfo,
-        id,
+      const response = await axios.put(`${CONFIG.API_URL}/users/${id}`, {
+        personalInfo
       });
       if (response) {
         router.replace("/selectionRole");
@@ -158,7 +157,7 @@ export default function OtherInformation() {
             initialValues={{ age: "", sex: 0 }}
             validationSchema={validationSchema}
             onSubmit={(values) => {
-              handleOtherInfermation({
+              handleOtherInformation({
                 age: Number(values.age),
                 sex: values.sex,
                 region: selectedWilaya?.id,
@@ -181,7 +180,6 @@ export default function OtherInformation() {
                   <WilayaDropdown
                     selectedWilaya={selectedWilaya}
                     onSelectWilaya={(wilaya) => {
-                     
                       setSelectedWilaya(wilaya);
                     }}
                   />

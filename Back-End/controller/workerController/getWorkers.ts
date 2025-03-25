@@ -34,6 +34,7 @@ export const getWorkers = async (req : Request , res : Response) =>{
                  JOIN address a2 ON u2.address = a2.id
                  WHERE u2.id = $2
              )
+             AND w.id <> $2
              ORDER BY (w.completed_requests * 2 - w.sent_requests) DESC
              LIMIT 20 OFFSET $3;
 

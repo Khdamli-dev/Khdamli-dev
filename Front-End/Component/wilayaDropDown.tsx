@@ -33,12 +33,12 @@ const WilayaDropdown: React.FC<WilayaDropdownProps> = ({
 
   const fetchRegions = async () => {
     try {
-      const response = await axios.get(`${CONFIG.API_URL}/address/regions`, {
-        params: { country: 1 },
-      });
+      const response = await axios.get(`${CONFIG.API_URL}/address/regions/1`);
       setWilayas(response.data.regions);
       setFilteredWilayas(response.data.regions);
-    } catch (error) {}
+    } catch (error) {
+      console.log(error)
+    }
   };
 
   useEffect(() => {

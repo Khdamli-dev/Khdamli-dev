@@ -35,9 +35,9 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
     const fetchCategories = async () => {
       try {
         const response = await axios.get(
-          `${CONFIG.API_URL}/work/category/get-category`
+          `${CONFIG.API_URL}/work/categories/`
         );
-        setMainCategories(response.data);
+        setMainCategories(response.data.categories);
       } catch (error) {
         console.error("Error fetching categories:", error);
       }

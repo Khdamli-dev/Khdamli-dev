@@ -11,5 +11,6 @@ work.use('/job-request', jobRequestRoutes);
 work.use('/categories', category);
 work.use('/payment', payment);
 work.use('/working-time', workingHours);
+work.use('/worker',worker);
 
 export default work;
