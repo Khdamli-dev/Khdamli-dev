@@ -21,7 +21,7 @@ const createUser = async (req: Request, res: Response) => {
     // send confirmation email
     await confirmationEmail(result[0].id, email);
 
-    const {user, password : _} = result[0];
+    const {password : _, ...user} = result[0];
     res.status(201).json({
       message: "User added",
       user,
