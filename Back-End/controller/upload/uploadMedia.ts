@@ -4,7 +4,14 @@ import pool from "../../database/dbConnection";
 import { updateRequestMedia } from "../../utils/update/updateRequestMedia";
 
 export const uploadMedia = async (req: Request, res: Response) => {
-  const requestId: number = +req.body.requestId;
+  const requestId: number = +req.params.requestId;
+  if (isNaN(requestId)){
+    res.status(400).json({
+    message : 'requestId of wrong format',
+    success : false
+    });
+    return
+  }
   upload.array("file", 5)(req, res, async (err) => {
     if (err) {
       console.log(err)
@@ -16,7 +23,7 @@ export const uploadMedia = async (req: Request, res: Response) => {
     }
 
     if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
-      return res.status(401).json({
+      return res.status(400).json({
         message:'no media is provided',
         requestId,
         success: false
