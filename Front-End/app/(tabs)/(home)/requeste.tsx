@@ -212,71 +212,72 @@ const uploadSelectedMedia = async (requestId: number = 14) => {
 
   //Handle Save ------------------------------------------------------------------------------------------
   const [error, setError] = useState<string>("");
-  const handleSubmit = async () => {
-    // Basic validation
-    if (
-      !selectedCategory ||
-      !selectedPaymentMethod ||
-      !selectedWilaya || // Region is required
-      !selectedMunicipality || // City is required
-      !date ||
-      !beginTime ||
-      !description
-    ) {
-      setError("Please fill in all required fields.");
-      return;
-    }
+ const handleSubmit = async () => {
+   // Basic validation
+   if (
+     !selectedCategory ||
+     !selectedPaymentMethod ||
+     !selectedWilaya || // Region is required
+     !selectedMunicipality || // City is required
+     !date ||
+     !beginTime ||
+     !description
+   ) {
+     setError("Please fill in all required fields.");
+     return;
+   }
 
-    // Validate description length
-    const trimmedDescription = description.trim();
-    if (trimmedDescription.length < 5) {
-      setError("Description must be at least 5 characters.");
-      return;
-    }
+   // Validate description length
+   const trimmedDescription = description.trim();
+   if (trimmedDescription.length < 5) {
+     setError("Description must be at least 5 characters.");
+     return;
+   }
 
-    // Clear any previous errors
-    setError("");
+   // Clear any previous errors
+   setError("");
 
-    // Convert date and time to a valid Date object
-    const working_time = convertToDate();
-    try {
-      // Retrieve user ID from AsyncStorage
-      // const storedId = await AsyncStorage.getItem("userId");
-      // if (!storedId) {
-      //   setError("User ID not found.");
-      //   return;
-      // }
-      // const id: number = Number(storedId);
+   // Convert date and time to a valid Date object
+   const working_time = convertToDate();
+   try {
+     // Retrieve user object from AsyncStorage
+     const userData = await AsyncStorage.getItem("user");
 
-      // Build the job request payload
-      const jobRequest: JobRequest = {
-        client: 23,
-        region: selectedWilaya.id, // Convert Wilaya ID to number
-        city: selectedMunicipality.id, // Convert Municipality ID to number
-        working_time,
-        category: Number(selectedCategory.id), // Convert to number
-        payment: selectedPaymentMethod.id, // Already a number
-        description: trimmedDescription,
-        type: 1, // Public request
-        status: 3, // "On Hold"
-      };
+     if (userData) {
+       const user: any = JSON.parse(userData); // Parse the user data
 
-      const response = await axios.post(
-        `${CONFIG.API_URL}/work/job-request/create`,
-        jobRequest
-      );
-      
-      if (response.status === 201) {
-        const requestId: number = response.data.id;
-        console.log("Job request submitted successfully:", response.data);
-        router.back();
-      }
-      // Optionally, clear form or redirect user
-    } catch (error) {
-      console.error("Error submitting job request:", error);
-      setError("There was an error submitting your request. Please try again.");
-    }
-  };
+       // Build the job request payload
+       const jobRequest: JobRequest = {
+         client: user.id, // Use the user ID from AsyncStorage
+         region: selectedWilaya.id, // Convert Wilaya ID to number
+         city: selectedMunicipality.id, // Convert Municipality ID to number
+         working_time,
+         category: Number(selectedCategory.id), // Convert to number
+         payment: selectedPaymentMethod.id, // Already a number
+         description: trimmedDescription,
+         type: 1, // Public request
+         status: 3, // "On Hold"
+       };
+
+       const response = await axios.post(
+         `${CONFIG.API_URL}/work/job-request/create`,
+         jobRequest
+       );
+
+       if (response.status === 201) {
+         const requestId: number = response.data.id;
+         console.log("Job request submitted successfully:", response.data);
+         router.back();
+       }
+     } else {
+       console.log("No user data found in AsyncStorage");
+       setError("User data not found. Please log in again.");
+     }
+   } catch (error) {
+     console.error("Error submitting job request:", error);
+     setError("There was an error submitting your request. Please try again.");
+   }
+ };
 
   return (
     <SafeAreaView className="flex-1 ">

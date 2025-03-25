@@ -75,49 +75,60 @@ export default function Work_Information() {
 
   //HandleSubmit
   const [errorSubmit, setErrorSubmit] = useState("")
-  const handleSubmit = async () => {
-    try {
-      const categories = selectedBranches.map(Number);
-      const workingHours = selectedDays
-        .filter((day) => day.selected)
-        .map(({ day, begin, end }) => ({ day, begin, end }));
+const handleSubmit = async () => {
+  try {
+    const categories = selectedBranches.map(Number);
+    const workingHours = selectedDays
+      .filter((day) => day.selected)
+      .map(({ day, begin, end }) => ({ day, begin, end }));
 
-      if (
-        categories.length === 0 ||
-        workingHours.length === 0 ||
-        paymentMethod.length === 0
-      ) {
+    if (
+      categories.length === 0 ||
+      workingHours.length === 0 ||
+      paymentMethod.length === 0
+    ) {
+      setErrorSubmit(
+        "You must select at least one category, one working hour, and one payment method."
+      );
+      setTimeout(() => setErrorSubmit(""), 3000);
+      return;
+    }
 
-        setErrorSubmit(
-          "You must select at least one category, one working hour, and one payment method."
-        );
-        setTimeout(() => setErrorSubmit(""), 3000);
-        return;
-      }
-      const storedId = await AsyncStorage.getItem("userId");
-      const id: number = Number(storedId);
-      
+    // Retrieve the user object from AsyncStorage
+    const userData = await AsyncStorage.getItem("user");
+
+    if (userData) {
+      const user: any = JSON.parse(userData); // Parse the user data
+
+      // Use the user.id for API requests
       await axios.post(`${CONFIG.API_URL}/work/category/add-category`, {
         categories,
-        workerId: id,
+        workerId: user.id,
       });
       await axios.post(`${CONFIG.API_URL}/work/working-hours/set-hours`, {
-        workerId: id,
+        workerId: user.id,
         workingHours,
       });
       await axios.post(`${CONFIG.API_URL}/work/payment/add-payment`, {
-        workerId: id,
+        workerId: user.id,
         payments: paymentMethod,
       });
-       router.dismissAll();
-       router.replace("/(tabs)/(home)");
-    
-    } catch (error) {
-      setErrorSubmit("Error Failed to submit data");
-      setTimeout(() => setErrorSubmit(""), 30000);
-    }
-  };
 
+      // Update the role to 2 in the user object and save it back to AsyncStorage
+      const updatedUser = { ...user, role: 2 };
+      await AsyncStorage.setItem("user", JSON.stringify(updatedUser));
+
+      // Navigate to the home page
+      router.dismissAll();
+      router.replace("/(tabs)/(home)");
+    } else {
+      console.log("No user data found in AsyncStorage");
+    }
+  } catch (error) {
+    setErrorSubmit("Error Failed to submit data");
+    setTimeout(() => setErrorSubmit(""), 30000);
+  }
+};
   return (
     <SafeAreaView className="flex-1 bg-white">
       <ScrollView

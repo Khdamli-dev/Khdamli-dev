@@ -108,7 +108,7 @@ export default function SignUp() {
         }
       );
       if (response?.status === 201) {
-        const user: any = response.data.user;
+       const user: any = response.data.user;
         await AsyncStorage.setItem("user", JSON.stringify(user));
         alert(
           "Check Your Email, We have sent you a verification link. Click on it to confirm your account."

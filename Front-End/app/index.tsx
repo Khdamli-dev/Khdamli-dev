@@ -43,7 +43,7 @@ const AppStartUp = () => {
        if (userId) {
          router.replace("/(tabs)/(home)"); // المستخدم مسجّل الدخول
        } else {
-         router.replace("/(tabs)/(home)"); // المستخدم غير مسجّل الدخول
+         router.replace("/(auth)"); // المستخدم غير مسجّل الدخول
        }
      };
 

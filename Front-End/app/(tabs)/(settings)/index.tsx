@@ -1,19 +1,16 @@
 import React from "react";
 import { View, Text, Button } from "react-native";
-
-
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const logout = async () => {
   try {
-    // Remove stored user session data
-    await AsyncStorage.removeItem("userId");
-
+    await AsyncStorage.clear();
+    console.log("AsyncStorage has been cleared.");
     // Navigate back to the auth screen and reset history
     router.replace("/(auth)");
   } catch (error) {
-    console.error("Logout error:", error);
+    console.error("Error clearing AsyncStorage:", error);
   }
 };
 

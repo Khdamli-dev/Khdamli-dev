@@ -21,7 +21,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import CONFIG from "../../config";
 import { LinearGradient } from "expo-linear-gradient";
 
-export default function Login() { 
+export default function Login() {
   const router = useRouter();
 
   const [focusedInput, setFocusedInput] = useState<string | null>(null); // Track focused input
@@ -50,14 +50,11 @@ export default function Login() {
     setPasswordError("");
     try {
       const response = await axios.post(`${CONFIG.API_URL}/auth/login`, values);
-      console.log(response.data);
       if (response.data.success) {
         const user: any = response.data.user;
-        console.log(user);
-       await AsyncStorage.setItem("user", JSON.stringify(user));
+        await AsyncStorage.setItem("user", JSON.stringify(user));
         router.replace("/(tabs)/(home)"); //
       } else {
-        
       }
     } catch (error: any) {
       if (error.response?.status === 403 && error.response.data) {
@@ -90,7 +87,6 @@ export default function Login() {
           <View className="bg-specialGreen flex-1 items-center px-4 ">
             {/* Image */}
 
-            
             <View className="relative w-11/12 h-72 top-12 mb-6">
               <Image
                 source={require("../../assets/images/bgLogologin.jpg")}

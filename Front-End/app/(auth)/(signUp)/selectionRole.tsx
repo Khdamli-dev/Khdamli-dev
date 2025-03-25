@@ -21,22 +21,32 @@ export default function SelectRole() {
   const router = useRouter();
    const navigation = useNavigation();
   // change the role of user if it is worker
-  const handleWorkerRole = async () => {
-    try {
-      //Get the user Id
-      const storedId = await AsyncStorage.getItem("userId");
-      const id: number = Number(storedId);
+ const handleWorkerRole = async () => {
+   try {
+     // Retrieve user data from AsyncStorage
+     const userData = await AsyncStorage.getItem("user");
 
-      const response = await axios.post(
-        `${CONFIG.API_URL}/profile/update/role/worker`,
-        { userId: id }
-      );
-     router.replace("/(auth)/(signUp)/workerInfo")
-      
-    } catch (error: any) {
-      alert("Server is busy, please try again later");
-    }
-  };
+     if (userData) {
+       const user: any = JSON.parse(userData); // Parse the user data
+
+       // Make the API request to update the role
+       const response = await axios.post(
+         `${CONFIG.API_URL}/profile/update/role/worker`,
+         { userId: user.id } // Use the user ID from AsyncStorage
+       );
+
+       if (response) {
+         // Navigate to the worker info page
+         router.push("/(auth)/(signUp)/workerInfo");
+       }
+     } else {
+       console.log("No user data found in AsyncStorage");
+     }
+   } catch (error: any) {
+     alert("Server is busy, please try again later");
+   }
+ };
+  //HandleClient --------------------------------------
   const handleClientRole = async () => {
     router.dismissAll();
     router.replace("/(tabs)/(home)");

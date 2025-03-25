@@ -92,23 +92,29 @@
         sex: sex ? sex : null,
         address,
       };
+
       // Retrieve userId from AsyncStorage
-      const storedId = await AsyncStorage.getItem("userId");
-      const id: number = Number(storedId); // Convert string to number safely
-      
-      try {
-        const response = await axios.post(
-          `${CONFIG.API_URL}/profile/update/user-info`,
-          {
-            personalInfo,
-            id,
+      const userData = await AsyncStorage.getItem("user");
+
+      if (userData) {
+        const user: any = JSON.parse(userData); // Parse only if userData is not null
+
+        try {
+          const response = await axios.post(
+            `${CONFIG.API_URL}/profile/update/user-info`,
+            {
+              personalInfo,
+              id: user.id, // Pass the user ID
+            }
+          );
+          if (response) {
+            router.replace("/selectionRole");
           }
-        );
-        if (response) {
-          router.replace("/selectionRole");
+        } catch (error) {
+          alert("Server is busy, please try again later.");
         }
-      } catch (error) {
-        alert("Server is busy, please try again later.");
+      } else {
+        console.log("No user data found in AsyncStorage");
       }
     };
 
