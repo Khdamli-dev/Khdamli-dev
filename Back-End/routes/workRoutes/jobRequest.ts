@@ -6,6 +6,7 @@ import deleteRequest from '../../controller/jobRequestController/deleteRequest';
 import modifyRequest from '../../controller/jobRequestController/modifyRequest';
 import { uploadMedia } from '../../controller/upload/uploadMedia';
 import { updateRequestStatus } from '../../controller/jobRequestController/updateRequestStatus';
+import getWorkersByName from '../../controller/jobRequestController/getWorkerByName';
 import selectWorker from '../../controller/jobRequestController/selectWorker';
 
 const request: Router = express.Router();
@@ -23,7 +24,11 @@ request.put('/media/:requestId',uploadMedia);
 
 request.put('/status/:requestId',updateRequestStatus);
 
+request.put('/status/:requestId',updateRequestStatus)
+
 // this route is used to select worker in public request
 request.put('/:requestId/select-worker/:workerId', selectWorker);
+
+request.get('/worker', getWorkersByName);
 
 export default request;
