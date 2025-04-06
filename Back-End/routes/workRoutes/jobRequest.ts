@@ -6,7 +6,6 @@ import deleteRequest from '../../controller/jobRequestController/deleteRequest';
 import modifyRequest from '../../controller/jobRequestController/modifyRequest';
 import { uploadMedia } from '../../controller/upload/uploadMedia';
 import { updateRequestStatus } from '../../controller/jobRequestController/updateRequestStatus';
-import getWorkersByName from '../../controller/jobRequestController/getWorkerByName';
 import selectWorker from '../../controller/jobRequestController/selectWorker';
 import createComment from '../../controller/jobRequestController/createComment';
 
@@ -32,7 +31,5 @@ request.put('/:requestId/select-worker/:workerId', selectWorker);
 
 // this route is used to make a comment on public request
 request.post('/:requestId/comment', createComment);
-
-request.get('/worker', getWorkersByName);
 
 export default request;
