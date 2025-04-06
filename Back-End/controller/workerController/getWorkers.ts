@@ -20,7 +20,7 @@ export const getWorkers = async (req: Request, res: Response) => {
     }
     const { rows: workers } = await pool.query(
       `
-             SELECT w.*, u.username, u.email, u.sex, u.age, u.profile_image
+             SELECT w.*, u.username, u.sex, u.age, u.profile_image
 FROM worker w
 JOIN worker_category wc ON wc.worker = w.id
 JOIN "user" u ON u.id = w.id
