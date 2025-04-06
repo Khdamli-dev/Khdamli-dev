@@ -8,8 +8,11 @@ import {
   ScrollView,
   Animated,
 } from "react-native";
+
+
 import Icon from "react-native-vector-icons/MaterialIcons";
-import CONFIG from "@/config";
+import CONFIG from "../config";
+
 
 interface Wilaya {
   name: string;
@@ -27,7 +30,7 @@ const WilayaDropdown: React.FC<WilayaDropdownProps> = ({
 }) => {
   const [wilayas, setWilayas] = useState<Wilaya[]>([]);
   const [filteredWilayas, setFilteredWilayas] = useState<Wilaya[]>([]);
-  const [isOpen, setIsOpen] = useState(false);
+  
   const [search, setSearch] = useState("");
   const rotateAnim = useState(new Animated.Value(0))[0];
 
@@ -45,14 +48,7 @@ const WilayaDropdown: React.FC<WilayaDropdownProps> = ({
     fetchRegions();
   }, []);
 
-  const toggleDropdown = () => {
-    setIsOpen(!isOpen);
-    Animated.timing(rotateAnim, {
-      toValue: isOpen ? 0 : 1,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
-  };
+  
 
   const handleSearch = (text: string) => {
     setSearch(text);
@@ -69,34 +65,18 @@ const WilayaDropdown: React.FC<WilayaDropdownProps> = ({
 
   const handleSelect = (wilaya: Wilaya) => {
     onSelectWilaya(wilaya);
-    setIsOpen(false);
+   
   };
 
-  const arrowRotation = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "180deg"],
-  });
+  
 
-  const renderButton = () => (
-    <TouchableOpacity
-      className="flex-row items-center justify-between w-9/12 h-20 border-2 border-specialGreen rounded-full px-4"
-      onPress={toggleDropdown}
-    >
-      <Icon name="location-pin" color="#396F65" size={30} />
-      <Text className="text-xl text-specialGreen font-bold">
-        {selectedWilaya?.name || "Enter your Wilaya"}
-      </Text>
-      <Animated.View style={{ transform: [{ rotate: arrowRotation }] }}>
-        <Icon name="keyboard-arrow-down" color="#396F65" size={30} />
-      </Animated.View>
-    </TouchableOpacity>
-  );
+  
 
   return (
-    <View className="items-center justify-center w-full mt-10">
-      {renderButton()}
-      {isOpen && (
-        <View className="w-9/12 bg-white border border-gray-300 rounded-lg shadow-xl py-4  mt-2">
+    
+     
+      
+        <View className="w-10/12 bg-white border-2 border-specialGreen rounded-xl shadow-xl py-4  mt-2">
           <TextInput
             className="border-b-2  border-gray-400 rounded-lg p-3 mb-3 text-lg"
             placeholder="Search Wilaya..."
@@ -122,8 +102,8 @@ const WilayaDropdown: React.FC<WilayaDropdownProps> = ({
             ))}
           </ScrollView>
         </View>
-      )}
-    </View>
+     
+ 
   );
 };
 

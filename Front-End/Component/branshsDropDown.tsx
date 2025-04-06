@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ScrollView, TouchableOpacity, Text, View, Image } from "react-native";
 import axios from "axios";
-import { useRouter } from "expo-router";
-import { MaterialCommunityIcons, Entypo } from "@expo/vector-icons";
-import Icon1 from "react-native-vector-icons/MaterialIcons";
+
 import CONFIG from "@/config";
 
 interface Category {
@@ -17,21 +15,24 @@ interface Category {
 interface CategorySelectorProps {
   selectCategories: string[] | null;
   onSelectBranches: (selectedBranches: string[]) => void;
+  branshss:string[]
 }
 
 const CategorySelector: React.FC<CategorySelectorProps> = ({
   selectCategories,
   onSelectBranches,
+  branshss,
 }) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedBranches, setSelectedBranches] = useState<string[]>([]);
   const [mainCategories, setMainCategories] = useState<Category[]>([]);
-  const [isListOpen, setIsListOpen] = useState(false);
+
   const [branshes, setBranshes] = useState<Category[]>([]);
   const [warning, setWarning] = useState(false);
 
   // Fetch main categories from API (includes all categories)
   useEffect(() => {
+    setSelectedBranches(branshss);
     const fetchCategories = async () => {
       try {
         const response = await axios.get(
@@ -44,15 +45,44 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
     };
     fetchCategories();
   }, []);
-
+ 
   // Update categories based on selected categories prop
   useEffect(() => {
-    setCategories(
-      mainCategories.filter((cat: Category) =>
-        selectCategories?.includes(cat.id ?? "")
-      )
-    );
+    if (mainCategories.length > 0 && selectCategories) {
+      setCategories(
+        mainCategories.filter((cat: Category) =>
+          selectCategories.includes(cat.id ?? "")
+        )
+      );
+      setBranshes(
+        mainCategories.filter((cat: Category) =>
+          branshss.includes(cat.id ?? "")
+        )
+      );
+    }
   }, [selectCategories, mainCategories]);
+
+  // Remove branches that don't have a parent in selected categories
+  useEffect(() => {
+    cleanUnparentedBranches();
+  }, [selectCategories]);
+
+  const cleanUnparentedBranches = () => {
+    if (!selectCategories) return;
+
+    setBranshes(mainCategories.filter((bransh) => branshss.includes(bransh.id)));
+    console.log(branshes);
+    
+    const validBranches = branshes.filter((branch) =>
+      selectCategories.includes(branch.parent_category ?? "")
+    );
+
+    if (validBranches.length !== branshes.length) {
+      setBranshes(validBranches);
+      setSelectedBranches(validBranches.map((b) => b.id));
+      onSelectBranches(validBranches.map((b) => b.id));
+    }
+  };
 
   // Handle branch selection toggle
 
@@ -74,14 +104,11 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
   };
 
   // Toggle the visibility of the list
-  const toggleList = () => {
-    setIsListOpen(!isListOpen);
-  };
 
   // Validate selection whenever categories or selected subcategories change
   useEffect(() => {
     validateSelection();
-  }, [branshes, categories]);
+  }, [branshss, categories]);
 
   const validateSelection = () => {
     const selectedParents = new Set(branshes.map((sub) => sub.parent_category));
@@ -99,6 +126,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
   // Render each category and its corresponding branches using ScrollView
   const renderCategory = (item: Category) => {
     // Filter branches which are children of the current category
+    
     const branchesForCategory = mainCategories.filter(
       (cat: Category) => cat.parent_category === item.id
     );
@@ -109,7 +137,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
         </View>
         <ScrollView
           style={{ maxHeight: 300 }}
-          className="mt-1 w-80"
+          className="mt-1 w-full"
           nestedScrollEnabled={true}
           showsVerticalScrollIndicator={true}
         >
@@ -123,8 +151,8 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
   const renderBranch = (item: Category) => (
     <TouchableOpacity
       key={item.id}
-      className={`flex-row items-center justify-around h-16 border-2 border-gray-300 rounded-md ${
-        selectedBranches.includes(item.id) ? "bg-foncyYellow" : "bg-specialGray"
+      className={`flex-row items-center mb-2 w-full  justify-around h-16 border-2 border-gray-300 rounded-md ${
+        selectedBranches.includes(item.id) ? "bg-foncyYellow" : "bg-white"
       }`}
       onPress={() => handleSelectBranch(item)}
     >
@@ -140,46 +168,20 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
     </TouchableOpacity>
   );
 
-  // Render the toggle button for showing/hiding the list
-  const renderButton = () => (
-    <TouchableOpacity
-      className="flex-row items-center justify-between rounded-full px-4 w-80 h-16 border-2 border-specialGreen mb-2"
-      onPress={toggleList}
-    >
-      <Entypo name="flow-tree" size={30} color="#4C8479" />
-      <Text className="text-specialGreen">
-        {selectedBranches.length > 0
-          ? `Selected Branches: ${selectedBranches.length}`
-          : "Select Your Branches"}
-      </Text>
-      <Icon1
-        name={isListOpen ? "keyboard-arrow-up" : "keyboard-arrow-down"}
-        color="#4C8479"
-        size={40}
-      />
-    </TouchableOpacity>
-  );
-
   return (
     <View className="flex-1 items-center mb-8 w-full">
-      {renderButton()}
-      {isListOpen && (
-        <ScrollView
-          style={{ maxHeight: 300, zIndex: 20 }}
-          className="mt-1 w-80 "
-          nestedScrollEnabled={true}
-          showsVerticalScrollIndicator={true}
-        >
-          {categories.map((category) => renderCategory(category))}
-        </ScrollView>
-      )}
-      {isListOpen && categories.length === 0 && (
-        <Text className="text-center text-red-600 text-lg  pt-4  w-8/12">
-          You Should Be Select Category First
-        </Text>
-      )}
+      <ScrollView
+        style={{ maxHeight: 300 }}
+        className="mt-1 w-80 border-2 px-4 border-specialGreen rounded-xl"
+        nestedScrollEnabled={true}
+        showsVerticalScrollIndicator={true}
+      >
+        
+        {categories.map((category) => renderCategory(category))}
+      </ScrollView>
+
       {warning && (
-        <Text className="text-center text-green-500 text-lg  pt-4 w-10/12">
+        <Text className="text-center text-green-500 text-lg px-4 pt-8">
           <Text className="text-red-600">warning </Text>
           <Text className="text-black">: </Text>
           Each category must have at least one subcategory selected!

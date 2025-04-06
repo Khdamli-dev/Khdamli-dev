@@ -36,16 +36,17 @@ const AppStartUp = () => {
       }),
     ]).start();
 
-    // التحقق من تسجيل الدخول بعد 3 ثوانٍ
-    const checkLoginStatus = async () => {
-      setTimeout(() => {
-        if (true) {
-          router.replace('./(auth)');
-        } else {
-          router.replace('./(tabs)');
-        }
-      }, 3000);
-    };
+      // التحقق من تسجيل الدخول بعد 3 ثوانٍ
+     const checkLoginStatus = async () => {
+       const userId = await AsyncStorage.getItem("userId");
+
+       if (userId) {
+         router.replace("/(tabs)/(home)"); // المستخدم مسجّل الدخول
+       } else {
+         router.replace("/(auth)"); // المستخدم غير مسجّل الدخول
+       }
+     };
+
 
     checkLoginStatus();
   }, []);
