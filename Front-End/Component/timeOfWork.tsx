@@ -18,14 +18,15 @@ interface WorkingDaysTimeSelectorProps {
 
 // Initial days array with each day unselected and times empty
 const initialDays: WorkingDay[] = [
-  { day: 1, label: "Sun", begin: "", end: "", selected: false },
-  { day: 2, label: "Mon", begin: "", end: "", selected: false },
-  { day: 3, label: "Tue", begin: "", end: "", selected: false },
-  { day: 4, label: "Wed", begin: "", end: "", selected: false },
-  { day: 5, label: "Thu", begin: "", end: "", selected: false },
-  { day: 6, label: "Fri", begin: "", end: "", selected: false },
-  { day: 7, label: "Sat", begin: "", end: "", selected: false },
+  { day: 1, label: "Sun", begin: "08:00", end: "16:00", selected: false },
+  { day: 2, label: "Mon", begin: "08:00", end: "16:00", selected: false },
+  { day: 3, label: "Tue", begin: "08:00", end: "16:00", selected: false },
+  { day: 4, label: "Wed", begin: "08:00", end: "16:00", selected: false },
+  { day: 5, label: "Thu", begin: "08:00", end: "16:00", selected: false },
+  { day: 6, label: "Fri", begin: "08:00", end: "16:00", selected: false },
+  { day: 7, label: "Sat", begin: "08:00", end: "16:00", selected: false },
 ];
+
 
 // Helper function to convert time string "HH:MM" to minutes
 const parseTime = (timeStr: string): number => {
@@ -36,6 +37,9 @@ const parseTime = (timeStr: string): number => {
 const WorkingDaysTimeSelector: React.FC<WorkingDaysTimeSelectorProps> = ({
   onSelectWorkingDays,
 }) => {
+   useEffect(() => {
+     onSelectWorkingDays(workingDays.filter((day) => day.selected));
+   }, []);
   // State for working days array
   const [workingDays, setWorkingDays] = useState<WorkingDay[]>(initialDays);
   // State to control display of the native time picker

@@ -7,7 +7,12 @@ import {
   Dimensions,
   ScrollView,
 } from "react-native";
-import { AntDesign } from "@expo/vector-icons";
+import {
+  AntDesign,
+  MaterialCommunityIcons,
+  MaterialIcons,
+  Entypo,
+} from "@expo/vector-icons";
 import CategorySelector from "@/Component/categorysDropDown";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -16,8 +21,10 @@ import WorkingDaysTimeSelector, { WorkingDay } from "@/Component/timeOfWork";
 import axios from "axios";
 import CONFIG from "@/config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation, CommonActions } from "@react-navigation/native";
 
 export default function Work_Information() {
+  const navigation = useNavigation();
   // State to store the selected payment method
   const [paymentMethod, setPaymentMethod] = useState<number[]>([]);
 
@@ -54,42 +61,76 @@ export default function Work_Information() {
     );
   };
 
+  const [isCategorysListOpen, setCategorysListOpen] = useState(false);
+  const toggleCategorysList = () => {
+    setCategorysListOpen(!isCategorysListOpen);
+    isBranshsListOpen ? setBranshsListOpen(!isBranshsListOpen) : null;
+  };
+
+  const [isBranshsListOpen, setBranshsListOpen] = useState(false);
+  const toggleBranshsList = () => {
+    setBranshsListOpen(!isBranshsListOpen);
+    isCategorysListOpen ? setCategorysListOpen(!isCategorysListOpen) : null;
+  };
+
   //HandleSubmit
   const [errorSubmit, setErrorSubmit] = useState("")
-  const handleSubmit = async () => {
-    try {
-      const categories = selectedBranches.map(Number);
-      const workingHours = selectedDays
-        .filter((day) => day.selected)
-        .map(({ day, begin, end }) => ({ day, begin, end }));
 
-      if (categories.length === 0) {
-        setErrorSubmit("You must select at least one category");
-        setTimeout(() => setErrorSubmit(""), 30000);
-        return;
-      }
-      const storedId = await AsyncStorage.getItem("userId");
-      const id: number = Number(storedId);
-      
+const handleSubmit = async () => {
+  try {
+    const categories = selectedBranches.map(Number);
+    const workingHours = selectedDays
+      .filter((day) => day.selected)
+      .map(({ day, begin, end }) => ({ day, begin, end }));
+
+    if (
+      categories.length === 0 ||
+      workingHours.length === 0 ||
+      paymentMethod.length === 0
+    ) {
+      setErrorSubmit(
+        "You must select at least one category, one working hour, and one payment method."
+      );
+      setTimeout(() => setErrorSubmit(""), 3000);
+      return;
+    }
+
+    // Retrieve the user object from AsyncStorage
+    const userData = await AsyncStorage.getItem("user");
+
+    if (userData) {
+      const user: any = JSON.parse(userData); // Parse the user data
+
+      // Use the user.id for API requests
       await axios.post(`${CONFIG.API_URL}/work/category/add-category`, {
         categories,
-        workerId: id,
+        workerId: user.id,
       });
       await axios.post(`${CONFIG.API_URL}/work/working-hours/set-hours`, {
-        workerId: id,
+        workerId: user.id,
         workingHours,
       });
       await axios.post(`${CONFIG.API_URL}/work/payment/add-payment`, {
-        workerId: id,
+        workerId: user.id,
+
         payments: paymentMethod,
       });
-       router.replace("/(auth)/(signUp)/terms");
-    } catch (error) {
-      setErrorSubmit("Error Failed to submit data");
-      setTimeout(() => setErrorSubmit(""), 30000);
-    }
-  };
 
+      // Update the role to 2 in the user object and save it back to AsyncStorage
+      const updatedUser = { ...user, role: 2 };
+      await AsyncStorage.setItem("user", JSON.stringify(updatedUser));
+
+      // Navigate to the home page
+      router.dismissAll();
+      router.replace("/(tabs)/(home)");
+    } else {
+      console.log("No user data found in AsyncStorage");
+    }
+  } catch (error) {
+    setErrorSubmit("Error Failed to submit data");
+    setTimeout(() => setErrorSubmit(""), 30000);
+  }
+};
   return (
     <SafeAreaView className="flex-1 bg-white">
       <ScrollView
@@ -122,14 +163,68 @@ export default function Work_Information() {
 
           {/* Category selection component */}
           <View className="flex-1">
-            <CategorySelector onSelectCategories={handleSelectedCategories} />
+            <TouchableOpacity
+              className="flex-row items-center justify-between rounded-full px-4 w-80 h-16 border-2 border-specialGreen mb-2"
+              onPress={toggleCategorysList}
+            >
+              <MaterialCommunityIcons
+                name="briefcase"
+                size={30}
+                color="#4C8479"
+              />
+              <Text className="text-specialGreen">
+                {selectedCategories.length > 0
+                  ? `Selected (${selectedCategories.length})`
+                  : "Select Your Category"}
+              </Text>
+              <MaterialIcons
+                name={
+                  isCategorysListOpen
+                    ? "keyboard-arrow-up"
+                    : "keyboard-arrow-down"
+                }
+                color="#4C8479"
+                size={40}
+              />
+            </TouchableOpacity>
+            {isCategorysListOpen && (
+              <CategorySelector
+                onSelectCategories={handleSelectedCategories}
+                categorys={selectedCategories}
+              />
+            )}
           </View>
 
           {/* Branch selection component based on selected categories */}
-          <Branshes
-            selectCategories={selectedCategories}
-            onSelectBranches={handleSelectedBranches}
-          />
+          <View className="flex-1 items-center">
+            <TouchableOpacity
+              className="flex-row items-center justify-between rounded-full px-4 w-80 h-16 border-2 border-specialGreen mb-2"
+              onPress={toggleBranshsList}
+            >
+              <Entypo name="flow-tree" size={30} color="#4C8479" />
+              <Text className="text-specialGreen">
+                {selectedBranches.length > 0
+                  ? `Selected Branches: ${selectedBranches.length}`
+                  : "Select Your Branches"}
+              </Text>
+              <MaterialIcons
+                name={
+                  isBranshsListOpen
+                    ? "keyboard-arrow-up"
+                    : "keyboard-arrow-down"
+                }
+                color="#4C8479"
+                size={40}
+              />
+            </TouchableOpacity>
+            {isBranshsListOpen && (
+              <Branshes
+                selectCategories={selectedCategories}
+                onSelectBranches={handleSelectedBranches}
+                branshss={selectedBranches}
+              />
+            )}
+          </View>
 
           {/* Working days selection component */}
           <View className="items-center mb-2 ">
@@ -156,19 +251,19 @@ export default function Work_Information() {
           </View>
 
           {/* Submit button */}
+          {errorSubmit ? (
+            <Text className="text-center text-red-600 text-lg  w-9/12 ">
+              {errorSubmit}
+            </Text>
+          ) : null}
           <TouchableOpacity
-            onPress={handleSubmit as any}
+            onPress={handleSubmit}
             className="bg-specialGreen p-6 rounded-full w-11/12 max-w-sm shadow-2xl shadow-black mb-6"
           >
             <Text className="text-white text-center font-bold text-2xl">
               Submit
             </Text>
           </TouchableOpacity>
-          {errorSubmit ? (
-            <Text className="text-center text-red-600 text-lg  w-9/12 ">
-              {errorSubmit}
-            </Text>
-          ) : null}
         </View>
       </ScrollView>
     </SafeAreaView>

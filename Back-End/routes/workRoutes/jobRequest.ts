@@ -19,7 +19,7 @@ request.get('/', getRequest);
 
 request.delete('/:requestId', deleteRequest);
 
-request.put('/:requestId', modifyRequest );
+request.put('/:requestId', modifyRequest);
 
 request.put('/media/:requestId',uploadMedia);
 

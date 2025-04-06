@@ -5,7 +5,7 @@ const setWorkingHours = async (req: Request, res: Response) => {
   const workerId : number = +req.params.workerId;
   const { workingHours }: { workingHours: { day: number, begin: string, end: string }[] } = req.body;
 
-  if (Number.isNaN(+workerId) || !workingHours.length) {
+  if (Number.isNaN(workerId) || !workingHours.length) {
     res.status(400).json({ message: 'Invalid worker ID or no working hours provided' });
     return;
   }
