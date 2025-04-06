@@ -1,9 +1,9 @@
-import { NextFunction, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import pool from '../../database/dbConnection';
 import JobRequest from '../../interface/jobRequest';
 import jobRequestEmitter from './jobRequestEmitter';
 
-const createRequest = async (req: Request, res: Response , next : NextFunction) => {
+const createRequest = async (req: Request, res: Response ) => {
   try {
     const {
       client,
@@ -27,13 +27,13 @@ const createRequest = async (req: Request, res: Response , next : NextFunction) 
 
     // send to it to workers to make it real time
     await jobRequestEmitter(rows[0]);
+    req.body.requestId = rows[0].request_id
 
     res.status(201).json({
       message : 'Job request created successfully',
       request : rows[0], 
       success : true
     });
-    
   } catch (error) {
     console.error('Error creating job request:', error);
     res.status(500).json({ 

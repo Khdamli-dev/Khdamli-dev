@@ -38,13 +38,14 @@ export default function ForgotPassword() {
     try {
       
       const response = await axios.post(
-        `${CONFIG.API_URL}/profile/update/password-reset/request`,
+        `${CONFIG.API_URL}/auth/password-reset/request`,
         { credentials: { email: values.email } }
       );
 
      
       
       if (response.status == 200) {
+        console.log(response.data)
         const id: number = response.data.userId;
         await AsyncStorage.setItem("userId", JSON.stringify(id));
         router.push({
@@ -54,7 +55,7 @@ export default function ForgotPassword() {
 
         alert("Code sent successfully!");
       } else {
-        setForgotError("The Email  dosn't exist");
+        setForgotError("The Email doesn't exist");
       }
     } catch (error: any) {
       if (error.status === 404){

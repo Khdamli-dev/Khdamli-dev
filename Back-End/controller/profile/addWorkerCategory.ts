@@ -4,8 +4,9 @@ import pool from '../../database/dbConnection';
 const addWorkerCategory = async (req: Request, res: Response) => {
   const workerId : number = +req.params.workerId;
   const { categories } : {categories : number[]} = req.body;
+ 
 
-  if (Number.isNaN(+workerId) || !categories.length) {
+  if (Number.isNaN(workerId) || !categories.length) {
     res.status(400).json({ message: 'Invalid worker ID or categories' });
     return;
   }
@@ -15,9 +16,9 @@ const addWorkerCategory = async (req: Request, res: Response) => {
     await Promise.all(
       categories.map(async (categoryId : number) => {
         await pool.query(
-          `INSERT INTO worker_category (worker, category) 
-          VALUES ($1, $2) 
-          `,[workerId, categoryId]);
+          `INSERT INTO worker_category (worker, category , unity) 
+          VALUES ($1, $2 , $3) 
+          `,[workerId, categoryId ,1]);
       })
     );
 

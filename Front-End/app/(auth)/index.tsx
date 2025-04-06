@@ -51,9 +51,11 @@ export default function Login() {
     try {
       const response = await axios.post(`${CONFIG.API_URL}/auth/login`, values);
       if (response.data.success) {
+
         const user: any = response.data.user;
         await AsyncStorage.setItem("user", JSON.stringify(user));
         router.replace("/(tabs)/(home)"); //
+
       } else {
       }
     } catch (error: any) {

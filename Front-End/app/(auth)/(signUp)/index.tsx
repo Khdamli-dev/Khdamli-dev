@@ -102,14 +102,14 @@ export default function SignUp() {
     };
     try {
       const response = await axios.post(
-        `${CONFIG.API_URL}/auth/signup/credentials`,
+        `${CONFIG.API_URL}/auth/signup`,
         {
-          credentials,
+          credentials
         }
       );
       if (response?.status === 201) {
-       const user: any = response.data.user;
-        await AsyncStorage.setItem("user", JSON.stringify(user));
+        const id: number = response.data.user.id;
+        await AsyncStorage.setItem("userId", JSON.stringify(id));
         alert(
           "Check Your Email, We have sent you a verification link. Click on it to confirm your account."
         );

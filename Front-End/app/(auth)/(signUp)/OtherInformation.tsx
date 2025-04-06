@@ -29,6 +29,7 @@
     const router = useRouter();
     const rotateAnim = useState(new Animated.Value(0))[0];
 
+
     const [selectedWilaya, setSelectedWilaya] = useState<{
       name: string;
       id: number;
@@ -50,12 +51,14 @@
     const toggleDropdown = () => {
       setIsWilayaOpen(!isWilayaOpen);
       isAddressOpen ? setIsAddressOpen(!isAddressOpen) : null;
+
     };
     useEffect(() => {
       setSelectedMunicipality(null);
     }, [selectedWilaya]);
 
-    //AddressDropDown
+
+    
     const [isAddressOpen, setIsAddressOpen] = useState(false);
     const toggleAddressDropdown = () => {
       setIsAddressOpen(!isAddressOpen);
@@ -93,11 +96,13 @@
         address,
       };
 
+
       // Retrieve userId from AsyncStorage
       const userData = await AsyncStorage.getItem("user");
 
       if (userData) {
         const user: any = JSON.parse(userData); // Parse only if userData is not null
+
 
         try {
           const response = await axios.post(
@@ -162,6 +167,7 @@
                       Skip
                     </Text>
                   </TouchableOpacity>
+
                 </View>
               </View>
 

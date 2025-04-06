@@ -75,6 +75,7 @@ export default function Work_Information() {
 
   //HandleSubmit
   const [errorSubmit, setErrorSubmit] = useState("")
+
 const handleSubmit = async () => {
   try {
     const categories = selectedBranches.map(Number);
@@ -111,6 +112,7 @@ const handleSubmit = async () => {
       });
       await axios.post(`${CONFIG.API_URL}/work/payment/add-payment`, {
         workerId: user.id,
+
         payments: paymentMethod,
       });
 

@@ -26,6 +26,7 @@ export default function SelectRole() {
      // Retrieve user data from AsyncStorage
      const userData = await AsyncStorage.getItem("user");
 
+
      if (userData) {
        const user: any = JSON.parse(userData); // Parse the user data
 
@@ -51,6 +52,7 @@ export default function SelectRole() {
     router.dismissAll();
     router.replace("/(tabs)/(home)");
     router.replace("/(tabs)/(home)"); // Navigate to home  
+
   };
 
   return (

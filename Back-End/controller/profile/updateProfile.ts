@@ -9,7 +9,7 @@ const updateProfile = async (req: Request, res: Response) => {
     const id : number = +req.params.id;
     const {personalInfo, credentials} : { personalInfo : PersonalInfo, credentials : Credentials} = req.body;
 
-    if (Number.isNaN(+id)) {
+    if (Number.isNaN(id)) {
        res.status(400).json({ message: 'user id is required' });
        return;
     }
