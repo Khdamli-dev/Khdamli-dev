@@ -55,7 +55,7 @@ export default function VerficationCode() {
     const id: number = Number(storedId); // Convert string to number safely
     try {
       const response = await axios.post(
-        `${CONFIG.API_URL}/profile/update/password-reset/verify`,
+        `${CONFIG.API_URL}/auth/password-reset/verify`,
         {
           otp: code,
           id,
@@ -100,7 +100,7 @@ export default function VerficationCode() {
     if (timer > 0) return;
     const { email } = useLocalSearchParams(); //Get the Email
     try {
-      await axios.post(`${CONFIG.API_URL}/profile/update/password-reset/request`,
+      await axios.post(`${CONFIG.API_URL}/auth/password-reset/request`,
          { credentials: { email: email} });
          setresendSuccess(true)
          setresendCode("Code sent successfully!");

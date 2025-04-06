@@ -52,9 +52,9 @@ export default function NewPassword() {
       const storedId = await AsyncStorage.getItem("userId");
       const id: number = Number(storedId);
       
-      const response = await axios.post(
-        `${CONFIG.API_URL}/profile/update/user-info`,
-        { credentials: { password: values.newPassword },id }
+      const response = await axios.put(
+        `${CONFIG.API_URL}/users/${id}`,
+        { credentials: { password: values.newPassword } }
       );
      
       if (response.status == 200) {
@@ -63,6 +63,7 @@ export default function NewPassword() {
         alert("Your password has been changed successfully");
       } 
     } catch (error: any) {
+      console.log(error)
       setError("Internal server error");
       setTimeout(() => setError(""), 50000); 
     }

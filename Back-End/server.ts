@@ -13,7 +13,8 @@ const server = http.createServer(app); // http server
 const port = process.env.PORT;
 
 // allow cors middleware
-app.use(cors(corsOption));
+app.use(cors());
+app.use(express.urlencoded({ extended: true }));
 
 // allow transfer json data to requests
 app.use(express.json());

@@ -49,7 +49,7 @@ export default function Login() {
     try {
       const response = await axios.post(`${CONFIG.API_URL}/auth/login`, values);
       if (response.data.success) {
-        const id: number = response.data.userId;
+        const id: number = response.data.user.id;
         await AsyncStorage.setItem("userId", JSON.stringify(id));
         router.replace("/(auth)/(signUp)/terms"); //
       } else {

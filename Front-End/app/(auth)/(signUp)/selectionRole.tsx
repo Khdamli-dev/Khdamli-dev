@@ -25,9 +25,8 @@ export default function SelectRole() {
       const storedId = await AsyncStorage.getItem("userId");
       const id: number = Number(storedId);
 
-      const response = await axios.post(
-        `${CONFIG.API_URL}/profile/update/role/worker`,
-        { userId: id }
+      const response = await axios.put(
+        `${CONFIG.API_URL}/users/${id}/role/worker`
       );
       router.replace("/(auth)/(signUp)/workerInfo");
     } catch (error: any) {

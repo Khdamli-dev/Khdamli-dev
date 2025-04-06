@@ -71,16 +71,13 @@ export default function Work_Information() {
       const storedId = await AsyncStorage.getItem("userId");
       const id: number = Number(storedId);
       
-      await axios.post(`${CONFIG.API_URL}/work/category/add-category`, {
-        categories,
-        workerId: id,
+      await axios.post(`${CONFIG.API_URL}/work/categories/${id}`, {
+        categories
       });
-      await axios.post(`${CONFIG.API_URL}/work/working-hours/set-hours`, {
-        workerId: id,
-        workingHours,
+      await axios.put(`${CONFIG.API_URL}/work/working-time/${id}`, {
+        workingHours
       });
-      await axios.post(`${CONFIG.API_URL}/work/payment/add-payment`, {
-        workerId: id,
+      await axios.post(`${CONFIG.API_URL}/work/payment/${id}`, {
         payments: paymentMethod,
       });
        router.replace("/(auth)/(signUp)/terms");
