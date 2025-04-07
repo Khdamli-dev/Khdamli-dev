@@ -102,18 +102,14 @@ const handleSubmit = async () => {
       const user: any = JSON.parse(userData); // Parse the user data
 
       // Use the user.id for API requests
-      await axios.post(`${CONFIG.API_URL}/work/category/add-category`, {
-        categories,
-        workerId: user.id,
+      await axios.post(`${CONFIG.API_URL}/work/categories/${user.id}`, {
+        categories
       });
-      await axios.post(`${CONFIG.API_URL}/work/working-hours/set-hours`, {
-        workerId: user.id,
-        workingHours,
+      await axios.put(`${CONFIG.API_URL}/work/working-time/${user.id}`, {
+        workingHours
       });
-      await axios.post(`${CONFIG.API_URL}/work/payment/add-payment`, {
-        workerId: user.id,
-
-        payments: paymentMethod,
+      await axios.post(`${CONFIG.API_URL}/work/payment/${user.id}`, {
+        payments: paymentMethod
       });
 
       // Update the role to 2 in the user object and save it back to AsyncStorage
@@ -128,6 +124,7 @@ const handleSubmit = async () => {
     }
   } catch (error) {
     setErrorSubmit("Error Failed to submit data");
+    console.log(error)
     setTimeout(() => setErrorSubmit(""), 30000);
   }
 };

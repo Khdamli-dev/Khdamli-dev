@@ -171,9 +171,12 @@ const CreateRequestScreen = () => {
     return dateObject;
   };
   //UploaderMedia ------------------------------------------------------------------------------------------
-const uploadSelectedMedia = async (requestId: number = 14) => {
+const uploadSelectedMedia = async (requestId: number) => {
   if (!selectedMedia.length) {
     console.warn("❌ No media selected to upload.");
+    return;
+  }
+  if (isNaN(requestId)) {
     return;
   }
 
@@ -192,10 +195,11 @@ const uploadSelectedMedia = async (requestId: number = 14) => {
 
   try {
     const response = await axios.put(
-      `${CONFIG.API_URL}/work/job-request/media/${14}`,
+      `${CONFIG.API_URL}/work/job-request/media/${requestId}`,
       formData,
       {
         headers: {
+          // Let Axios handle Content-Type with the correct boundary
           "Content-Type": "multipart/form-data",
         },
       }
@@ -203,10 +207,7 @@ const uploadSelectedMedia = async (requestId: number = 14) => {
 
     console.log("✅ Media uploaded successfully:", response.data);
   } catch (error: any) {
-    console.error(
-      "❌ Error uploading media:",
-      error.response?.data || error.message
-    );
+    console.log(error)
   }
 };
 
@@ -258,17 +259,17 @@ const uploadSelectedMedia = async (requestId: number = 14) => {
          type: 1, // Public request
          status: 3, // "On Hold"
        };
-
        const response = await axios.post(
-         `${CONFIG.API_URL}/work/job-request/create`,
+         `${CONFIG.API_URL}/work/job-request/`,
          jobRequest
        );
 
        if (response.status === 201) {
-         const requestId: number = response.data.id;
-         console.log("Job request submitted successfully:", response.data);
-         router.back();
+         const requestId: number = +response.data.request.id;
+         uploadSelectedMedia(requestId);
+        
        }
+       router.back();
      } else {
        console.log("No user data found in AsyncStorage");
        setError("User data not found. Please log in again.");
@@ -612,7 +613,7 @@ const uploadSelectedMedia = async (requestId: number = 14) => {
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={uploadSelectedMedia as any}
+                onPress={handleSubmit as any}
                 className="flex justify-center items-center w-1/2 ml-1 bg-specialGreen h-16 rounded-full"
               >
                 <Text className=" text-center text-xl font-semibold text-white">

@@ -35,7 +35,7 @@ const OneCategorySelector: React.FC<CategorySelectorProps> = ({
     const fetchCategories = async () => {
       try {
         const response = await axios.get(
-          `${CONFIG.API_URL}/work/category/get-category`
+          `${CONFIG.API_URL}/work/categories/`
         );
         const filteredCategories = response?.data?.categories.filter(
           (category: Category) => category.parent_category === null
