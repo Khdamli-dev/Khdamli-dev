@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import JobRequest from '../interface/jobRequest';
-import PersonalInfo from '../interface/personalInfo';
 import assignAddress from './assignAddress';
 
 const validateJobRequest = async (req: Request, res: Response, next: NextFunction) => {
