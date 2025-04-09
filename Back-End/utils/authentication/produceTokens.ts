@@ -1,4 +1,4 @@
-import JwtToken from '../../interface/jwtToken';
+import { JwtToken } from '../../interface/jwtToken';
 import makeJwtToken from './makeJwtToken';
 
 const produceTokens = (id: number, role: number) : {accessToken : string, refreshToken : string} => {

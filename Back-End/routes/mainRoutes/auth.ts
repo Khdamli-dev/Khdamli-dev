@@ -6,12 +6,13 @@ import {
   verifyOTP,
 } from '../../controller/profile/handlePasswordReset';
 import canSendOTP from '../../middleware/canSendOTP';
-import verifyJWT from '../../middleware/verifyJWT';
+import refreshAccessToken from '../../config/refreshAccessToken';
 
 const auth: Router = express.Router();
 
 auth.use('/signup', signup);
-auth.post('/login', verifyJWT, login);
+auth.post('/login', login);
+auth.post('/refresh', refreshAccessToken);
 auth.post('/password-reset/request', canSendOTP, sendOTP); // Request OTP for password reset
 auth.post('/password-reset/verify', verifyOTP);
 
