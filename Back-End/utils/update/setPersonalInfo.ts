@@ -35,7 +35,7 @@ const setPersonalInfo = async (req: Request, res: Response) => {
       res.status(400).json({ message: "user doesn't exist" });
       return;
     }
-    res.status(200).json({ message: 'User information added successfully' });
+    res.status(200).json({ message: 'User information added successfully' ,success : true});
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: 'internal server error' });

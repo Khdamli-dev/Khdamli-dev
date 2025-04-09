@@ -14,20 +14,21 @@ export const uploadMedia = async (req: Request, res: Response) => {
   }
   upload.array("file", 5)(req, res, async (err) => {
     if (err) {
-      console.log(err)
-      return res.status(400).json({
+       res.status(400).json({
         message: err.message || "Error uploading files",
         success: false,
         requestId
       });
+      return;
     }
 
     if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
-      return res.status(400).json({
+       res.status(400).json({
         message:'no media is provided',
         requestId,
         success: false
       });
+      return
     }
     const uploadedFiles = (req.files as Express.Multer.File[]).map((file) => ({
       fileUrl: file.path, // Cloudinary file URL
@@ -38,11 +39,12 @@ export const uploadMedia = async (req: Request, res: Response) => {
       await updateRequestMedia(File , requestId);
     })
 
-    return res.status(201).json({
+     res.status(201).json({
       message: 'Media uploaded successfully',
       requestId,
       success: true,
       files: uploadedFiles,
     });
+    return
   });
 };

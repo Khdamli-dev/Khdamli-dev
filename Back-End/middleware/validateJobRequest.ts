@@ -15,7 +15,6 @@ const validateJobRequest = async (req: Request, res: Response, next: NextFunctio
     type,
     worker,
   }: JobRequest = req.body;
-  console.log(req.body);
   // Check for required fields
   if (!client || !region || !working_time || !category || !payment || !type) {
     res.status(400).json({ 
