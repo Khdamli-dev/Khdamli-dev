@@ -14,7 +14,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Icon from "react-native-vector-icons/Octicons";
 import Icoon from "react-native-vector-icons/AntDesign";
-import CONFIG from "../../../config"
+import CONFIG from "../../../config";
 import { useRouter } from "expo-router";
 import { Formik } from "formik";
 import * as Yup from "yup";
@@ -32,20 +32,15 @@ export default function ForgotPassword() {
     email: Yup.string().email("Invalid Email").required("Email Is Required"),
   });
 
-  
-
   const handleReset = async (values: { email: string }) => {
     try {
-      
       const response = await axios.post(
         `${CONFIG.API_URL}/auth/password-reset/request`,
         { credentials: { email: values.email } }
       );
 
-     
-      
       if (response.status == 200) {
-        console.log(response.data)
+        console.log(response.data);
         const id: number = response.data.userId;
         await AsyncStorage.setItem("userId", JSON.stringify(id));
         router.push({
@@ -58,19 +53,17 @@ export default function ForgotPassword() {
         setForgotError("The Email doesn't exist");
       }
     } catch (error: any) {
-      if (error.status === 404){
-        setForgotError("User not found")
+      if (error.status === 404) {
+        setForgotError("User not found");
+      } else if (error.status === 403) {
+        setForgotError("you need to validate your account first");
+      } else if (error.status === 429) {
+        setForgotError(
+          "OTP resend not allowed. Please wait until the previous OTP expires."
+        );
+      } else {
+        setForgotError("internal server error");
       }
-      else if(error.status === 403){
-        setForgotError("you need to validate your account first")
-      }
-      else if(error.status === 429){
-        setForgotError("OTP resend not allowed. Please wait until the previous OTP expires.")
-      }
-      else {
-        setForgotError("internal server error")
-      }
-      
     }
   };
   return (
@@ -118,20 +111,15 @@ export default function ForgotPassword() {
             </Text>
           </LinearGradient>
 
-           {/* Icon !&& Text Section */}
+          {/* Icon !&& Text Section */}
           <View className="felx items-center justify-center">
-         
-          <View className="relative w-full  h-56 flex items-center justify-center">
-            <Icon name="shield-lock" color="#4C8479" size={140} />
-          </View>
+            <View className="relative w-full  h-56 flex items-center justify-center">
+              <Icon name="shield-lock" color="#4C8479" size={140} />
+            </View>
 
             <Text className=" w-9/12 text-center  font-normal text-2xl text-black leading-10">
-              Enter your email and
-           
-              we'll send you a code to reset your
-              password
+              Enter your email and we'll send you a code to reset your password
             </Text>
-         
           </View>
 
           <Formik
@@ -153,19 +141,17 @@ export default function ForgotPassword() {
               <View className="flex justify-center items-center">
                 <View className="relative w-full  h-32 flex items-center justify-center">
                   <TextInput
-                    className={`w-9/12 h-16 text-2xl  border-red-600 border-0 ${ ForgotError ||(errors.email && touched.email ) ? " border-2":""} rounded-full px-8 py-2 bg-white`}
+                    className={`w-9/12 h-16 text-2xl  border-red-600 border-0 ${ForgotError || (errors.email && touched.email) ? " border-2" : ""} rounded-full px-8 py-2 bg-white`}
                     value={values.email}
                     onChangeText={handleChange("email")}
                     keyboardType="email-address"
                     placeholder="Email"
                     placeholderTextColor="#C4C4C4"
                     onFocus={() => {
-                     
                       setForgotError("");
                       setFieldTouched("email", false);
                     }}
                     onBlur={() => {
-                      
                       handleBlur("email");
                     }}
                   />
@@ -175,9 +161,11 @@ export default function ForgotPassword() {
                     {errors.email}
                   </Text>
                 )}
-                {ForgotError && (<Text className="text-center text-red-600 text-lg  w-9/12">
+                {ForgotError && (
+                  <Text className="text-center text-red-600 text-lg  w-9/12">
                     {ForgotError}
-                  </Text>)}
+                  </Text>
+                )}
                 <View className="relative w-full  h-32 flex items-center justify-center">
                   <TouchableOpacity
                     onPress={handleSubmit as any}
