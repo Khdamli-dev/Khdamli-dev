@@ -11,7 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import CONFIG from "../../../config";
 import axios from "axios";
-import { useRouter } from "expo-router";
+import { router, useRouter } from "expo-router";
 
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import {
@@ -94,9 +94,17 @@ const ProfileItem: React.FC<ProfileItemProps> = ({
 
 const Setting = () => {
   const [isEnabled, setIsEnabled] = useState(false);
-  const handleLogout = () => {
-    console.log("asdfghjkl;sdfghjksdfghjkyuisdfghjdf");
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.clear();
+      console.log("AsyncStorage has been cleared.");
+      // Navigate back to the auth screen and reset history
+      router.replace("/(auth)");
+    } catch (error) {
+      console.error("Error clearing AsyncStorage:", error);
+    }
   };
+
   const handledelete = async () => {
     const userData = await AsyncStorage.getItem("user");
 
@@ -107,9 +115,9 @@ const Setting = () => {
           `${CONFIG.API_URL}/users/${user.id}`
         );
         if (response.data.success) {
-          // Optionally clear AsyncStorage after deletion
           await AsyncStorage.removeItem("user");
           Alert.alert("Success", "Your account has been deleted.");
+          router.replace("/(auth)");
         }
       } catch (error) {
         Alert.alert("Error", "Server is busy, please try again later.");
