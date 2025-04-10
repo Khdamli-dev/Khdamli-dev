@@ -1,11 +1,11 @@
 import jwt from 'jsonwebtoken';
 import { NextFunction, Request, Response } from 'express';
 import dotenv from 'dotenv';
+import { JwtUserPayload } from '../interface/jwtToken';
 
 dotenv.config();
 
 const verifyJWT = async (req: Request, res: Response, next: NextFunction) => {
-
   const accessTokenSecret: string | undefined = process.env.Access_Token_Secret;
   if (!accessTokenSecret) {
     res.status(500).json({
@@ -14,10 +14,9 @@ const verifyJWT = async (req: Request, res: Response, next: NextFunction) => {
     });
     return;
   }
-
   const accessToken: string = req.cookies?.accessToken || req.headers['authorization']?.split(' ')[1];
 
-  // case of Session expired
+  // case of there is not token
   if (!accessToken) {
     res.status(403).json({
       message: 'you are forbidden, dont have access token',
@@ -29,7 +28,7 @@ const verifyJWT = async (req: Request, res: Response, next: NextFunction) => {
   // check if access token is valid
   jwt.verify(accessToken, accessTokenSecret, (err, decode) => {
     if (err) {
-      if (err.name == 'TokenExpiredError'){
+      if (err.name == 'TokenExpiredError'){ // case of session expired
         res.status(401).json({
           message: 'Session expired. Please log in again.',
           success: false,
@@ -43,6 +42,10 @@ const verifyJWT = async (req: Request, res: Response, next: NextFunction) => {
         return;
       } 
     }
+    
+    // set role to check it in checkRole middleware
+    const decodedToken: JwtUserPayload = decode as JwtUserPayload;
+    (req as any).role = decodedToken.userInfo.role;
     next();
   });
 };
