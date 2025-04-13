@@ -1,5 +1,5 @@
-import { Request, Response } from "express";
-import pool from "../../database/dbConnection";
+import { Request, Response } from 'express';
+import pool from '../../database/dbConnection';
 
 export const getWorkers = async (req: Request, res: Response) => {
   try {
@@ -7,7 +7,7 @@ export const getWorkers = async (req: Request, res: Response) => {
     const userId = req.params.userId;
     if (!userId || isNaN(+userId) || !category || isNaN(+category)) {
       res.status(400).json({
-        message: "category or userId is not provided",
+        message: 'category or userId is not provided',
         success: false,
       });
       return;
@@ -36,25 +36,25 @@ WHERE wc.category = $1
 ORDER BY (w.completed_requests * 2 - w.sent_requests) DESC
 LIMIT 20 OFFSET $3;
              `,
-      [+category, +userId, parsedPage]
+      [+category, +userId, parsedPage],
     );
 
     if (!workers.length) {
       res.status(404).json({
-        message: "no workers fit this category",
+        message: 'no workers fit this category',
         success: false,
       });
       return;
     }
     res.status(200).json({
-      message: "workers fetched with success",
+      message: 'workers fetched with success',
       success: true,
       workers,
     });
   } catch (err) {
     console.log(err);
     res.status(500).json({
-      message: "internal error",
+      message: 'internal error',
       success: false,
     });
   }
