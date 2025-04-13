@@ -29,21 +29,19 @@ export default function SelectRole() {
 
      if (userData) {
        const user: any = JSON.parse(userData); // Parse the user data
-
        // Make the API request to update the role
-       const response = await axios.post(
-         `${CONFIG.API_URL}/profile/update/role/worker`,
-         { userId: user.id } // Use the user ID from AsyncStorage
+       const response = await axios.put(
+         `${CONFIG.API_URL}/users/${user.id}/role/worker`
        );
 
-       if (response) {
-         // Navigate to the worker info page
+       if (response.data.success) {
          router.push("/(auth)/(signUp)/workerInfo");
        }
      } else {
        console.log("No user data found in AsyncStorage");
      }
    } catch (error: any) {
+    console.log(error)
      alert("Server is busy, please try again later");
    }
  };

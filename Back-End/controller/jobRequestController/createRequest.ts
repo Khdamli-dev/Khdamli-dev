@@ -27,8 +27,6 @@ const createRequest = async (req: Request, res: Response ) => {
 
     // send to it to workers to make it real time
     await jobRequestEmitter(rows[0]);
-    req.body.requestId = rows[0].request_id
-
     res.status(201).json({
       message : 'Job request created successfully',
       request : rows[0], 

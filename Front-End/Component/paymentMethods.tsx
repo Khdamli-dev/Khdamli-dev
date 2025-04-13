@@ -29,9 +29,9 @@ const PaymentMethod: React.FC<PaymentMethodProps> = ({
   const fetchPaymentMethods = async () => {
     try {
       const response = await axios.get(
-        `${CONFIG.API_URL}/work/payment/get-payment`
+        `${CONFIG.API_URL}/work/payment/`
       );
-      if (response.status === 200) setPaymentMethods(response.data);
+      if (response.status === 200) setPaymentMethods(response.data.paymentMethods);
     } catch (error) {}
   };
 

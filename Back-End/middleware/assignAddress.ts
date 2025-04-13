@@ -5,7 +5,6 @@ import createAddress from "../utils/address/createAddress";
 
 const assignAddress = async ( req: Request , res : Response , next : NextFunction)=>{
     try {
-      // if user don 't want to modify his address
       if (!req.body.personalInfo?.address){
         next();
         return;

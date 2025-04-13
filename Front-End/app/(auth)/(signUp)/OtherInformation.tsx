@@ -102,24 +102,21 @@
 
       if (userData) {
         const user: any = JSON.parse(userData); // Parse only if userData is not null
-
-
         try {
-          const response = await axios.post(
-            `${CONFIG.API_URL}/profile/update/user-info`,
+          const response = await axios.put(
+            `${CONFIG.API_URL}/users/${user.id}`,
             {
-              personalInfo,
-              id: user.id, // Pass the user ID
+              personalInfo // Pass the user ID
             }
           );
-          if (response) {
+          if (response.data.success) {
             router.replace("/selectionRole");
           }
         } catch (error) {
           alert("Server is busy, please try again later.");
         }
       } else {
-        console.log("No user data found in AsyncStorage");
+        console.log("No user data found in AsyncStorage "+userData);
       }
     };
 
