@@ -34,8 +34,8 @@ const EditProfileScreen = ({ navigation }: ProfileScreenProps) => {
   const renderItem = () => (
     <>
       <GeneralInfo onInfoChange={setUserInfo} />
-      <WorkingDays onChange={setWorkingDays} />
-      <AdderssSection onChange={setAddressInfo} />
+      <WorkingDays onChange={setWorkingDays as any} />
+      <AdderssSection onChange={setAddressInfo as any} />
       <View className="flex-row justify-between mt-5 mb-7">
         <TouchableOpacity
           className="border-2 border-[#396F65] bg-white mr-0.5 py-1.5 rounded-[25px] flex-1 items-center shadow-lg"

@@ -170,7 +170,7 @@ const Setting = () => {
             />
           ))}
       </View>
-      <View className="bg-primary rounded-2xl mb-2 mx-2 p-4 border border-gray-300 shadow-md py-0 ">
+      <View className="bg-red-700 rounded-2xl mb-2 mx-2 p-4 border border-gray-300 shadow-md py-0 ">
         <ProfileItem
           label="Delete Account "
           value={<Trash2 size={20} color="white" />}
