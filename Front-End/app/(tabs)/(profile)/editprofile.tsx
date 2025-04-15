@@ -8,6 +8,7 @@ import Header from "../../../Component/ProfileComponents/Header";
 
 import React from "react";
 import { View, TouchableOpacity, Text } from "react-native";
+import { router } from "expo-router";
 type RootStackParamList = {
   Profile: undefined;
 };
@@ -18,13 +19,23 @@ type ProfileScreenProps = {
 
 const EditProfileScreen = ({ navigation }: ProfileScreenProps) => {
   const [userInfo, setUserInfo] = useState({});
-  const [workingDays, setWorkingDays] = useState([]);
-  const [addressInfo, setAddressInfo] = useState({
+  const [workingDays, setWorkingDays] = useState<
+    { name: string; from: string; to: string }[]
+  >([]);
+  type AddressInfo = {
+    wilayaId: number | null;
+    dairaId: number | null;
+    addressname: string | null;
+    addressId: number | null;
+  };
+
+  const [addressInfo, setAddressInfo] = useState<AddressInfo>({
     wilayaId: null,
     dairaId: null,
     addressname: null,
     addressId: null,
   });
+
   const handleSave = () => {
     console.log("User Info:", userInfo);
     console.log("Working Days:", workingDays);
@@ -39,7 +50,7 @@ const EditProfileScreen = ({ navigation }: ProfileScreenProps) => {
       <View className="flex-row justify-between mt-5 mb-7">
         <TouchableOpacity
           className="border-2 border-[#396F65] bg-white mr-0.5 py-1.5 rounded-[25px] flex-1 items-center shadow-lg"
-          onPress={() => navigation.navigate("Profile")}
+          onPress={() => router.back()}
         >
           <Text
             className="text-[#396F65] text-xl "

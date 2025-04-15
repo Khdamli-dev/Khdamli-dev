@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,6 @@ import {
   Alert,
   FlatList,
   Dimensions,
-  Button,
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -33,6 +32,9 @@ import { useFonts, Itim_400Regular } from "@expo-google-fonts/itim";
 import * as ImagePicker from "expo-image-picker";
 import { NavigationProp } from "@react-navigation/native";
 import { router } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import CONFIG from "@/config";
+import axios from "axios";
 
 const { width } = Dimensions.get("window");
 
@@ -93,7 +95,9 @@ const pickProfileImage = async (
     updateProfileImage(result.assets[0].uri);
   }
 };
+
 const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
+  useEffect(() => {}, []);
   const [user, setUser] = useState({
     fullName: "Mohammed",
     email: "mohammed@gmail.com",
@@ -229,7 +233,9 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
               />
               <TouchableOpacity
                 className="absolute bottom-0 right-0 bg-[#BD7D06] rounded-full p-[6px] border-[1.5px] border-white"
-                onPress={() => pickProfileImage(updateProfileImage)}
+                onPress={() => {
+                  pickProfileImage(updateProfileImage);
+                }}
               >
                 <Pencil size={20} color="white" />
               </TouchableOpacity>

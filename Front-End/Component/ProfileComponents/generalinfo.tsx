@@ -94,7 +94,7 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onInfoChange }) => {
         setPayment(paymentData);
       } catch (error) {
         console.error("Error fetching data:", error);
-        alert("حدث خطأ أثناء تحميل البيانات");
+        alert("there is wrong ");
       } finally {
         setLoading(false);
       }
