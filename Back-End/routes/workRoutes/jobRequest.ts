@@ -9,6 +9,7 @@ import { uploadMedia } from '../../controller/upload/uploadMedia';
 import { updateRequestStatus } from '../../controller/jobRequestController/updateRequestStatus';
 import selectWorker from '../../controller/jobRequestController/selectWorker';
 import createComment from '../../controller/jobRequestController/createComment';
+import getRequestMessages from '../../controller/jobRequestController/getRequestMessages';
 import checkRole from '../../middleware/checkRole';
 
 const request: Router = express.Router();
@@ -35,5 +36,7 @@ request.put('/:requestId/select-worker/:workerId', checkRole([clientRoleId]), se
 
 // this route is used to make a comment on public request
 request.post('/:requestId/comment', checkRole([workerRoleId]), createComment);
+
+request.get('/:requestId/messages', getRequestMessages);
 
 export default request;
