@@ -45,7 +45,9 @@ const Sender = () => {
 
   const fetchPrivateRequests = async () => {
     try {
-      const response = await axios.get("http://example.com/api/privateRequests");
+      const response = await axios.get(
+        "http://example.com/api/privateRequests"
+      );
       const result: Request[] = response.data;
       // Fetch status for each request and filter out rejected ones
       const requestsWithStatus = await Promise.all(
@@ -95,7 +97,7 @@ const Sender = () => {
 
     useEffect(() => {
       const fetchStatus = async () => {
-        const s = await stateRequest(item.id);
+        const s = "accepted"; //await stateRequest(item.id);
         setStatus(s);
         // Remove item from state if rejected
         if (s === "rejected") {
@@ -127,19 +129,26 @@ const Sender = () => {
             <View className="p-4">
               <Text className="text-xl font-bold">Request Details:</Text>
               <Text className="text-lg">
-                Date: <Text className="text-specialGreen">{item.sent_time || "N/A"}</Text>
+                Date:{" "}
+                <Text className="text-specialGreen">
+                  {item.sent_time || "N/A"}
+                </Text>
               </Text>
               <Text className="text-lg">
-                Address: <Text className="text-specialGreen">{item.location}</Text>
+                Address:{" "}
+                <Text className="text-specialGreen">{item.location}</Text>
               </Text>
               <Text className="text-lg">
-                Service: <Text className="text-specialGreen">{item.description}</Text>
+                Service:{" "}
+                <Text className="text-specialGreen">{item.description}</Text>
               </Text>
               <Text className="text-lg">
-                Contact: <Text className="text-specialGreen">{item.contact}</Text>
+                Contact:{" "}
+                <Text className="text-specialGreen">{item.contact}</Text>
               </Text>
               <Text className="text-lg">
-                About Service: <Text className="text-specialGreen">{item.aboutService}</Text>
+                About Service:{" "}
+                <Text className="text-specialGreen">{item.aboutService}</Text>
               </Text>
             </View>
           </View>
@@ -160,12 +169,16 @@ const Sender = () => {
                 }}
               >
                 <View style={{ paddingLeft: 12, flex: 1 }}>
-                  <Text style={{ fontSize: 20, fontWeight: "bold" }}>{item.user}</Text>
+                  <Text style={{ fontSize: 20, fontWeight: "bold" }}>
+                    {item.user}
+                  </Text>
                   <Text style={{ fontWeight: "500" }}>
-                    Phone: <Text style={{ color: "#F8A100" }}>{item.contact}</Text>
+                    Phone:{" "}
+                    <Text style={{ color: "#F8A100" }}>{item.contact}</Text>
                   </Text>
                   <Text>
-                    Service: <Text style={{ color: "#F8A100" }}>{item.description}</Text>
+                    Service:{" "}
+                    <Text style={{ color: "#F8A100" }}>{item.description}</Text>
                   </Text>
                 </View>
                 <View
@@ -176,13 +189,25 @@ const Sender = () => {
                   }}
                 >
                   {status === "accepted" && (
-                    <MaterialCommunityIcons name="check-circle" size={35} color="green" />
+                    <MaterialCommunityIcons
+                      name="check-circle"
+                      size={35}
+                      color="green"
+                    />
                   )}
                   {status === "completed" && (
-                    <MaterialCommunityIcons name="check-all" size={35} color="blue" />
+                    <MaterialCommunityIcons
+                      name="check-all"
+                      size={35}
+                      color="blue"
+                    />
                   )}
                   {status === "onhold" && (
-                    <MaterialCommunityIcons name="clock-time-four" size={35} color="#F8A100" />
+                    <MaterialCommunityIcons
+                      name="clock-time-four"
+                      size={35}
+                      color="#F8A100"
+                    />
                   )}
                 </View>
               </View>

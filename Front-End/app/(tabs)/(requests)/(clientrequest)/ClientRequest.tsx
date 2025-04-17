@@ -107,7 +107,7 @@ const PublicRequest = () => {
   const handleSelectRequest = (id: number) => {
     console.log("Handling request selection for id:", id);
     router.push({
-      pathname: "./WorkerComments",
+      pathname: "/WorkerComments",
       params: { id },
     });
   };
