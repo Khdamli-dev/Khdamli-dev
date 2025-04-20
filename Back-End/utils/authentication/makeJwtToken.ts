@@ -1,5 +1,5 @@
 import jwt, {SignOptions} from 'jsonwebtoken';
-import JwtToken from '../../interface/jwtToken';
+import { JwtToken } from '../../interface/jwtToken';
 
 const makeJwtToken = (info: JwtToken): string => {
   const { userId, role, time, secret }: JwtToken = info;

@@ -1,6 +1,17 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Switch } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Switch,
+  Alert,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import CONFIG from "../../../config";
+import axios from "axios";
+import { router, useRouter } from "expo-router";
 
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import {
@@ -18,6 +29,7 @@ declare module "lucide-react-native" {
     color?: string;
   }
 }
+
 type RootStackParamList = {
   changephone: undefined;
   changeEmail: undefined;
@@ -82,12 +94,40 @@ const ProfileItem: React.FC<ProfileItemProps> = ({
 
 const Setting = () => {
   const [isEnabled, setIsEnabled] = useState(false);
-  const handleLogout = () => {
-    console.log("asdfghjkl;sdfghjksdfghjkyuisdfghjdf");
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.clear();
+      console.log("AsyncStorage has been cleared.");
+      // Navigate back to the auth screen and reset history
+      router.replace("/(auth)");
+    } catch (error) {
+      console.error("Error clearing AsyncStorage:", error);
+    }
   };
-  const handledelete = () => {
-    console.log("asdfghjkl;sdfghjksdfghjkyuisdfghjdf");
+
+  const handledelete = async () => {
+    const userData = await AsyncStorage.getItem("user");
+
+    if (userData) {
+      const user: any = JSON.parse(userData);
+      try {
+        const response = await axios.delete(
+          `${CONFIG.API_URL}/users/${user.id}`
+        );
+        if (response.data.success) {
+          await AsyncStorage.removeItem("user");
+          Alert.alert("Success", "Your account has been deleted.");
+          router.replace("/(auth)");
+        }
+      } catch (error) {
+        Alert.alert("Error", "Server is busy, please try again later.");
+      }
+    } else {
+      console.log("No user data found in AsyncStorage " + userData);
+      Alert.alert("Error", "No user data found.");
+    }
   };
+
   const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
   return (
     <SafeAreaView className="flex-1 bg-gray-200">
@@ -170,7 +210,7 @@ const Setting = () => {
             />
           ))}
       </View>
-      <View className="bg-red-700 rounded-2xl mb-2 mx-2 p-4 border border-gray-300 shadow-md py-0 ">
+      <View className="bg-red-600 rounded-2xl mb-2 mx-2 p-4 border border-gray-300 shadow-md py-0 ">
         <ProfileItem
           label="Delete Account "
           value={<Trash2 size={20} color="white" />}
