@@ -9,6 +9,7 @@ import { updateRequestStatus } from '../../controller/jobRequestController/updat
 import selectWorker from '../../controller/jobRequestController/selectWorker';
 import createComment from '../../controller/jobRequestController/createComment';
 import getRequestMessages from '../../controller/jobRequestController/getRequestMessages';
+import getRequestDetails from '../../controller/jobRequestController/getRequestDetails';
 
 const request: Router = express.Router();
 
@@ -16,6 +17,8 @@ request.post('/', validateJobRequest, createRequest);
 
 // this route used to get private and public requests for a client or a worker
 request.get('/', getRequest);
+
+request.get("/:requestId", getRequestDetails);
 
 request.delete('/:requestId', deleteRequest);
 
