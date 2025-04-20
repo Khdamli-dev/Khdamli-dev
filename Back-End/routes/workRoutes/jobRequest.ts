@@ -1,20 +1,20 @@
 import express, { Router } from 'express';
 import createRequest from '../../controller/jobRequestController/createRequest';
 import validateJobRequest from '../../middleware/validateJobRequest';
-import getRequest from '../../controller/jobRequestController/getRequests';
 import deleteRequest from '../../controller/jobRequestController/deleteRequest';
 import modifyRequest from '../../controller/jobRequestController/modifyRequest';
 import { uploadMedia } from '../../controller/upload/uploadMedia';
 import { updateRequestStatus } from '../../controller/jobRequestController/updateRequestStatus';
 import selectWorker from '../../controller/jobRequestController/selectWorker';
 import createComment from '../../controller/jobRequestController/createComment';
+import getRequests from '../../controller/jobRequestController/getRequests';
 
 const request: Router = express.Router();
 
 request.post('/', validateJobRequest, createRequest);
 
 // this route used to get private and public requests for a client or a worker
-request.get('/', getRequest);
+request.get('/', getRequests);
 
 request.delete('/:requestId', deleteRequest);
 
