@@ -24,6 +24,8 @@ request.post('/', checkRole([clientRoleId]), validateJobRequest, createRequest);
 // this route used to get private and public requests for a client or a worker
 request.get('/', getRequest);
 
+request.get('/:requestId', getRequestDetails);
+
 request.delete('/:requestId', checkRole([clientRoleId]), deleteRequest);
 
 request.put('/:requestId', checkRole([clientRoleId]), modifyRequest);
