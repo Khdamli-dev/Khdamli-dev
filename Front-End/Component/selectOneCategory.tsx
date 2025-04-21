@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ScrollView, TouchableOpacity, Text, View, Image } from "react-native";
-import axios from "axios";
-import CONFIG from "@/config";
+import apiClient from "@/api/appClient";
+import refreshAccessToken from "@/api/refreshAccessToken";
 
 interface Category {
   id: string;
@@ -34,15 +34,17 @@ const OneCategorySelector: React.FC<CategorySelectorProps> = ({
     setSelected(selectedCategory); // Sync with parent state
     const fetchCategories = async () => {
       try {
-        const response = await axios.get(
-          `${CONFIG.API_URL}/work/categories/`
-        );
+        const response = await apiClient.get(`/work/categories`);
         const filteredCategories = response?.data?.categories.filter(
           (category: Category) => category.parent_category === null
         );
         setCategories(filteredCategories);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
+      } catch (error : any) {
+        if (error.response?.status === 403){
+          await refreshAccessToken();
+          await fetchCategories();
+        }
+        console.log(error);
       }
     };
     fetchCategories();

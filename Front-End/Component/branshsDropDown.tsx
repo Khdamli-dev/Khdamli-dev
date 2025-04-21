@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { ScrollView, TouchableOpacity, Text, View, Image } from "react-native";
-import axios from "axios";
-
-import CONFIG from "@/config";
+import React, { useState, useEffect } from 'react';
+import { ScrollView, TouchableOpacity, Text, View, Image } from 'react-native';
+import apiClient from '@/api/appClient';
+import refreshAccessToken from '@/api/refreshAccessToken';
 
 interface Category {
   id: string;
@@ -15,7 +14,7 @@ interface Category {
 interface CategorySelectorProps {
   selectCategories: string[] | null;
   onSelectBranches: (selectedBranches: string[]) => void;
-  branshss:string[]
+  branshss: string[];
 }
 
 const CategorySelector: React.FC<CategorySelectorProps> = ({
@@ -35,29 +34,31 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
     setSelectedBranches(branshss);
     const fetchCategories = async () => {
       try {
-        const response = await axios.get(
-          `${CONFIG.API_URL}/work/categories/`
-        );
+        const response = await apiClient.get(`/work/categories`);
         setMainCategories(response.data.categories);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
+      } catch (error: any) {
+        if (error.response?.status === 403) {
+          await refreshAccessToken();
+          await fetchCategories();
+        }
+        console.log(error);
       }
     };
     fetchCategories();
   }, []);
- 
+
   // Update categories based on selected categories prop
   useEffect(() => {
     if (mainCategories.length > 0 && selectCategories) {
       setCategories(
         mainCategories.filter((cat: Category) =>
-          selectCategories.includes(cat.id ?? "")
-        )
+          selectCategories.includes(cat.id ?? ''),
+        ),
       );
       setBranshes(
         mainCategories.filter((cat: Category) =>
-          branshss.includes(cat.id ?? "")
-        )
+          branshss.includes(cat.id ?? ''),
+        ),
       );
     }
   }, [selectCategories, mainCategories]);
@@ -70,11 +71,13 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
   const cleanUnparentedBranches = () => {
     if (!selectCategories) return;
 
-    setBranshes(mainCategories.filter((bransh) => branshss.includes(bransh.id)));
+    setBranshes(
+      mainCategories.filter((bransh) => branshss.includes(bransh.id)),
+    );
     console.log(branshes);
-    
+
     const validBranches = branshes.filter((branch) =>
-      selectCategories.includes(branch.parent_category ?? "")
+      selectCategories.includes(branch.parent_category ?? ''),
     );
 
     if (validBranches.length !== branshes.length) {
@@ -115,9 +118,9 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
 
     // Check if any category is missing a selected subcategory
     let perentCategorys: string[];
-    perentCategorys =categories.map((sub) => sub.id);
+    perentCategorys = categories.map((sub) => sub.id);
     const hasMissingCategories = perentCategorys.some(
-      (id) => !selectedParents.has(id)
+      (id) => !selectedParents.has(id),
     );
 
     setWarning(hasMissingCategories);
@@ -126,9 +129,9 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
   // Render each category and its corresponding branches using ScrollView
   const renderCategory = (item: Category) => {
     // Filter branches which are children of the current category
-    
+
     const branchesForCategory = mainCategories.filter(
-      (cat: Category) => cat.parent_category === item.id
+      (cat: Category) => cat.parent_category === item.id,
     );
     return (
       <View key={item.id}>
@@ -152,7 +155,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
     <TouchableOpacity
       key={item.id}
       className={`flex-row items-center mb-2 w-full  justify-around h-16 border-2 border-gray-300 rounded-md ${
-        selectedBranches.includes(item.id) ? "bg-foncyYellow" : "bg-white"
+        selectedBranches.includes(item.id) ? 'bg-foncyYellow' : 'bg-white'
       }`}
       onPress={() => handleSelectBranch(item)}
     >
@@ -176,7 +179,6 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
         nestedScrollEnabled={true}
         showsVerticalScrollIndicator={true}
       >
-        
         {categories.map((category) => renderCategory(category))}
       </ScrollView>
 

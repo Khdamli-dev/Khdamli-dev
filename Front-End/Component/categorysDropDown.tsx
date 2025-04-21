@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { ScrollView, TouchableOpacity, Text, View, Image } from "react-native";
-import axios from "axios";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import Icon1 from "react-native-vector-icons/MaterialIcons";
-import CONFIG from "@/config";
+import React, { useState, useEffect } from 'react';
+import { ScrollView, TouchableOpacity, Text, View, Image } from 'react-native';
+import apiClient from '@/api/appClient';
+import refreshAccessToken from '@/api/refreshAccessToken';
 
 interface Category {
   id: string;
@@ -15,7 +13,7 @@ interface Category {
 
 interface CategorySelectorProps {
   onSelectCategories: (selectedIds: string[]) => void;
-  categorys:string[]
+  categorys: string[];
 }
 
 const CategorySelector: React.FC<CategorySelectorProps> = ({
@@ -32,16 +30,18 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
     setSelectedCategories(categorys);
     const fetchCategories = async () => {
       try {
-        const response = await axios.get(
-          `${CONFIG.API_URL}/work/categories/`
-        );
+        const response = await apiClient.get(`/work/categories`);
         // Filter categories to include only top-level categories
         const filteredCategories = response.data.categories.filter(
-          (category: Category) => category.parent_category === null
+          (category: Category) => category.parent_category === null,
         );
         setCategories(filteredCategories);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
+      } catch (error: any) {
+        if (error.response?.status === 403) {
+          await refreshAccessToken();
+          await fetchCategories();
+        }
+        console.log(error);
       }
     };
     fetchCategories();
@@ -53,7 +53,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
     if (selectedCategories.includes(id)) {
       // Remove category if already selected
       updatedSelectedCategories = selectedCategories.filter(
-        (item) => item !== id
+        (item) => item !== id,
       );
     } else {
       // Add category if not selected
@@ -68,9 +68,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
     <TouchableOpacity
       key={item.id}
       className={`flex-row items-center mx-2 mb-3 justify-around h-16 border-2 border-gray-300 rounded-md ${
-        selectedCategories.includes(item.id)
-          ? "bg-foncyYellow"
-          : "bg-white"
+        selectedCategories.includes(item.id) ? 'bg-foncyYellow' : 'bg-white'
       }`}
       onPress={() => handleSelectCategory(item.id)}
     >

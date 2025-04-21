@@ -8,10 +8,8 @@ import {
   ScrollView,
   Animated,
 } from "react-native";
-
-
-import Icon from "react-native-vector-icons/MaterialIcons";
-import CONFIG from "../config";
+import apiClient from "@/api/appClient";
+import refreshAccessToken from "@/api/refreshAccessToken";
 
 
 interface Wilaya {
@@ -36,11 +34,15 @@ const WilayaDropdown: React.FC<WilayaDropdownProps> = ({
 
   const fetchRegions = async () => {
     try {
-      const response = await axios.get(`${CONFIG.API_URL}/address/regions/1`);
+      const response = await apiClient.get(`/address/regions/1`);
       setWilayas(response.data.regions);
       setFilteredWilayas(response.data.regions);
-    } catch (error) {
-      console.log(error)
+    } catch (error : any) {
+      if (error.response?.status === 403){
+        await refreshAccessToken();
+        await fetchRegions();
+      }
+      console.log(error);
     }
   };
 

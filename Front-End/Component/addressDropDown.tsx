@@ -7,9 +7,7 @@ import {
   ScrollView,
   Animated,
 } from "react-native";
-import Icon from "react-native-vector-icons/MaterialIcons";
-import axios from "axios";
-import CONFIG from "../config";
+import apiClient from "@/api/appClient";
 
 interface City {
   name: string;
@@ -36,7 +34,7 @@ const AddressDropdown: React.FC<AddressDropdownProps> = ({
 
   const fetchMunicipalities = async (wilayaId: number) => {
     try {
-      const response = await axios.get(`${CONFIG.API_URL}/address/cities/${wilayaId}`, 
+      const response = await apiClient.get(`/address/cities/${wilayaId}`, 
       );
       setMunicipalities(response.data.cities);
       setFilteredMunicipalities(response.data.cities);

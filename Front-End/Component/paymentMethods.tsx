@@ -1,5 +1,4 @@
-import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,8 +6,9 @@ import {
   TouchableOpacity,
   ScrollView,
   Animated,
-} from "react-native";
-import CONFIG from "@/config";
+} from 'react-native';
+import apiClient from '@/api/appClient';
+import refreshAccessToken from '@/api/refreshAccessToken';
 
 interface PaymentMethod {
   name: string;
@@ -28,11 +28,16 @@ const PaymentMethod: React.FC<PaymentMethodProps> = ({
 
   const fetchPaymentMethods = async () => {
     try {
-      const response = await axios.get(
-        `${CONFIG.API_URL}/work/payment/`
-      );
-      if (response.status === 200) setPaymentMethods(response.data.paymentMethods);
-    } catch (error) {}
+      const response = await apiClient.get(`/work/payment`);
+      if (response.status === 200)
+        setPaymentMethods(response.data.paymentMethods);
+    } catch (error: any) {
+      if (error.response?.status === 403) {
+        await refreshAccessToken();
+        await fetchPaymentMethods();
+      }
+      console.log(error);
+    }
   };
 
   useEffect(() => {
