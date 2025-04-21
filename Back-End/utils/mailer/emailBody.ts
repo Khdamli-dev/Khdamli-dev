@@ -137,7 +137,7 @@ export const emailConfirmationMail = ((token : string) => {
         <p class="header">Verify Your Email</p>
         <p class="message">Hello,</p>
         <p class="message">Thank you for signing up! Click the button below to verify your email address.</p>
-        <a href="${process.env.BASE_URL}/${token}" class="btn">Verify Email</a>
+        <a href="${process.env.APP_URL}/${token}" class="btn">Verify Email</a>
         <p class="message">If you didn't request this, you can ignore this email.</p>
         <p class="footer">The Khdamli-Dev Team</p>
     </div>
