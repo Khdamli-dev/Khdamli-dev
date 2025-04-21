@@ -379,6 +379,7 @@ CREATE TABLE "public_request_messages" (
   "request" INTEGER NOT NULL,
   "worker" INTEGER NOT NULL,
   "message" TEXT NOT NULL,
+  "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY("request","worker"),
   CONSTRAINT "FK_public-request-messages_request"
     FOREIGN KEY ("request")
