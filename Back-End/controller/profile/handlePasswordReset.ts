@@ -26,11 +26,13 @@ export const sendOTP = async (req: Request, res: Response) => {
 
     // Store OTP in DB
     await pool.query(
-      `INSERT INTO otp_codes (user_id, otp, expires_at) 
-       VALUES ($1, $2, $3) 
-       ON CONFLICT (user_id) DO UPDATE SET otp = $2, expires_at = $3`,
-      [userId, otp, expiresAt],
+      `INSERT INTO otp_codes (user_id, otp, expires_at, purpose) 
+       VALUES ($1, $2, $3, $4) 
+       ON CONFLICT (user_id) DO UPDATE 
+       SET otp = EXCLUDED.otp, expires_at = EXCLUDED.expires_at, purpose = EXCLUDED.purpose`,
+      [userId, otp, expiresAt, "password_reset"]
     );
+    
     res.json({
       message: 'OTP sent successfully',
       success : true,
@@ -60,8 +62,8 @@ export const verifyOTP = async (req: Request, res: Response) => {
 
     // Verify OTP from otp_codes table
     const { rows } = await pool.query(
-      `SELECT expires_at FROM otp_codes WHERE user_id = $1 AND otp = $2`,
-      [id, otp],
+      `SELECT expires_at FROM otp_codes WHERE user_id = $1 AND otp = $2 AND purpose = $3`,
+      [id, otp , "password_reset"],
     );
     if (!rows.length) {
       res.status(400).json({

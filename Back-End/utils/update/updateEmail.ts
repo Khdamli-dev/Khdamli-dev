@@ -1,5 +1,5 @@
-import confirmationEmail from "../../controller/signupController/confirmationEmail";
 import pool from "../../database/dbConnection";
+import { sendEmailConfirmationMail} from "../authentication/sendMail";
 
 // store updated email and send confirmation email to it
 const updateEmail = async (userId : number, email : string) => {
@@ -11,7 +11,7 @@ const updateEmail = async (userId : number, email : string) => {
         SET email = EXCLUDED.email
         `, [userId, email]);
     // send confirmation email
-    await confirmationEmail(userId, email);
+    await sendEmailConfirmationMail( email , userId);
 }
 
 export default updateEmail;

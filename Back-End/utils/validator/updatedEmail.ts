@@ -7,12 +7,9 @@ const updatedEmail = async (userId : number) => {
         SELECT email from updated_email
         WHERE user_id = $1
         `, [userId]);
-    // not updated email
     if (!result.length)
         return;
 
-    // updated email
-    // check if another user signup with it before this user confirm it
     const notUsedEmail = await checkEmail(result[0].email);
     if (notUsedEmail){
         await pool.query(`
@@ -21,7 +18,6 @@ const updatedEmail = async (userId : number) => {
             WHERE id = $2
             `, [result[0].email, userId]);
     }
-    // delete row from updated_email
     await pool.query(`
         DELETE FROM updated_email
         WHERE user_id = $1
