@@ -40,11 +40,12 @@ const AppStartUp = () => {
     const checkLoginStatus = async () => {
       const userId = await AsyncStorage.getItem("userId");
 
-      if (userId) {
+      /* if (userId) {
         router.replace("/(tabs)/(home)"); // المستخدم مسجّل الدخول
       } else {
         router.replace("/(auth)"); // المستخدم غير مسجّل الدخول
-      }
+      } */
+      router.replace("/(tabs)/(home)");
     };
 
     checkLoginStatus();
