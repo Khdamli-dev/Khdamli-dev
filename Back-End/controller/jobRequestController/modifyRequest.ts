@@ -16,7 +16,6 @@ const modifyRequest = async (req: Request, res: Response) => {
       client_address,
       working_time,
       category,
-      payment,
       description,
     } : JobRequest = req.body;
     let query = 'UPDATE request SET ';
@@ -33,10 +32,6 @@ const modifyRequest = async (req: Request, res: Response) => {
     if (category) {
         query += ` category = $${counter++},`;
         params.push(category);
-    };
-    if (payment) {
-        query += ` payment = $${counter++},`;
-        params.push(payment);
     };
     if (description) {
         query += ` description = $${counter++},`;
