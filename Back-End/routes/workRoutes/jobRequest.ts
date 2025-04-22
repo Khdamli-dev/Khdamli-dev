@@ -11,6 +11,7 @@ import createComment from '../../controller/jobRequestController/createComment';
 import getRequestMessages from '../../controller/jobRequestController/getRequestMessages';
 import getRequestDetails from '../../controller/jobRequestController/getRequestDetails';
 import checkRole from '../../middleware/checkRole';
+import getRequests from '../../controller/jobRequestController/getRequests';
 
 const request: Router = express.Router();
 
@@ -36,5 +37,7 @@ request.put('/:requestId/select-worker/:workerId', checkRole([clientRoleId]), se
 request.post('/:requestId/comment', checkRole([workerRoleId]), createComment);
 
 request.get('/:requestId/messages', getRequestMessages);
+
+request.get("/",getRequests);
 
 export default request;
