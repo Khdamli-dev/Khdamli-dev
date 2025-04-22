@@ -12,8 +12,8 @@ import {
   Platform,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import Header from "../../../Component/SettingComponents/Header";
-import PasswordInput from "../../../Component/SettingComponents/PasswordInput";
+import Header from "@/Component/SettingComponents/Header";
+import PasswordInput from "@/Component/SettingComponents/PasswordInput";
 import { useRouter } from "expo-router";
 import { useFonts, Itim_400Regular } from "@expo-google-fonts/itim";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
@@ -54,7 +54,7 @@ const ChangePassword = ({ navigation }: ChangePasswordprops) => {
     }
     setsame(true);
     Alert.alert("✅ Success", "Password changed successfully!", [
-      { text: "OK", onPress: () => router.push("/(tabs)/(settings)") },
+      { text: "OK", onPress: () => router.push("/(tabs)/(profile)/(settings)") },
     ]);
   };
 

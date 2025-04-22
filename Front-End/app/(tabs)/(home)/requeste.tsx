@@ -44,16 +44,19 @@ interface JobRequest {
   type: number | null; // 1 for Public, 2 for Private
   status: number | null; // 3 for "On Hold" on new requests
 }
+interface Props {
+  type: number; // 1 for Public, 2 for Private
+}
 
-const CreateRequestScreen = () => {
+const CreateRequestScreen: React.FC<Props> = ({ type }) => {
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
- const getTodayDateString = () => {
-   const today = new Date();
-   const year = today.getFullYear();
-   const month = String(today.getMonth() + 1).padStart(2, "0");
-   const day = String(today.getDate()).padStart(2, "0");
-   return `${year}/${month}/${day}`;
- };
+  const getTodayDateString = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    return `${year}/${month}/${day}`;
+  };
   const [selectedCategory, setSelectedCategory] = useState<{
     name: string;
     id: string;
@@ -171,114 +174,113 @@ const CreateRequestScreen = () => {
     return dateObject;
   };
   //UploaderMedia ------------------------------------------------------------------------------------------
-const uploadSelectedMedia = async (requestId: number) => {
-  if (!selectedMedia.length) {
-    console.warn("❌ No media selected to upload.");
-    return;
-  }
-  if (isNaN(requestId)) {
-    return;
-  }
+  const uploadSelectedMedia = async (requestId: number) => {
+    if (!selectedMedia.length) {
+      console.warn("❌ No media selected to upload.");
+      return;
+    }
+    if (isNaN(requestId)) {
+      return;
+    }
 
-  const formData = new FormData();
+    const formData = new FormData();
 
-  selectedMedia.forEach((item, index) => {
-    const fileExtension = item.type === "image" ? "jpg" : "mp4";
-    formData.append("file", {
-      uri: item.uri,
-      name: `media-${index}.${fileExtension}`,
-      type: item.type === "image" ? "image/jpeg" : "video/mp4",
-    } as any);
-  });
+    selectedMedia.forEach((item, index) => {
+      const fileExtension = item.type === "image" ? "jpg" : "mp4";
+      formData.append("file", {
+        uri: item.uri,
+        name: `media-${index}.${fileExtension}`,
+        type: item.type === "image" ? "image/jpeg" : "video/mp4",
+      } as any);
+    });
 
-  console.log("📤 FormData being sent:", formData);
+    console.log("📤 FormData being sent:", formData);
 
-  try {
-    const response = await axios.put(
-      `${CONFIG.API_URL}/work/job-request/media/${requestId}`,
-      formData,
-      {
-        headers: {
-          // Let Axios handle Content-Type with the correct boundary
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    );
+    try {
+      const response = await axios.put(
+        `${CONFIG.API_URL}/work/job-request/media/${requestId}`,
+        formData,
+        {
+          headers: {
+            // Let Axios handle Content-Type with the correct boundary
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
-    console.log("✅ Media uploaded successfully:", response.data);
-  } catch (error: any) {
-    console.log(error)
-  }
-};
+      console.log("✅ Media uploaded successfully:", response.data);
+    } catch (error: any) {
+      console.log(error);
+    }
+  };
 
   //Handle Save ------------------------------------------------------------------------------------------
   const [error, setError] = useState<string>("");
- const handleSubmit = async () => {
-   // Basic validation
-   if (
-     !selectedCategory ||
-     !selectedPaymentMethod ||
-     !selectedWilaya || // Region is required
-     !selectedMunicipality || // City is required
-     !date ||
-     !beginTime ||
-     !description
-   ) {
-     setError("Please fill in all required fields.");
-     return;
-   }
+  const handleSubmit = async () => {
+    // Basic validation
+    if (
+      !selectedCategory ||
+      !selectedPaymentMethod ||
+      !selectedWilaya || // Region is required
+      !selectedMunicipality || // City is required
+      !date ||
+      !beginTime ||
+      !description
+    ) {
+      setError("Please fill in all required fields.");
+      return;
+    }
 
-   // Validate description length
-   const trimmedDescription = description.trim();
-   if (trimmedDescription.length < 5) {
-     setError("Description must be at least 5 characters.");
-     return;
-   }
+    // Validate description length
+    const trimmedDescription = description.trim();
+    if (trimmedDescription.length < 5) {
+      setError("Description must be at least 5 characters.");
+      return;
+    }
 
-   // Clear any previous errors
-   setError("");
+    // Clear any previous errors
+    setError("");
 
-   // Convert date and time to a valid Date object
-   const working_time = convertToDate();
-   try {
-     // Retrieve user object from AsyncStorage
-     const userData = await AsyncStorage.getItem("user");
+    // Convert date and time to a valid Date object
+    const working_time = convertToDate();
+    try {
+      // Retrieve user object from AsyncStorage
+      const userData = await AsyncStorage.getItem("user");
 
-     if (userData) {
-       const user: any = JSON.parse(userData); // Parse the user data
+      if (userData) {
+        const user: any = JSON.parse(userData); // Parse the user data
 
-       // Build the job request payload
-       const jobRequest: JobRequest = {
-         client: user.id, // Use the user ID from AsyncStorage
-         region: selectedWilaya.id, // Convert Wilaya ID to number
-         city: selectedMunicipality.id, // Convert Municipality ID to number
-         working_time,
-         category: Number(selectedCategory.id), // Convert to number
-         payment: selectedPaymentMethod.id, // Already a number
-         description: trimmedDescription,
-         type: 1, // Public request
-         status: 3, // "On Hold"
-       };
-       const response = await axios.post(
-         `${CONFIG.API_URL}/work/job-request/`,
-         jobRequest
-       );
+        // Build the job request payload
+        const jobRequest: JobRequest = {
+          client: user.id, // Use the user ID from AsyncStorage
+          region: selectedWilaya.id, // Convert Wilaya ID to number
+          city: selectedMunicipality.id, // Convert Municipality ID to number
+          working_time,
+          category: Number(selectedCategory.id), // Convert to number
+          payment: selectedPaymentMethod.id, // Already a number
+          description: trimmedDescription,
+          type,
+          status: 3, // "On Hold"
+        };
+        const response = await axios.post(
+          `${CONFIG.API_URL}/work/job-request/`,
+          jobRequest
+        );
 
-       if (response.status === 201) {
-         const requestId: number = +response.data.request.id;
-         uploadSelectedMedia(requestId);
-        
-       }
-       router.back();
-     } else {
-       console.log("No user data found in AsyncStorage");
-       setError("User data not found. Please log in again.");
-     }
-   } catch (error) {
-     console.error("Error submitting job request:", error);
-     setError("There was an error submitting your request. Please try again.");
-   }
- };
+        if (response.status === 201) {
+          const requestId: number = +response.data.request.id;
+          uploadSelectedMedia(requestId);
+        }
+        router.back();
+      } else {
+        console.log("No user data found in AsyncStorage");
+        setError("User data not found. Please log in again.");
+      }
+    } catch (error) {
+      console.error("Error submitting job request:", error);
+      setError("There was an error submitting your request. Please try again.");
+    }
+  };
 
   return (
     <SafeAreaView className="flex-1 ">

@@ -33,6 +33,7 @@ import { useFonts, Itim_400Regular } from "@expo-google-fonts/itim";
 import * as ImagePicker from "expo-image-picker";
 import { NavigationProp } from "@react-navigation/native";
 import { router } from "expo-router";
+import { FontAwesome } from "@expo/vector-icons";
 
 const { width } = Dimensions.get("window");
 
@@ -162,7 +163,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   };
 
   const [fontsLoaded] = useFonts({ Itim_400Regular });
-  if (!fontsLoaded) return <Text>Loading...</Text>;
+  
 
   const ProfileItem: React.FC<ProfileItemProps> = ({ label, value, Icon }) => (
     <TouchableOpacity className="flex-row justify-between items-center py-4 px-[10px] mb-[3px]">
@@ -197,8 +198,14 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         >
           <>
             <TouchableOpacity
+              className="absolute top-[30px] left-[30px]"
+              onPress={() => router.push("/(tabs)/(profile)/(settings)")}
+            >
+              <FontAwesome name="user" size={38} color="#BD7D06" />
+            </TouchableOpacity>
+            <TouchableOpacity
               className="absolute top-[30px] right-[30px]"
-              onPress={() => router.push("/(tabs)/(profile)/editprofile")}
+              onPress={() => router.push("/(tabs)/(profile)/editProfile")}
             >
               <Edit size={38} color="#BD7D06" />
             </TouchableOpacity>

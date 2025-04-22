@@ -1,144 +1,383 @@
-import CONFIG from "@/config";
-import { EvilIcons } from "@expo/vector-icons";
-import axios from "axios";
-import { router } from "expo-router";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
-  FlatList,
   Image,
-  SafeAreaView,
-
+  FlatList,
+  TouchableOpacity,
+  TextInput,
+  Dimensions,
+  ActivityIndicator,
 } from "react-native";
-// If you're using NativeWind or another Tailwind RN library, import the tailwind function
-// import { useTailwind } from "nativewind"; // for example
+import axios from "axios";
+import {
+  FontAwesome,
+  Ionicons,
+  MaterialCommunityIcons,
+} from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
+import { router } from "expo-router";
 
-interface Category {
-  id: string;
-  name: string;
-  description: string;
-  logo: string;
-  parent_category: string | null;
+// Media item can be image, video or none
+interface MediaItem {
+  type: "image" | "video" | "none";
+  url?: string;
 }
+
+// Post shape from backend
+interface Post {
+  id: number;
+  clientId: number;
+  clientName: string;
+  authorImage: string;
+  regine: string;
+  city: string;
+  sent_time: string;
+  working_time: string;
+  category: string;
+  description: string;
+  media: MediaItem[];
+}
+
+// Comment shape
+interface Comment {
+  id: number;
+  workerId: number;
+  authorImage: string;
+  authorName: string;
+  text: string;
+}
+
 const HomeScreen = () => {
-  // const tailwind = useTailwind(); // If using the NativeWind hook
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [search, setSearch] = useState("");
+  const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
+  // POSTS + PAGINATION STATE
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
+
+  // COMMENTS STATE
+  const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
+  const [commentText, setCommentText] = useState("");
+  const [comments, setComments] = useState<Comment[]>([]);
+
+  // FETCH POSTS HELPER
+  const fetchPosts = useCallback(
+    async (pageToFetch: number) => {
+      if (loading) return;
+      setLoading(true);
+      try {
+        // Fake data for testing
+        const fakePosts: Post[] = Array.from({ length: 20 }, (_, index) => ({
+          id: (pageToFetch - 1) * 20 + index + 1,
+          clientId: index + 1,
+          clientName: `Client ${(pageToFetch - 1) * 20 + index + 1}`,
+          authorImage: `https://randomuser.me/api/portraits/men/${index + 10}.jpg`,
+          regine: `Region ${index + 1}`,
+          city: `City ${index + 1}`,
+          sent_time: new Date(
+            Date.now() - Math.random() * 86400000 * 7
+          ).toISOString(),
+          working_time: "9am - 5pm",
+          category: `Category ${(index % 3) + 1}`,
+          description: `This is a sample post #${(pageToFetch - 1) * 20 + index + 1}.`,
+          media:
+            Math.random() > 0.3
+              ? Array.from(
+                  { length: Math.floor(Math.random() * 4) + 1 },
+                  (_, i) => ({
+                    type: Math.random() > 0.7 ? "video" : "image",
+                    url:
+                      Math.random() > 0.7
+                        ? `https://example.com/video${index * 5 + i}.mp4`
+                        : `https://picsum.photos/800/400?random=${index * 5 + i}`,
+                  })
+                )
+              : [],
+        }));
+        // Simulate total_pages
+        const simTotalPages = 5;
+        setPosts((prev) =>
+          pageToFetch === 1 ? fakePosts : [...prev, ...fakePosts]
+        );
+        setTotalPages(simTotalPages);
+        setPage(pageToFetch);
+      } catch (err) {
+        console.error("Failed to load posts", err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [loading]
+  );
+
+  // Initial fetch
   useEffect(() => {
-    fetchCategories();
-  }, []);
+    fetchPosts(1);
+  }, [fetchPosts]);
 
-  // Example fetch - replace with your actual API call
-  const fetchCategories = async () => {
-    try {
-      const response = await axios.get(
-        `${CONFIG.API_URL}/work/categories`
-      );
-      // Filter categories to include only top-level categories
-      const filteredCategories = response.data.categories.filter(
-        (category: Category) => category.parent_category === null
-      );
-      setCategories(filteredCategories);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
+  // Load next page when reaching end
+  const handleEndReached = () => {
+    if (!loading && page < totalPages) {
+      fetchPosts(page + 1);
     }
   };
 
-  const handleCategoryPress = (category: Category) => {
-    // Navigate or show details for the selected category
-    console.log("Category pressed:", category.name);
+  // Refresh list back to first page
+  const handleRefresh = () => {
+    setPosts([]);
+    setSelectedPostId(null);
+    fetchPosts(1);
   };
 
-  const renderCategoryItem = ({ item }: { item: Category }) => {
-    return (
-      <TouchableOpacity
-        onPress={() => handleCategoryPress(item)}
-        // Example Tailwind classes for styling
-        className="w-1/3 h-3/6 p-2"
-      >
-        <View className="bg-white p-2 rounded-md items-center">
-          <Image
-            source={{ uri: item.logo }}
-            className="w-16 h-16 mb-2"
-            resizeMode="contain"
-          />
-          <Text className="text-center font-semibold">{item.name}</Text>
-        </View>
-      </TouchableOpacity>
+  // Open comment box and fetch fake comments
+  const openCommentBox = (postId: number) => {
+    setSelectedPostId(postId);
+    const fakeComments: Comment[] = Array.from(
+      { length: Math.floor(Math.random() * 9) + 2 },
+      (_, i) => ({
+        id: i + 1,
+        workerId: i + 1,
+        authorImage: `https://randomuser.me/api/portraits/women/${i + 10}.jpg`,
+        authorName: `User ${i + 1}`,
+        text: `This is a fake comment #${i + 1} for post ${postId}.`,
+      })
     );
+    setComments(fakeComments);
   };
 
-  return (
-    <SafeAreaView className="flex-1 bg-gray-100 ">
-      <View className="relative w-full  h-2/6 ">
+  // Close comment box
+  const closeCommentBox = () => {
+    setSelectedPostId(null);
+    setComments([]);
+  };
+
+  // Submit comment (fake)
+  const submitComment = () => {
+    if (!selectedPostId || commentText.trim() === "") return;
+    const newComment: Comment = {
+      id: comments.length + 1,
+      workerId: comments.length + 1,
+      authorImage: `https://randomuser.me/api/portraits/women/20.jpg`,
+      authorName: "You",
+      text: commentText,
+    };
+    setComments((prev) => [...prev, newComment]);
+    setCommentText("");
+  };
+
+  // Render media item
+  const renderMediaItem = ({ item }: { item: MediaItem }) => {
+    if (item.type === "image" && item.url) {
+      return (
+        <View className="mr-2">
+          <Image
+            source={{ uri: item.url }}
+            className="w-48 h-32 rounded-xl"
+            resizeMode="cover"
+          />
+        </View>
+      );
+    }
+    if (item.type === "video" && item.url) {
+      return (
+        <View className="mr-2 bg-gray-200 w-48 h-32 rounded-xl justify-center items-center">
+          <Ionicons name="play-circle" size={40} color="gray" />
+          <Text className="text-gray-600 text-xs mt-1">Video</Text>
+        </View>
+      );
+    }
+    return null;
+  };
+
+  // Time ago helper
+  const getTimeAgo = (dateString: string): string => {
+    const now = new Date();
+    const sentDate = new Date(dateString);
+    const diffInSeconds = Math.floor(
+      (now.getTime() - sentDate.getTime()) / 1000
+    );
+    if (diffInSeconds < 60) return `${diffInSeconds} seconds ago`;
+    if (diffInSeconds < 3600)
+      return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    if (diffInSeconds < 86400)
+      return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    return `${Math.floor(diffInSeconds / 86400)} days ago`;
+  };
+
+  // Render post
+  const renderPost = ({ item }: { item: Post }) => (
+    <View className="bg-white rounded-2xl shadow p-4 mb-4 mx-2">
+      {/* Header */}
+      <View className="flex-row items-center mb-2">
         <Image
-          source={require("../../../assets/images/homeImg.jpg")}
-          className="absolute w-full h-5/6  "
+          source={{ uri: item.authorImage }}
+          className="w-10 h-10 rounded-full mr-2"
         />
-        <View
-          style={{
-            backgroundColor: "rgba(76, 132, 121, 0.9)", // Optional: to make content more readable
-          }}
-          className="absolute w-full h-5/6"
-        >
-          <View className="items-start px-4 py-2 ">
-            <Text className="text-white font-bold mr-2">Location</Text>
-            <View className="flex-row items-center justify-start my-2">
-              <EvilIcons name="location" size={30} color="#F8A100" />
-              <Text className="text-[#F8A100]">Sidi Bel Abbes, Algeria</Text>
-            </View>
-          </View>
-
-          {/* HEADER TEXT & SEARCH */}
-          <View className="px-4 pt-2 items-center">
-            <Text className="text-4xl mb-2 text-white font-bold ">
-              How Can We Help You Today ?
-            </Text>
-            <View className="bg-white  rounded-md p-2 flex-row items-center w-10/12">
-              <EvilIcons name="search" size={30} color="#A0A0A0" />
-              <TextInput
-                placeholder="Search For Service"
-                placeholderTextColor="#A0A0A0"
-                value={search}
-                onChangeText={setSearch}
-                className="flex-1 text-black"
-              />
-            </View>
-          </View>
+        <View>
+          <Text className="font-bold text-lg">{item.clientName}</Text>
+          <Text className="text-sm text-gray-500">
+            {item.regine}, {item.city}
+          </Text>
         </View>
       </View>
-      {/* TOP BAR / NAV BAR */}
-
-      {/* TOP CATEGORIES TITLE */}
-      <View className="px-6 py-4 mb-16 ">
-        <View className="flex-row items-center justify-between">
-          <Text className="text-xl font-bold">Top Categories</Text>
-          <Text className="text-lm text-[#CB8400]">Click On Service</Text>
+      {/* Description */}
+      <Text className="text-gray-700">{item.description}</Text>
+      {/* Media */}
+      {item.media.length > 0 ? (
+        <View className="mt-2">
+          <FlatList
+            horizontal
+            data={item.media}
+            keyExtractor={(_, i) => `media-${i}`}
+            renderItem={renderMediaItem}
+            showsHorizontalScrollIndicator={false}
+          />
         </View>
-
-        {/* CATEGORY GRID */}
-        <FlatList
-          data={categories}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderCategoryItem}
-          numColumns={3}
-          contentContainerStyle={{ paddingHorizontal: 8 }}
-        />
+      ) : (
+        <View className="mt-2 py-2">
+          <Text className="text-gray-500 text-sm italic">Text only post</Text>
+        </View>
+      )}
+      {/* Time & category */}
+      <View className="flex-row items-center gap-2 mt-2">
+        <Ionicons name="time-outline" size={14} color="green" />
+        <Text className="text-sm text-green-700">
+          {getTimeAgo(item.sent_time)}
+        </Text>
+        <MaterialCommunityIcons name="tools" size={14} color="green" />
+        <Text className="text-sm text-green-700">
+          {item.category} | {item.working_time}
+        </Text>
       </View>
-      {/* FLOATING ADD REQUEST BUTTON */}
-      <View className="absolute bottom-4 right-4">
+      {/* Comment button */}
+      <View className="flex-row justify-end mt-2">
         <TouchableOpacity
-          className="bg-foncyYellow p-4 rounded-full shadow-lg"
-          onPress={() => router.push("/requeste")}
+          onPress={() => openCommentBox(item.id)}
+          className="bg-blue-500 rounded-xl px-4 py-1"
         >
-          <Text className="text-white font-bold px-2">+ Add Request</Text>
+          <Text className="text-white">💬 Comment</Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+      {/* Comments */}
+      {selectedPostId === item.id && (
+        <View className="mt-4">
+          <FlatList
+            data={comments}
+            keyExtractor={(c) => c.id.toString()}
+            renderItem={({ item: c }) => (
+              <TouchableOpacity
+                onPress={() =>
+                  router.push({
+                    pathname: "/",
+                    params: { workerId: c.workerId },
+                  })
+                }
+              >
+                <View className="bg-gray-100 p-4 rounded-2xl mb-2">
+                  <View className="flex-row items-center mb-2">
+                    <Image
+                      source={{ uri: c.authorImage }}
+                      className="w-8 h-8 rounded-full mr-2"
+                    />
+                    <Text className="font-bold text-sm">{c.authorName}</Text>
+                  </View>
+                  <Text className="text-gray-600">{c.text}</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+          />
+          <TextInput
+            className="border border-gray-300 rounded-xl p-2 h-16 text-right mt-2"
+            placeholder="Write your comment..."
+            multiline
+            value={commentText}
+            onChangeText={setCommentText}
+          />
+          <TouchableOpacity
+            onPress={submitComment}
+            className="bg-green-600 px-4 py-2 rounded-xl mt-2"
+          >
+            <Text className="text-white text-center">Post Comment</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={closeCommentBox}
+            className="mt-4 bg-red-500 px-4 py-2 rounded-xl"
+          >
+            <Text className="text-white text-center">Close Comments</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
+  );
+
+  return (
+    <View className="flex-1 bg-gray-100 pt-4">
+      <LinearGradient
+        colors={["#2B524A", "#BED2D0"]}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        className="shadow-2xl"
+      >
+        <View className="overflow-hidden border-b border-gray-800/30">
+          <View className="flex-row justify-between items-center py-3 px-4">
+            <View className="flex-row items-baseline space-x-1">
+              <Text
+                className="text-4xl font-black text-foncyYellow"
+                style={{
+                  textShadowColor: "rgba(0,0,0,0.3)",
+                  textShadowOffset: { width: 2, height: 2 },
+                  textShadowRadius: 5,
+                }}
+              >
+                KH
+              </Text>
+              <Text
+                className="text-2xl font-semibold text-white tracking-wider"
+                style={{
+                  textShadowColor: "rgba(0,0,0,0.2)",
+                  textShadowOffset: { width: 1, height: 1 },
+                  textShadowRadius: 3,
+                }}
+              >
+                damli
+              </Text>
+            </View>
+            <View className="flex-row items-center">
+              <TouchableOpacity
+                onPress={handleRefresh}
+                className="bg-white/10 w-12 h-12 p-2 mx-2 rounded-full"
+              >
+                <Ionicons name="refresh-outline" size={24} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="w-12 h-12 bg-[#F8A100] rounded-full items-center justify-center"
+                onPress={() =>
+                  router.push({
+                    pathname: "/(tabs)/(home)/requeste",
+                    params: { type: "1" },
+                  })
+                }
+              >
+                <FontAwesome name="plus" size={24} color="white" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </LinearGradient>
+      <FlatList
+        data={posts}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderPost}
+        onEndReached={handleEndReached}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          loading ? <ActivityIndicator style={{ margin: 20 }} /> : null
+        }
+      />
+    </View>
   );
 };
 

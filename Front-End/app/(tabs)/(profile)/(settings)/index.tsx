@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import CONFIG from "../../../config";
+import CONFIG from "@/config";
 import axios from "axios";
 import { router, useRouter } from "expo-router";
 
@@ -131,6 +131,7 @@ const Setting = () => {
   const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
   return (
     <SafeAreaView className="flex-1 bg-gray-200">
+      
       <View className="px-2 py-1  bg-white rounded-2xl mb-2 mx-2 p-4 border border-gray-300 shadow-md">
         <ProfileItem
           label="Active Account"

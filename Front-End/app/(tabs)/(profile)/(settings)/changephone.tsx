@@ -6,41 +6,28 @@ import {
   Alert,
   SafeAreaView,
 } from "react-native";
-import Header from "../../../Component/SettingComponents/Header";
+import Header from "@/Component/SettingComponents/Header";
 import { LinearGradient } from "expo-linear-gradient";
-import PasswordInput from "../../../Component/SettingComponents/PasswordInput";
-import { useFonts, Itim_400Regular } from "@expo-google-fonts/itim";
+import PasswordInput from "@/Component/SettingComponents/PasswordInput";
 import { NavigationProp } from "@react-navigation/native";
-import { useRouter } from "expo-router";
 
 type RootStackParamList = {
   Setting: undefined;
 };
-type ChangeEmailProps = {
+type ChangePhoneprops = {
   navigation: NavigationProp<RootStackParamList>;
 };
-
-const ChangeEmail = ({ navigation }: ChangeEmailProps) => {
-  const [email, setEmail] = useState<string>("");
-  const router = useRouter();
-
-  let [fontsLoaded] = useFonts({ Itim_400Regular });
-  if (!fontsLoaded) return null;
-
-  const handleEmailChange = () => {
-    if (!email.trim()) {
-      Alert.alert("⚠️ Warning", "Please fill in the field!");
-      return;
+const changephone = ({ navigation }: ChangePhoneprops) => {
+  const [phone, setPhone] = useState<string>("");
+  const handlePhoneChange = () => {
+    {
+      console.log(phone);
     }
-
-    Alert.alert("✅ Success", "Email changed successfully!", [
-      {
-        text: "OK",
-        onPress: () => router.push("/(tabs)/(settings)"),
-      },
-    ]);
+    if (!phone.trim())
+      return Alert.alert("⚠️ Warning", "Please fill in field!");
+    navigation.navigate("Setting");
+    Alert.alert("✅ Success", "Password changed successfully!");
   };
-
   return (
     <SafeAreaView>
       <Header />
@@ -49,16 +36,17 @@ const ChangeEmail = ({ navigation }: ChangeEmailProps) => {
           className="text-[25px] mb-1"
           style={{ fontFamily: "Itim_400Regular" }}
         >
-          Change Your Email
+          {" "}
+          Change Your Phone{" "}
         </Text>
         <PasswordInput
-          label="New Email"
-          placeholder="Enter The New Email"
-          onValueChange={setEmail}
-          input="email"
+          label="New Phone"
+          placeholder="Enter The New Phone"
+          onValueChange={setPhone}
+          input="phone"
         />
       </View>
-      <TouchableOpacity onPress={handleEmailChange}>
+      <TouchableOpacity onPress={handlePhoneChange}>
         <LinearGradient
           colors={["#4C8479", "#1E4D4D"]}
           start={{ x: 0, y: 0 }}
@@ -78,4 +66,4 @@ const ChangeEmail = ({ navigation }: ChangeEmailProps) => {
   );
 };
 
-export default ChangeEmail;
+export default changephone;

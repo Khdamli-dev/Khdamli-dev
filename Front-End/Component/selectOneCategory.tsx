@@ -43,7 +43,7 @@ const OneCategorySelector: React.FC<CategorySelectorProps> = ({
         setCategories(filteredCategories);
       } catch (error) {
         console.error("Error fetching categories:", error);
-      }
+      } 
     };
     fetchCategories();
   }, []);
