@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ScrollView, TouchableOpacity, Text, View, Image } from 'react-native';
 import apiClient from '@/api/appClient';
 import refreshAccessToken from '@/api/refreshAccessToken';
+import { router } from 'expo-router';
 
 interface Category {
   id: string;
@@ -38,8 +39,12 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
         setMainCategories(response.data.categories);
       } catch (error: any) {
         if (error.response?.status === 403) {
-          await refreshAccessToken();
-          await fetchCategories();
+          if (await refreshAccessToken()) {
+            await fetchCategories();
+          } else {
+            // need to login
+            router.push('/(auth)');
+          }
         }
         console.log(error);
       }

@@ -53,13 +53,15 @@ export default function Login() {
         const user: any = response.data.user;
         await AsyncStorage.setItem('user', JSON.stringify(user));
         
-        // store tokens to react-native-keychain storage
+        // store tokens to expo-secure-store storage
         const {
           accessToken,
           refreshToken,
         }: { accessToken: string; refreshToken: string } = response.data;
         await SecureStore.setItemAsync('accessToken', accessToken);
         await SecureStore.setItemAsync('refreshToken', refreshToken);
+        await SecureStore.setItemAsync('email', values.email);
+        await SecureStore.setItemAsync('password', values.password);
 
         // go to home page
         router.replace('/(tabs)/(home)');

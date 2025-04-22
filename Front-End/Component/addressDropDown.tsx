@@ -8,6 +8,8 @@ import {
   Animated,
 } from "react-native";
 import apiClient from "@/api/appClient";
+import refreshAccessToken from "@/api/refreshAccessToken";
+import { router } from "expo-router";
 
 interface City {
   name: string;
@@ -38,7 +40,17 @@ const AddressDropdown: React.FC<AddressDropdownProps> = ({
       );
       setMunicipalities(response.data.cities);
       setFilteredMunicipalities(response.data.cities);
-    } catch (error) {}
+    } catch (error: any) {
+      if (error.response?.status === 403) {
+        if (await refreshAccessToken()) {
+          await fetchMunicipalities(wilayaId);
+        } else {
+          // need to login
+          router.push('/(auth)');
+        }
+      }
+      console.log(error);
+    }
   };
 
   useEffect(() => {

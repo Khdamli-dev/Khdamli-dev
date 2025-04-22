@@ -1,35 +1,34 @@
 import * as SecureStore from 'expo-secure-store';
 import apiClient from './appClient';
+import silentLogin from './silentLogin';
+
+// this function return true when refresh access token with success
+// and when both tokens are expired or invalid it make silent login and return true if it is success
+// otherwise it return false
 
 const refreshAccessToken = async (): Promise<boolean> => {
   try {
     const refreshToken = await SecureStore.getItemAsync('refreshToken');
     if (!refreshToken)
-        return false;
-    // apiClient.interceptors.request.use(
-    //   async (config) => {
-    //     // grab the refresh token
-    //     if (token) {
-    //       config.headers['x-refresh-token'] =
-    //         `x-refresh-token ${token}`;
-    //     }
-    //     return config;
-    //   },
-    //   (err) => Promise.reject(err),
-    // );
+      return false;
+
     const response = await apiClient.post('/auth/refresh', null, {
       headers: {
         'x-refresh-token': refreshToken,
       },
     });
+    
     if (response.data.success) {
       const { accessToken }: { accessToken: string } = response.data;
       await SecureStore.setItemAsync('accessToken', accessToken);
       return true;
     }
-    return false;
+
+    // session expired or not valid tokens
+    return await silentLogin();
   } catch (error) {
-    return false;
+    // session expired or not valid tokens
+    return await silentLogin();
   }
 };
 

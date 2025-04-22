@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { ScrollView, TouchableOpacity, Text, View, Image } from "react-native";
-import apiClient from "@/api/appClient";
-import refreshAccessToken from "@/api/refreshAccessToken";
+import React, { useState, useEffect } from 'react';
+import { ScrollView, TouchableOpacity, Text, View, Image } from 'react-native';
+import apiClient from '@/api/appClient';
+import refreshAccessToken from '@/api/refreshAccessToken';
+import { router } from 'expo-router';
 
 interface Category {
   id: string;
@@ -27,7 +28,7 @@ const OneCategorySelector: React.FC<CategorySelectorProps> = ({
 }) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selected, setSelected] = useState<SelectedCategory | null>(
-    selectedCategory
+    selectedCategory,
   );
 
   useEffect(() => {
@@ -36,13 +37,17 @@ const OneCategorySelector: React.FC<CategorySelectorProps> = ({
       try {
         const response = await apiClient.get(`/work/categories`);
         const filteredCategories = response?.data?.categories.filter(
-          (category: Category) => category.parent_category === null
+          (category: Category) => category.parent_category === null,
         );
         setCategories(filteredCategories);
-      } catch (error : any) {
-        if (error.response?.status === 403){
-          await refreshAccessToken();
-          await fetchCategories();
+      } catch (error: any) {
+        if (error.response?.status === 403) {
+          if (await refreshAccessToken()) {
+            await fetchCategories();
+          } else {
+            // need to login
+            router.push('/(auth)');
+          }
         }
         console.log(error);
       }
@@ -63,7 +68,7 @@ const OneCategorySelector: React.FC<CategorySelectorProps> = ({
     <TouchableOpacity
       key={item.id}
       className={`flex-row items-center  mx-2 mb-3 justify-around h-16 border-2 border-gray-300 rounded-md ${
-        selected?.id === item.id ? "bg-foncyYellow" : "bg-white"
+        selected?.id === item.id ? 'bg-foncyYellow' : 'bg-white'
       }`}
       onPress={() => handleSelectCategory(item)}
     >
@@ -73,7 +78,7 @@ const OneCategorySelector: React.FC<CategorySelectorProps> = ({
         className="rounded-full border-2 ml-2"
         resizeMode="contain"
       />
-      <View style={{ width:150 }}>
+      <View style={{ width: 150 }}>
         <Text className="text-black text-center text-lg ">{item.name}</Text>
       </View>
     </TouchableOpacity>

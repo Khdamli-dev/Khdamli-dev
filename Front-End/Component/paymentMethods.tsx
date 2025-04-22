@@ -1,14 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  Animated,
-} from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import apiClient from '@/api/appClient';
 import refreshAccessToken from '@/api/refreshAccessToken';
+import { router } from 'expo-router';
 
 interface PaymentMethod {
   name: string;
@@ -33,8 +27,12 @@ const PaymentMethod: React.FC<PaymentMethodProps> = ({
         setPaymentMethods(response.data.paymentMethods);
     } catch (error: any) {
       if (error.response?.status === 403) {
-        await refreshAccessToken();
-        await fetchPaymentMethods();
+        if (await refreshAccessToken()) {
+          await fetchPaymentMethods();
+        } else {
+          // need to login
+          router.push('/(auth)');
+        }
       }
       console.log(error);
     }
