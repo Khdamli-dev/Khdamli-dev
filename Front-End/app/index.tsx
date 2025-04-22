@@ -1,10 +1,11 @@
-import { View, Text, Image } from "react-native";
-import React, { useEffect, useRef } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Animated, Easing } from "react-native";
-import { useRouter } from "expo-router";
-
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Animated, Easing } from 'react-native';
+import { useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
+import apiClient from '@/api/appClient';
+import refreshAccessToken from '@/api/refreshAccessToken';
 
 const AppStartUp = () => {
   const router = useRouter();
@@ -38,14 +39,28 @@ const AppStartUp = () => {
 
     // التحقق من تسجيل الدخول بعد 3 ثوانٍ
     const checkLoginStatus = async () => {
-      const userId = await AsyncStorage.getItem("userId");
+      // refresh the access token
+      const refreshToken = await SecureStore.getItemAsync('refreshToken');
+      if (!refreshToken){
+        router.replace('/(auth)');
+        return;
+      }
 
-      /* if (userId) {
-        router.replace("/(tabs)/(home)"); // المستخدم مسجّل الدخول
-      } else {
-        router.replace("/(auth)"); // المستخدم غير مسجّل الدخول
-      } */
-      router.replace("/(tabs)/(home)");
+      try {
+        const response = await apiClient.post('/auth/refresh', null, {
+          headers: {
+            'x-refresh-token': `Bearer ${refreshToken}`,
+          },
+        });
+        if (response.data.success) {
+          const { accessToken }: { accessToken: string } = response.data;
+          await SecureStore.setItemAsync('accessToken', accessToken);
+          router.replace('/(tabs)/(home)');
+        } else
+          router.replace('/(auth)');
+      } catch (error) {
+        router.replace('/(auth)');
+      }
     };
 
     checkLoginStatus();
@@ -65,7 +80,7 @@ const AppStartUp = () => {
           </Animated.Text>
           <View className=" items-end flex-col">
             <Animated.Image
-              source={require("../assets/images/startUpPhoto.jpg")}
+              source={require('../assets/images/startUpPhoto.jpg')}
               className="w-full h-32"
               style={{
                 transform: [{ translateX: imageAnim }],
