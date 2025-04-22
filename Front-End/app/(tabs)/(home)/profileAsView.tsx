@@ -20,7 +20,7 @@ import {
   Globe,
   MessageSquare,
 } from "lucide-react-native";
-import CONFIG from "@/config";
+import CONFIG from "../../../config";
 import { Video, ResizeMode } from "expo-av";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFonts, Itim_400Regular } from "@expo-google-fonts/itim";
@@ -106,7 +106,7 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ workerId }) => {
   useEffect(() => {
     // Set fake data for demonstration
     setUser(fakeData);
-    
+
     /* Commented out as requested
     const fetchUser = async () => {
       try {
@@ -240,12 +240,16 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ workerId }) => {
               onPress={handleSendPrivateRequest}
               style={styles.requestButton}
             >
-              <MessageSquare size={20} color="white" style={{ marginRight: 8 }} />
+              <MessageSquare
+                size={20}
+                color="white"
+                style={{ marginRight: 8 }}
+              />
               <Text style={styles.requestButtonText}>Send Private Request</Text>
             </TouchableOpacity>
           </>
         </LinearGradient>
-        
+
         {user.accountType === "worker" && (
           <>
             <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
@@ -292,7 +296,7 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ workerId }) => {
             </View>
           </>
         )}
-        
+
         <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
           <ProfileItem
             label="Registration Date"
@@ -351,41 +355,43 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ workerId }) => {
           )}
         </View>
 
-        {user.accountType === "worker" && user.gallery && user.gallery.length > 0 && (
-          <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
-            <Text
-              className="text-center text-[#BD7D06] mb-2.5 text-[20px]"
-              style={{ fontFamily: "Itim_400Regular" }}
-            >
-              Gallery
-            </Text>
-            <FlatList
-              data={user.gallery}
-              renderItem={({ item }) => (
-                <View className="relative mx-4">
-                  {item.type === "image" ? (
-                    <Image
-                      source={{ uri: item.uri }}
-                      className="h-[300px] rounded-[10px] my-1.5"
-                      style={{ width: width - 32 }}
-                    />
-                  ) : (
-                    <Video
-                      source={{ uri: item.uri }}
-                      className="h-[300px] rounded-[10px] my-1.5"
-                      style={{ width: width - 32 }}
-                      useNativeControls={true}
-                      resizeMode={ResizeMode.CONTAIN}
-                      shouldPlay={false}
-                    />
-                  )}
-                </View>
-              )}
-              keyExtractor={(item, index) => item.uri + index}
-              scrollEnabled={false}
-            />
-          </View>
-        )}
+        {user.accountType === "worker" &&
+          user.gallery &&
+          user.gallery.length > 0 && (
+            <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
+              <Text
+                className="text-center text-[#BD7D06] mb-2.5 text-[20px]"
+                style={{ fontFamily: "Itim_400Regular" }}
+              >
+                Gallery
+              </Text>
+              <FlatList
+                data={user.gallery}
+                renderItem={({ item }) => (
+                  <View className="relative mx-4">
+                    {item.type === "image" ? (
+                      <Image
+                        source={{ uri: item.uri }}
+                        className="h-[300px] rounded-[10px] my-1.5"
+                        style={{ width: width - 32 }}
+                      />
+                    ) : (
+                      <Video
+                        source={{ uri: item.uri }}
+                        className="h-[300px] rounded-[10px] my-1.5"
+                        style={{ width: width - 32 }}
+                        useNativeControls={true}
+                        resizeMode={ResizeMode.CONTAIN}
+                        shouldPlay={false}
+                      />
+                    )}
+                  </View>
+                )}
+                keyExtractor={(item, index) => item.uri + index}
+                scrollEnabled={false}
+              />
+            </View>
+          )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -406,7 +412,7 @@ const styles = StyleSheet.create({
     color: "white",
     fontFamily: "Itim_400Regular",
     fontSize: 16,
-  }
+  },
 });
 
 export default UserProfileScreen;

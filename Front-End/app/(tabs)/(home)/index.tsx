@@ -271,7 +271,7 @@ const HomeScreen = () => {
               <TouchableOpacity
                 onPress={() =>
                   router.push({
-                    pathname: "/",
+                    pathname: "/(tabs)/(home)/profileAsView", // Ensure this route exists in your project
                     params: { workerId: c.workerId },
                   })
                 }
