@@ -67,7 +67,6 @@ const getRequestDetails = async (req: Request, res: Response) => {
         ct.name AS city,
         rg.name AS region,
         co.name AS country,
-        pm.name AS payment_method,
         rs.name AS status,
         uc.username AS client_username,
         uc.profile_image AS client_profile_image,
@@ -79,7 +78,6 @@ const getRequestDetails = async (req: Request, res: Response) => {
       JOIN city ct ON a.city = ct.id
       JOIN region rg ON a.region = rg.id
       JOIN country co ON rg.country = co.id
-      JOIN payment_method pm ON r.payment = pm.id
       JOIN request_status rs ON r.status = rs.id
       JOIN "user" uc ON r.client = uc.id
       LEFT JOIN worker w ON r.worker = w.id
@@ -159,7 +157,6 @@ const getRequestDetails = async (req: Request, res: Response) => {
     response.category = requestRow.category;
     response.description = requestRow.description || null;
     response.media = media;
-    response.payment_method = requestRow.payment_method;
     response.status = requestRow.status;
     response.location = {
       city: requestRow.city,
