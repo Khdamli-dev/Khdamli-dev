@@ -303,7 +303,6 @@ CREATE TABLE "request" (
   "sent_time" TIMESTAMP NOT NULL DEFAULT DATE_TRUNC('minute', CURRENT_TIMESTAMP),
   "working_time" TIMESTAMP NOT NULL,
   "category" INT NOT NULL,
-  "payment" SMALLINT NOT NULL,
   "description" TEXT,
   "type" SMALLINT NOT NULL,
   "status" SMALLINT NOT NULL,
@@ -326,11 +325,6 @@ CREATE TABLE "request" (
     FOREIGN KEY("category")
       REFERENCES "category"("id")
       ON DELETE CASCADE
-      ON UPDATE CASCADE,
-  CONSTRAINT "FK_request-payment_method"
-    FOREIGN KEY("payment")
-      REFERENCES "payment_method"("id")
-      ON DELETE RESTRICT
       ON UPDATE CASCADE,
   CONSTRAINT "FK_request-request_type"
     FOREIGN KEY("type")

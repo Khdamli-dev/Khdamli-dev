@@ -7,7 +7,6 @@ import { uploadProfilePicture } from "../../controller/upload/uploadProfilePictu
 import deleteUser from '../../controller/profile/deleteUser';
 import getClientProfile from '../../controller/profile/getClientProfile'; 
 import getWorkerProfile from '../../controller/profile/getWorkerProfile';
-import deleteUser from '../../controller/jobRequestController/deleteUser';;
 import checkRole from '../../middleware/checkRole';
 
 
