@@ -18,9 +18,7 @@ const clientRoleId = Number(process.env.CLIENT_ROLE_ID);
 const workerRoleId = Number(process.env.WORKER_ROLE_ID);
 
 request.post('/', checkRole([clientRoleId]), validateJobRequest, createRequest);
-
 // this route used to get private and public requests for a client or a worker
-
 request.delete('/:requestId', checkRole([clientRoleId]), deleteRequest);
 
 request.put('/:requestId', checkRole([clientRoleId]), modifyRequest);
@@ -28,10 +26,8 @@ request.put('/:requestId', checkRole([clientRoleId]), modifyRequest);
 request.put('/media/:requestId', checkRole([clientRoleId]),uploadMedia);
 
 request.put('/status/:requestId',updateRequestStatus);
-
 // this route is used to select worker in public request
 request.put('/:requestId/select-worker/:workerId', checkRole([clientRoleId]), selectWorker);
-
 // this route is used to make a comment on public request
 request.post('/:requestId/comment', checkRole([workerRoleId]), createComment);
 
