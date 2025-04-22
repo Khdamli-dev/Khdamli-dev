@@ -11,7 +11,6 @@ import {
   FlatList,
   Image,
   SafeAreaView,
-
 } from "react-native";
 // If you're using NativeWind or another Tailwind RN library, import the tailwind function
 // import { useTailwind } from "nativewind"; // for example
@@ -35,9 +34,7 @@ const HomeScreen = () => {
   // Example fetch - replace with your actual API call
   const fetchCategories = async () => {
     try {
-      const response = await axios.get(
-        `${CONFIG.API_URL}/work/categories`
-      );
+      const response = await axios.get(`${CONFIG.API_URL}/work/categories/`);
       // Filter categories to include only top-level categories
       const filteredCategories = response.data.categories.filter(
         (category: Category) => category.parent_category === null

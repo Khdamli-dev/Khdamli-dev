@@ -5,12 +5,10 @@ import authenticatePassword from "../../utils/authentication/authenticatePasswor
 import dotenv from "dotenv";
 import produceTokens from "../../utils/authentication/produceTokens";
 
-
 dotenv.config();
 
 const login = async (req: Request, res: Response) => {
   try {
-   
     const { email, password }: Credentials = req.body;
     if (!email || !password) {
       res.status(400).json({
@@ -47,7 +45,7 @@ const login = async (req: Request, res: Response) => {
         success: false,
         message: "password is wrong",
         validEmail: true,
-        validPassword: false
+        validPassword: false,
       });
       return;
     }
@@ -68,14 +66,14 @@ const login = async (req: Request, res: Response) => {
       user[0].role
     );
 
-    const {password : _, ...returnedUser} = user[0];
+    const { password: _, ...returnedUser } = user[0];
     // success login
     res.status(200).json({
       success: true,
       message: "login with success",
       accessToken,
       refreshToken,
-      user : returnedUser,
+      user: returnedUser,
     });
   } catch (error) {
     console.log(error);

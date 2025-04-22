@@ -9,6 +9,7 @@ import {
   FlatList,
   Dimensions,
 } from "react-native";
+import MediaUploader, { MediaItem } from "@/Component/mediaUploader";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -26,14 +27,14 @@ import {
   User,
   Globe,
 } from "lucide-react-native";
-
+import CONFIG from "../../../config";
+import { Video, ResizeMode } from "expo-av";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFonts, Itim_400Regular } from "@expo-google-fonts/itim";
 import * as ImagePicker from "expo-image-picker";
 import { NavigationProp } from "@react-navigation/native";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import CONFIG from "@/config";
 import axios from "axios";
 
 const { width } = Dimensions.get("window");
@@ -55,20 +56,6 @@ interface ProfileItemProps {
   value: React.ReactNode;
   Icon?: React.ComponentType<{ size: number; color: string }>;
 }
-
-const StarRating: React.FC<StarRatingProps> = ({ rating }) => {
-  return (
-    <View className="flex-row items-center">
-      {[...Array(5)].map((_, index) => (
-        <Star
-          key={index}
-          size={20}
-          color={index < rating ? "#facc15" : "#d1d5db"}
-        />
-      ))}
-    </View>
-  );
-};
 
 const pickProfileImage = async (
   updateProfileImage: (newImage: string) => void
@@ -97,31 +84,100 @@ const pickProfileImage = async (
 };
 
 const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
-  useEffect(() => {}, []);
-  const [user, setUser] = useState({
-    fullName: "Mohammed",
-    email: "mohammed@gmail.com",
-    phone: "0669782424",
-    bio: "Professional Carpenter With 5 Years Experience In Furniture Making And Wood Decoration Design",
-    image: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
-    region: "tlemcen",
-    city: "maghnia",
-    accountType: "worker",
-    workingDays: [
-      { day: "Sunday", from: "8:00", to: "16:00" },
-      { day: "Monday", from: "8:00", to: "16:00" },
-      { day: "Tuesday", from: "8:00", to: "16:00" },
-      { day: "Wednesday", from: "8:00", to: "16:00" },
-      { day: "Thursday", from: "8:00", to: "16:00" },
-    ],
-    age: 23,
-    gender: "male",
-    paymentMethod: ["baridiMob", "ccp"] as string[],
-    category: ["carpenter"] as string[],
-    branches: ["carpenter"] as string[],
-    gallery: [] as string[],
+  type MediaItem = {
+    type: "image" | "video";
+    uri: string;
+  };
+
+  const [user, setUser] = useState<{
+    fullName: string | null;
+    registration_date: string | null;
+    bio: string | null;
+    image: string | null;
+    region: string | null;
+    city: string | null;
+    accountType: string | null;
+    workingDays: { day: string; from: string; to: string }[] | null;
+    age: number | null;
+    gender: string | null;
+    paymentMethod: string[] | null;
+    category: { name: string; price: number; unity: string }[] | null;
+    gallery: MediaItem[] | null;
+  }>({
+    fullName: null,
+    registration_date: null,
+    bio: null,
+    image: null,
+    region: null,
+    city: null,
+    accountType: null,
+    workingDays: null,
+    age: null,
+    gender: null,
+    paymentMethod: null,
+    category: null,
+    gallery: null,
   });
-  const pickGalleryImage = async () => {
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const userData = await AsyncStorage.getItem("user");
+        const user: any = JSON.parse(userData as any);
+
+        if (!user) {
+          console.log("User does not exist");
+          return;
+        }
+
+        const { id, role } = user;
+        const endpoint =
+          role === 1 ? `/users/client/` : role === 2 ? `/users/worker/` : null;
+        console.log(endpoint);
+        if (endpoint) {
+          const response = await axios.get(`${CONFIG.API_URL}${endpoint}${id}`);
+          console.log(response);
+          const newUserData =
+            role === 1
+              ? {
+                  fullName: response.data.client.username,
+                  image: response.data.client.profile_image,
+                  registration_date: response.data.client.registration_date,
+                  age: response.data.client.age,
+                  gender: response.data.client.sex,
+                  region: response.data.client.location.region,
+                  city: response.data.client.location.city,
+                  accountType: "client",
+                }
+              : {
+                  fullName: response.data.worker.username,
+                  image: response.data.worker.profile_image,
+                  registration_date: response.data.worker.registration_date,
+                  age: response.data.worker.age,
+                  gender: response.data.worker.sex,
+                  region: response.data.worker.location.region,
+                  city: response.data.worker.location.city,
+                  accountType: "worker",
+                  bio: response.data.worker.bio,
+                  workingDays: response.data.worker.availability,
+                  category: response.data.worker.categories,
+                  paymentMethod: response.data.worker.payment_methods,
+                  gallery: response.data.worker.media,
+                };
+
+          setUser((prev) => ({ ...prev, ...newUserData }));
+        } else {
+          console.log("Unknown role");
+        }
+      } catch (error) {
+        console.error("Failed to fetch user data", error);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+  const pickGalleryMedia = async () => {
     const { granted } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!granted) {
       Alert.alert(
@@ -132,16 +188,33 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 1,
     });
 
     if (result.assets?.length) {
-      addGalleryImage(result.assets[0].uri);
+      const selectedMedia = result.assets[0];
+      const newMedia: MediaItem = {
+        uri: selectedMedia.uri,
+        type: selectedMedia.type === "video" ? "video" : "image",
+      };
+      addGalleryImage(newMedia);
     }
   };
+
+  const addGalleryImage = (newMedia: MediaItem) => {
+    setUser((prevUser) => ({
+      ...prevUser,
+      gallery: prevUser.gallery
+        ? prevUser.gallery.some((item) => item.uri === newMedia.uri)
+          ? prevUser.gallery
+          : [...prevUser.gallery, newMedia]
+        : null,
+    }));
+  };
+
   const updateProfileImage = (newImage: string) => {
     setUser((prevUser) => ({
       ...prevUser,
@@ -149,19 +222,12 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     }));
     console.log(newImage);
   };
-  const addGalleryImage = (newImage: string) => {
+  const deleteGalleryImage = (itemToDelete: MediaItem) => {
     setUser((prevUser) => ({
       ...prevUser,
-      gallery: prevUser.gallery.includes(newImage)
-        ? prevUser.gallery
-        : [...prevUser.gallery, newImage],
-    }));
-  };
-
-  const deleteGalleryImage = (imageToDelete: string) => {
-    setUser((prevUser) => ({
-      ...prevUser,
-      gallery: prevUser.gallery.filter((img) => img !== imageToDelete),
+      gallery: prevUser.gallery
+        ? prevUser.gallery.filter((item) => item.uri !== itemToDelete.uri)
+        : null,
     }));
   };
 
@@ -228,7 +294,11 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
 
             <View className="relative">
               <Image
-                source={{ uri: user.image }}
+                source={{
+                  uri:
+                    user.image ??
+                    "https://cdn-icons-png.flaticon.com/512/149/149071.png",
+                }}
                 className="w-[130px] h-[130px] rounded-full border-[3px] border-white"
               />
               <TouchableOpacity
@@ -249,61 +319,57 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
             </Text>
           </>
         </LinearGradient>
-
-        <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
-          <Text
-            className="text-center text-[#BD7D06]  mb-2.5"
-            style={{ fontFamily: "Itim_400Regular" }}
-          >
-            Short Bio
-          </Text>
-          <Text
-            className="text-center mt-2 text-[16px]"
-            style={{ fontFamily: "Itim_400Regular" }}
-          >
-            {user.bio}
-          </Text>
-        </View>
-
-        <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
-          <Text
-            className="text-center text-[#BD7D06]  mb-2.5"
-            style={{ fontFamily: "Itim_400Regular" }}
-          >
-            Working Days
-          </Text>
-          {user.workingDays.map((item, index) => (
-            <View
-              key={index}
-              className="flex-row justify-between py-2 border-b border-gray-200"
-            >
-              <Text className="text-[16px] font-semibold">{item.day}</Text>
+        {user.accountType === "worker" && (
+          <>
+            <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
               <Text
-                className="mr-2 text-[#BD7D06]  "
+                className="text-center text-[#BD7D06]  mb-2.5"
                 style={{ fontFamily: "Itim_400Regular" }}
               >
-                From {item.from}
+                Short Bio
               </Text>
               <Text
-                className="mr-2 text-[#BD7D06]  "
+                className="text-center mt-2 text-[16px]"
                 style={{ fontFamily: "Itim_400Regular" }}
               >
-                To {item.to}
+                {user.bio}
               </Text>
             </View>
-          ))}
-        </View>
-
+            <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
+              <Text
+                className="text-center text-[#BD7D06]  mb-2.5"
+                style={{ fontFamily: "Itim_400Regular" }}
+              >
+                Working Days
+              </Text>
+              {user.workingDays?.map((item, index) => (
+                <View
+                  key={index}
+                  className="flex-row justify-between py-2 border-b border-gray-200"
+                >
+                  <Text className="text-[16px] font-semibold">{item.day}</Text>
+                  <Text
+                    className="mr-2 text-[#BD7D06]"
+                    style={{ fontFamily: "Itim_400Regular" }}
+                  >
+                    From {item.from}
+                  </Text>
+                  <Text
+                    className="mr-2 text-[#BD7D06]"
+                    style={{ fontFamily: "Itim_400Regular" }}
+                  >
+                    To {item.to}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </>
+        )}
         <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
           <ProfileItem
-            label="Phone Number"
-            value={user.phone}
+            label="Registration Date"
+            value={user.registration_date}
             Icon={(props) => <Phone {...props} />}
-          />
-          <ProfileItem
-            label="Email"
-            value={user.email}
-            Icon={(props) => <Mail {...props} />}
           />
           <ProfileItem
             label="Region"
@@ -335,66 +401,75 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           />
           {user.accountType === "worker" && (
             <>
-              <ProfileItem
-                label="Profession"
-                value={user.category}
-                Icon={(props) => <Briefcase {...props} />}
-              />
-              <ProfileItem
-                label="Branches"
-                value={user.branches}
-                Icon={(props) => <Briefcase {...props} />}
-              />
+              {user.category?.map((cat, index) => (
+                <ProfileItem
+                  key={index}
+                  label="Profession"
+                  value={`${cat.name} / price: ${cat.price} / unity: ${cat.unity}`}
+                  Icon={(props) => <Briefcase {...props} />}
+                />
+              ))}
+
+              {user.paymentMethod && (
+                <ProfileItem
+                  label="Payment Method"
+                  value={user.paymentMethod.join(" / ")}
+                  Icon={(props) => <CreditCard {...props} />}
+                />
+              )}
             </>
           )}
-
-          <ProfileItem
-            label="Payment Method"
-            value={user.paymentMethod.join(" / ")}
-            Icon={(props) => <CreditCard {...props} />}
-          />
-          <ProfileItem
-            label="Ratings & Reviews"
-            value={<StarRating rating={4} />}
-          />
         </View>
+        {user.accountType === "worker" && (
+          <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
+            <View className="flex-row justify-between items-center mb-2.5">
+              <Text
+                className="text-center text-[#BD7D06]  mb-2.5 text-[20px]"
+                style={{ fontFamily: "Itim_400Regular" }}
+              >
+                Some Pictures
+              </Text>
+              <TouchableOpacity
+                className="items-center my-2.5 p-1.25"
+                onPress={pickGalleryMedia}
+              >
+                <Plus size={22} color="#BD7D06" strokeWidth={4} />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={user.gallery}
+              renderItem={({ item }) => (
+                <View className="relative mx-4">
+                  {item.type === "image" ? (
+                    <Image
+                      source={{ uri: item.uri }}
+                      className="h-[300px] rounded-[10px] my-1.5"
+                      style={{ width: width - 32 }}
+                    />
+                  ) : (
+                    <Video
+                      source={{ uri: item.uri }}
+                      className="h-[300px] rounded-[10px] my-1.5"
+                      style={{ width: width - 32 }}
+                      useNativeControls={true} // لتمكين أدوات التحكم في الفيديو
+                      resizeMode={ResizeMode.CONTAIN}
+                      shouldPlay={false} // يمكنك تحديد ما إذا كان يجب تشغيل الفيديو تلقائيًا
+                    />
+                  )}
 
-        <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
-          <View className="flex-row justify-between items-center mb-2.5">
-            <Text
-              className="text-center text-[#BD7D06]  mb-2.5 text-[20px]"
-              style={{ fontFamily: "Itim_400Regular" }}
-            >
-              Some Pictures
-            </Text>
-            <TouchableOpacity
-              className="items-center my-2.5 p-1.25"
-              onPress={pickGalleryImage}
-            >
-              <Plus size={22} color="#BD7D06" strokeWidth={4} />
-            </TouchableOpacity>
+                  <TouchableOpacity
+                    className="absolute top-[10px] right-[10px] bg-[rgba(255,0,0,0.7)] rounded-[15px] p-2"
+                    onPress={() => deleteGalleryImage(item)}
+                  >
+                    <Trash size={20} color="white" />
+                  </TouchableOpacity>
+                </View>
+              )}
+              keyExtractor={(item, index) => item.uri + index}
+              scrollEnabled={false}
+            />
           </View>
-          <FlatList
-            data={user.gallery}
-            renderItem={({ item }) => (
-              <View className="relative mx-4">
-                <Image
-                  source={{ uri: item }}
-                  className="h-[300px] rounded-[10px] my-1.5"
-                  style={{ width: width - 32 }}
-                />
-                <TouchableOpacity
-                  className="absolute top-[10px] right-[10px] bg-[rgba(255,0,0,0.7)] rounded-[15px] p-2"
-                  onPress={() => deleteGalleryImage(item)}
-                >
-                  <Trash size={20} color="white" />
-                </TouchableOpacity>
-              </View>
-            )}
-            keyExtractor={(item, index) => item + index}
-            scrollEnabled={false}
-          />
-        </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
