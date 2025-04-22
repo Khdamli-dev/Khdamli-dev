@@ -16,15 +16,14 @@ import React, { useState, useRef, useEffect } from "react";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import axios from "axios";
-
-interface Request {
-  id: number;
-  service: string;
-  location: string;
-  sent_time: string;
-  AboutService: string;
-  canceled: boolean;
-}
+// Import the interfaces from your interfaces file
+import {
+  Request,
+  BaseRequest,
+  RequestOnClient,
+  RequestOnWorker,
+  UserRole,
+} from "../../../../Interfaces/Requestsinterfaces";
 
 const PublicRequest = () => {
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -32,21 +31,28 @@ const PublicRequest = () => {
   const [showFullComment, setShowFullComment] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
   const [imageModalVisible, setImageModalVisible] = useState(false);
+  const [userRole, setUserRole] = useState<UserRole>(UserRole.WORKER); // Default to WORKER, adjust as needed
   const [personnelRequests, setPersonnelRequests] = useState<Request[]>([
     {
-      id: 2,
-      service: "Plumber",
-      location: "M'sila",
-      sent_time: "20/04/2024",
-      AboutService:
-        "The worker should be diligentfwekjcvuyhiejoasjbhjoiwnjkhjbhi",
+      id: 1,
+      username_Client: "khalil djaidja",
+      category: "Plumbing",
+      location: "123 Main St",
+      RequestDate: "2025-04-22",
+      WorkDate: "2025-04-25",
+      WorkTime: "14:00",
+      payment: "$100",
+      AboutService: "Fix leaky faucet",
       canceled: false,
+      service: "Plumbing Services",
+      sent_time: "2025-04-22",
+      images: [],
     },
   ]);
 
   const { width: windowWidth } = Dimensions.get("window");
   const scrollViewRef = useRef<ScrollView>(null);
-  const Clientid = false; // Replace with actual client ID logic
+  const isClient = userRole === UserRole.CLIENT; // Use the enum
 
   const requestImages = [
     require("../../../../assets/images/istockphoto-615086822-170667a.jpg"),
@@ -74,9 +80,9 @@ const PublicRequest = () => {
 
   const fetchRequests = async () => {
     try {
-      const response = await axios.get("http://example.com/api/requests"); // Update with actual endpoint
-      const result: Request = response.data;
-      setPersonnelRequests((prev) => [...prev, result]);
+      const response = await axios.get("/requests"); // Update with actual endpoint
+      const results = response.data as Request[];
+      setPersonnelRequests((prevRequests) => [...prevRequests, ...results]);
     } catch (err) {
       console.error("Error fetching requests:", err);
       alert("Error fetching requests");
@@ -118,13 +124,29 @@ const PublicRequest = () => {
     },
   });
 
+  // Helper function to safely access properties regardless of request type
+  const getRequestDetail = (request: Request, property: keyof BaseRequest) => {
+    return request[property];
+  };
+
+  // Helper function for client-specific properties
+  const getClientProperty = (
+    request: Request,
+    property: keyof RequestOnWorker
+  ) => {
+    if ("username_Client" in request) {
+      return request[property];
+    }
+    return undefined;
+  };
+
   return (
     <SafeAreaView className="flex-1">
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         className="flex-1"
       >
-        {Clientid ? (
+        {isClient ? (
           <FlatList
             data={personnelRequests.filter((item) => !item.canceled)}
             keyExtractor={(item) => item.id.toString()}
@@ -156,8 +178,7 @@ const PublicRequest = () => {
                         </Text>
                       </View>
                       <View className="items-center">
-                        <Text className="leading-6">{item.timeAgo}</Text>
-                        <Text>{item.comments} comments</Text>
+                        {/* Add any additional info here */}
                       </View>
                     </View>
                   </TouchableOpacity>
@@ -174,11 +195,11 @@ const PublicRequest = () => {
                       </Text>
                       <Text className="text-lg">
                         Work Date:{" "}
-                        <Text className="text-green-500">{item.sent_time}</Text>
+                        <Text className="text-green-500">{item.WorkDate}</Text>
                       </Text>
                       <Text className="text-lg">
                         Work Time:{" "}
-                        <Text className="text-green-500">{item.sent_time}</Text>
+                        <Text className="text-green-500">{item.WorkTime}</Text>
                       </Text>
                       <Text className="text-lg">
                         Address:{" "}
@@ -191,7 +212,7 @@ const PublicRequest = () => {
                       <Text className="text-lg">
                         About Service:{" "}
                         <Text className="text-green-500">
-                          {item.description}
+                          {item.AboutService}
                         </Text>
                       </Text>
                     </View>
@@ -234,7 +255,7 @@ const PublicRequest = () => {
                     <View className="flex-1 flex-col">
                       <View className="flex-row justify-between">
                         <Text className="text-lg leading-7">
-                          Khalil Djaidja
+                          {getClientProperty(item, "username_Client")}
                         </Text>
                         <Text>{item.sent_time}</Text>
                       </View>
@@ -264,7 +285,7 @@ const PublicRequest = () => {
                       </View>
                       <View className="w-3/6 pl-2 pt-1">
                         <Text className="text-xl font-medium">
-                          Khalil Djaidja
+                          {getClientProperty(item, "username_Client") || "User"}
                         </Text>
                       </View>
                       <View className="w-2/6 h-full flex-row items-center justify-between px-2">
@@ -280,15 +301,17 @@ const PublicRequest = () => {
                       <Text className="text-xl">Request Details:</Text>
                       <Text className="text-xl">
                         Request Date:{" "}
-                        <Text className="text-green-500">{item.sent_time}</Text>
+                        <Text className="text-green-500">
+                          {item.RequestDate}
+                        </Text>
                       </Text>
                       <Text className="text-xl">
                         Work Date:{" "}
-                        <Text className="text-green-500">{item.sent_time}</Text>
+                        <Text className="text-green-500">{item.WorkDate}</Text>
                       </Text>
                       <Text className="text-xl">
                         Work Time:{" "}
-                        <Text className="text-green-500">08:00 - 16:00</Text>
+                        <Text className="text-green-500">{item.WorkTime}</Text>
                       </Text>
                       <Text className="text-xl">
                         Work Address:{" "}
@@ -300,7 +323,7 @@ const PublicRequest = () => {
                       </Text>
                       <Text className="text-xl">
                         Payment Method:{" "}
-                        <Text className="text-green-500">BaridiMob</Text>
+                        <Text className="text-green-500">{item.payment}</Text>
                       </Text>
                       <Text className="text-xl">
                         About Service:{" "}
