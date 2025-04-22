@@ -3,22 +3,23 @@ import pool from "../database/dbConnection";
 
 const ensureEmailNotValid = async (req : Request, res : Response, next : NextFunction) => {
     try {
-    const {userId, email} : {userId : number, email : string} = req.body;
-    if (!userId || !email){
-      res.status(400).json({
-        message : "userId and email are required",
-        success : false
-       });
-      return;
-    }
-
+        const userId = +req.params.userId;
+    const {email} : { email : string} = req.body.credentials;
+    if (!email || isNaN(userId) || !userId) {
+        res.status(400).json({ 
+            message: 'Email and User id are required', 
+            success: false,
+            userId : null 
+          });
+        return;
+      }
     const {rows : user} = await pool.query(`
         SELECT registration_date, email FROM "user"
         WHERE id=$1
         `, [userId]);
     if (!user.length){
       res.status(403).json({
-        message : "user don 't exist",
+        message : "user don't exist",
         success : false
        });
       return;
