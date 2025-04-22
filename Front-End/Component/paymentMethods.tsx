@@ -1,14 +1,8 @@
-import axios from "axios";
-import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  Animated,
-} from "react-native";
-import CONFIG from "@/config";
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import apiClient from '@/api/appClient';
+import refreshAccessToken from '@/api/refreshAccessToken';
+import { router } from 'expo-router';
 
 interface PaymentMethod {
   name: string;
@@ -28,11 +22,20 @@ const PaymentMethod: React.FC<PaymentMethodProps> = ({
 
   const fetchPaymentMethods = async () => {
     try {
-      const response = await axios.get(
-        `${CONFIG.API_URL}/work/payment/`
-      );
-      if (response.status === 200) setPaymentMethods(response.data.paymentMethods);
-    } catch (error) {}
+      const response = await apiClient.get(`/work/payment`);
+      if (response.status === 200)
+        setPaymentMethods(response.data.paymentMethods);
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        if (await refreshAccessToken()) {
+          await fetchPaymentMethods();
+        } else {
+          // need to login
+          router.push('/(auth)');
+        }
+      }
+      console.log(error);
+    }
   };
 
   useEffect(() => {

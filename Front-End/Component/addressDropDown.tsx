@@ -7,9 +7,9 @@ import {
   ScrollView,
   Animated,
 } from "react-native";
-import Icon from "react-native-vector-icons/MaterialIcons";
-import axios from "axios";
-import CONFIG from "../config";
+import apiClient from "@/api/appClient";
+import refreshAccessToken from "@/api/refreshAccessToken";
+import { router } from "expo-router";
 
 interface City {
   name: string;
@@ -36,11 +36,21 @@ const AddressDropdown: React.FC<AddressDropdownProps> = ({
 
   const fetchMunicipalities = async (wilayaId: number) => {
     try {
-      const response = await axios.get(`${CONFIG.API_URL}/address/cities/${wilayaId}`, 
+      const response = await apiClient.get(`/address/cities/${wilayaId}`, 
       );
       setMunicipalities(response.data.cities);
       setFilteredMunicipalities(response.data.cities);
-    } catch (error) {}
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        if (await refreshAccessToken()) {
+          await fetchMunicipalities(wilayaId);
+        } else {
+          // need to login
+          router.push('/(auth)');
+        }
+      }
+      console.log(error);
+    }
   };
 
   useEffect(() => {
