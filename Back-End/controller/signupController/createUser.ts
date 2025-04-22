@@ -1,8 +1,8 @@
 import pool from "../../database/dbConnection";
 import Credentials from "../../interface/credentials";
 import { Request, Response } from "express";
-import confirmationEmail from "./confirmationEmail";
 import encryptPassword from "../../utils/authentication/encryptPassword";
+import { sendEmailConfirmationMail }from "../../utils/authentication/sendMail";
 
 const createUser = async (req: Request, res: Response) => {
   try {
@@ -19,15 +19,16 @@ const createUser = async (req: Request, res: Response) => {
     );
 
     // send confirmation email
-    await confirmationEmail(result[0].id, email);
+    await sendEmailConfirmationMail(email , result[0].id);
     const {password : _, ...user} = result[0];
     res.status(201).json({
       message: "User added",
       user,
+      success : true
     });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "internal error" });
+    res.status(500).json({ message: "internal error" , success : false});
   }
 };
 

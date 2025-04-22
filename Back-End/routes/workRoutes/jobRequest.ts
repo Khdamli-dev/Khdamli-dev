@@ -2,7 +2,6 @@ import express, { Router } from 'express';
 import dotenv from 'dotenv';
 import createRequest from '../../controller/jobRequestController/createRequest';
 import validateJobRequest from '../../middleware/validateJobRequest';
-import getRequest from '../../controller/jobRequestController/getRequests';
 import deleteRequest from '../../controller/jobRequestController/deleteRequest';
 import modifyRequest from '../../controller/jobRequestController/modifyRequest';
 import { uploadMedia } from '../../controller/upload/uploadMedia';
@@ -22,7 +21,6 @@ const workerRoleId = Number(process.env.WORKER_ROLE_ID);
 request.post('/', checkRole([clientRoleId]), validateJobRequest, createRequest);
 
 // this route used to get private and public requests for a client or a worker
-request.get('/', getRequest);
 
 request.get('/:requestId', getRequestDetails);
 

@@ -7,7 +7,7 @@ import {
   FlatList,
 } from "react-native";
 import { ComponentType } from "react";
-import { LucideProps } from "lucide-react";
+import { LucideProps } from "lucide-react-native";
 type DropdownProps = {
   label: string;
   icon: ComponentType<LucideProps>;
