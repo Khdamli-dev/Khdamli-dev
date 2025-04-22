@@ -21,10 +21,9 @@ import {
   RequestOnWorker,
   RequestOnClient,
   UserRole,
+  RequestStatus,
+  Request,
 } from "../../../../Interfaces/Requestsinterfaces";
-
-// Union type for requests as defined in your types file
-type Request = RequestOnWorker | RequestOnClient;
 
 const PrivateRequests = () => {
   const [privateRequests, setPrivateRequests] = useState<Request[]>([
@@ -33,18 +32,14 @@ const PrivateRequests = () => {
       id: 1,
       category: "Plumbing",
       location: "123 Main St, Springfield",
-      RequestDate: "2025-04-20",
-      WorkDate: "2025-04-22",
-      WorkTime: "14:00",
-      payment: "Credit Card",
-      AboutService: "Plumbing repair for kitchen sink",
+      status: RequestStatus.ON_HOLD,
+      working_time: "2025-04-22 14:00",
+      description: "Plumbing repair for kitchen sink",
       canceled: false,
-      service: "Plumbing",
       sent_time: "2025-04-20 10:30",
       images: ["image1.jpg", "image2.jpg"],
       username_Client: "John Doe",
       client_profile_image: "profile1.jpg",
-      status: "onhold",
     },
 
     // Example for RequestOnClient (shown to a client)
@@ -52,20 +47,15 @@ const PrivateRequests = () => {
       id: 2,
       category: "Electrical",
       location: "456 Oak Ave, Shelbyville",
-      RequestDate: "2025-04-19",
-      WorkDate: "2025-04-23",
-      WorkTime: "09:00",
-      payment: "Cash",
-      AboutService: "Electrical wiring for new light fixtures",
+      status: RequestStatus.ACCEPTED,
+      working_time: "2025-04-23 09:00",
+      description: "Electrical wiring for new light fixtures",
       canceled: false,
-      service: "Electrical",
       sent_time: "2025-04-19 15:45",
       images: ["image3.jpg", "image4.jpg"],
-      username_Worker: "Khalil",
+      username_Worker: "Houda",
       worker_profile_image: "profile2.jpg",
-      worker_comment: "I'll bring all necessary equipment",
       workStartedTime: "2025-04-23 09:15",
-      status: "accepted",
     },
 
     // Another example for RequestOnClient (pending verification)
@@ -73,20 +63,16 @@ const PrivateRequests = () => {
       id: 3,
       category: "Painting",
       location: "789 Pine Rd, Capital City",
-      RequestDate: "2025-04-18",
-      WorkDate: "2025-04-21",
-      WorkTime: "11:00",
-      payment: "Bank Transfer",
-      AboutService: "Painting living room walls",
+      status: RequestStatus.PENDING_CLIENT_VERIFICATION,
+      working_time: "2025-04-21 11:00",
+      description: "Painting living room walls",
       canceled: false,
-      service: "Painting",
       sent_time: "2025-04-18 08:20",
       images: ["image5.jpg", "image6.jpg"],
       username_Worker: "Khalil",
       worker_profile_image: "profile2.jpg",
       workStartedTime: "2025-04-21 11:05",
       workCompletedClaimTime: "2025-04-21 14:30",
-      status: "pending_client_verification",
     },
   ]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -117,15 +103,8 @@ const PrivateRequests = () => {
       });
 
       const requests: Request[] = response.data.requests || [];
-      const requestsWithStatus = await Promise.all(
-        requests.map(async (request) => {
-          const status = await getRequestState(request.id);
-          return { ...request, status };
-        })
-      );
-
       setPrivateRequests(
-        requestsWithStatus.filter((req) => req.status !== "rejected")
+        requests.filter((req) => req.status !== RequestStatus.REJECTED)
       );
     } catch (err) {
       console.error("ERROR FETCHING DATA", err);
@@ -133,28 +112,49 @@ const PrivateRequests = () => {
     }
   };
 
-  const getRequestState = async (requestId: number): Promise<string> => {
+  const fetchRequestDetails = async (requestId: number, type: string) => {
     try {
+      // Get user ID from state or context if not already defined
+      const userData = await AsyncStorage.getItem("user");
+      const user = userData ? JSON.parse(userData) : null;
+      const userid = user?.id;
+
       const response = await axios.get(
-        `${CONFIG.API_URL}/work/job-request/${requestId}/state`
+        `${CONFIG.API_URL}/work/job-request/${requestId}`,
+        {
+          params:
+            userRole === UserRole.CLIENT
+              ? { role: "client", type }
+              : { worker_id: userid, role: "worker", type },
+        }
       );
-      return response.data.state || "unknown";
+
+      const results = response.data;
+
+      // Update the specific request rather than appending to the array
+      setPrivateRequests((prevRequests) =>
+        prevRequests.map((req) =>
+          req.id === requestId ? { ...req, ...results } : req
+        )
+      );
     } catch (err) {
-      console.error("Error fetching request state", err);
-      Alert.alert("Error", "Error fetching request state");
-      return "unknown";
+      console.error("Error fetching request details:", err);
+      Alert.alert("Error", "Error fetching request details");
     }
   };
 
-  const updateRequestStatus = async (requestId: number, newStatus: string) => {
+  const updateRequestStatus = async (
+    requestId: number,
+    newStatus: RequestStatus
+  ) => {
     try {
       // Prepare the data to send
       const updateData: any = { state: newStatus };
 
       // Add timestamps for specific status changes
-      if (newStatus === "accepted") {
+      if (newStatus === RequestStatus.ACCEPTED) {
         updateData.workStartedTime = new Date().toISOString();
-      } else if (newStatus === "pending_client_verification") {
+      } else if (newStatus === RequestStatus.PENDING_CLIENT_VERIFICATION) {
         updateData.workCompletedClaimTime = new Date().toISOString();
       }
 
@@ -171,10 +171,10 @@ const PrivateRequests = () => {
             ? {
                 ...request,
                 status: newStatus,
-                ...(newStatus === "accepted" && {
+                ...(newStatus === RequestStatus.ACCEPTED && {
                   workStartedTime: new Date().toISOString(),
                 }),
-                ...(newStatus === "pending_client_verification" && {
+                ...(newStatus === RequestStatus.PENDING_CLIENT_VERIFICATION && {
                   workCompletedClaimTime: new Date().toISOString(),
                 }),
               }
@@ -183,12 +183,12 @@ const PrivateRequests = () => {
       );
 
       // Show appropriate alert based on status
-      if (newStatus === "pending_client_verification") {
+      if (newStatus === RequestStatus.PENDING_CLIENT_VERIFICATION) {
         Alert.alert(
           "Completion Request Sent",
           "The client has been notified to verify that the work is complete."
         );
-      } else if (newStatus === "completed") {
+      } else if (newStatus === RequestStatus.COMPLETED) {
         Alert.alert("Success", "The job has been marked as completed.");
       } else {
         Alert.alert(
@@ -204,11 +204,11 @@ const PrivateRequests = () => {
 
   // Action handler functions
   const handleAcceptRequest = (requestId: number) => {
-    updateRequestStatus(requestId, "accepted");
+    updateRequestStatus(requestId, RequestStatus.ACCEPTED);
   };
 
   const handleRejectRequest = (requestId: number) => {
-    updateRequestStatus(requestId, "rejected");
+    updateRequestStatus(requestId, RequestStatus.REJECTED);
   };
 
   const handleMarkAsCompleted = (requestId: number) => {
@@ -220,7 +220,10 @@ const PrivateRequests = () => {
         {
           text: "Yes, Mark Completed",
           onPress: () =>
-            updateRequestStatus(requestId, "pending_client_verification"),
+            updateRequestStatus(
+              requestId,
+              RequestStatus.PENDING_CLIENT_VERIFICATION
+            ),
         },
       ]
     );
@@ -235,7 +238,7 @@ const PrivateRequests = () => {
           text: "Not Complete",
           style: "destructive",
           onPress: () => {
-            updateRequestStatus(requestId, "accepted");
+            updateRequestStatus(requestId, RequestStatus.ACCEPTED);
             Alert.alert(
               "Notification Sent",
               "The worker has been notified that the job is not complete."
@@ -245,7 +248,8 @@ const PrivateRequests = () => {
         {
           text: "Verify Completion",
           style: "default",
-          onPress: () => updateRequestStatus(requestId, "completed"),
+          onPress: () =>
+            updateRequestStatus(requestId, RequestStatus.COMPLETED),
         },
       ]
     );
@@ -260,7 +264,8 @@ const PrivateRequests = () => {
         {
           text: "Yes, Cancel",
           style: "destructive",
-          onPress: () => updateRequestStatus(requestId, "cancelled"),
+          onPress: () =>
+            updateRequestStatus(requestId, RequestStatus.CANCELLED),
         },
       ]
     );
@@ -269,15 +274,15 @@ const PrivateRequests = () => {
   // Helper function to get status display label
   const getStatusLabel = (status: string): string => {
     switch (status) {
-      case "onhold":
+      case RequestStatus.ON_HOLD:
         return "Pending";
-      case "accepted":
+      case RequestStatus.ACCEPTED:
         return "In Progress";
-      case "pending_client_verification":
+      case RequestStatus.PENDING_CLIENT_VERIFICATION:
         return "Awaiting Client Verification";
-      case "completed":
+      case RequestStatus.COMPLETED:
         return "Completed";
-      case "cancelled":
+      case RequestStatus.CANCELLED:
         return "Cancelled";
       default:
         return status;
@@ -287,15 +292,15 @@ const PrivateRequests = () => {
   // Helper function to get status color
   const getStatusColor = (status: string): string => {
     switch (status) {
-      case "onhold":
+      case RequestStatus.ON_HOLD:
         return "text-gray-600";
-      case "accepted":
+      case RequestStatus.ACCEPTED:
         return "text-green-600";
-      case "pending_client_verification":
+      case RequestStatus.PENDING_CLIENT_VERIFICATION:
         return "text-yellow-600";
-      case "completed":
+      case RequestStatus.COMPLETED:
         return "text-blue-600";
-      case "cancelled":
+      case RequestStatus.CANCELLED:
         return "text-red-600";
       default:
         return "text-gray-600";
@@ -307,6 +312,19 @@ const PrivateRequests = () => {
     if (!timestamp) return "N/A";
     const date = new Date(timestamp);
     return `${date.toLocaleDateString()} at ${date.toLocaleTimeString()}`;
+  };
+
+  // Parse working_time to extract date and time
+  const parseWorkingTime = (working_time: string) => {
+    if (!working_time) return { date: "N/A", time: "N/A" };
+    const dateTime = new Date(working_time);
+    return {
+      date: dateTime.toLocaleDateString(),
+      time: dateTime.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    };
   };
 
   // ImageViewer component for viewing request images
@@ -394,31 +412,29 @@ const PrivateRequests = () => {
   };
 
   // Request detail section component
-  const RequestDetails = ({ item }: { item: Request & { status: string } }) => {
+  const RequestDetails = ({ item }: { item: Request }) => {
+    const { date: workDate, time: workTime } = parseWorkingTime(
+      item.working_time
+    );
+
     return (
       <View className="pl-5">
         <Text className="text-xl font-bold mb-2">Request Details:</Text>
         <Text className="text-base">
-          Work Date:{" "}
-          <Text className="text-green-600">{item.WorkDate || "N/A"}</Text>
+          Work Date: <Text className="text-green-600">{workDate}</Text>
         </Text>
         <Text className="text-base">
-          Work Time:{" "}
-          <Text className="text-green-600">{item.WorkTime || "N/A"}</Text>
+          Work Time: <Text className="text-green-600">{workTime}</Text>
         </Text>
         <Text className="text-base">
           Address: <Text className="text-green-600">{item.location}</Text>
         </Text>
         <Text className="text-base">
-          Service:{" "}
-          <Text className="text-green-600">{item.service || "N/A"}</Text>
-        </Text>
-        <Text className="text-base">
-          Payment Method: <Text className="text-green-600">{item.payment}</Text>
+          Service: <Text className="text-green-600">{item.category}</Text>
         </Text>
         <Text className="text-base">
           About Service:{" "}
-          <Text className="text-green-600">{item.AboutService}</Text>
+          <Text className="text-green-600">{item.description}</Text>
         </Text>
         <Text className="text-base">
           Status:{" "}
@@ -428,7 +444,7 @@ const PrivateRequests = () => {
         </Text>
 
         {/* Show work timeline when applicable */}
-        {(item.workStartedTime || item.workCompletedClaimTime) && (
+        {"workStartedTime" in item && (
           <View className="mt-2 p-2 bg-gray-100 rounded">
             <Text className="text-lg font-semibold mb-1">Work Timeline:</Text>
             {item.workStartedTime && (
@@ -439,14 +455,15 @@ const PrivateRequests = () => {
                 </Text>
               </Text>
             )}
-            {item.workCompletedClaimTime && (
-              <Text className="text-sm">
-                • Worker marked complete:{" "}
-                <Text className="text-blue-600">
-                  {formatTime(item.workCompletedClaimTime)}
+            {"workCompletedClaimTime" in item &&
+              item.workCompletedClaimTime && (
+                <Text className="text-sm">
+                  • Worker marked complete:{" "}
+                  <Text className="text-blue-600">
+                    {formatTime(item.workCompletedClaimTime)}
+                  </Text>
                 </Text>
-              </Text>
-            )}
+              )}
           </View>
         )}
       </View>
@@ -454,11 +471,7 @@ const PrivateRequests = () => {
   };
 
   // Request item component for client view
-  const RequestItemOnClient = ({
-    item,
-  }: {
-    item: Request & { status: string };
-  }) => {
+  const RequestItemOnClient = ({ item }: { item: Request }) => {
     const [imageModalVisible, setImageModalVisible] = useState(false);
     const [selectedImage, setSelectedImage] = useState(0);
 
@@ -468,15 +481,20 @@ const PrivateRequests = () => {
       require("../../../../assets/images/images (1).jpg"),
     ];
 
-    if (item.status === "rejected") return null;
+    if (item.status === RequestStatus.REJECTED) return null;
 
     const isSelected = selectedId === item.id;
-    const workerName = "username_Worker" in item ? item.username_Worker : "";
+    // Type guard to check if the item has username_Worker property
+    const isClientRequest = "username_Worker" in item;
+    const workerName = isClientRequest ? item.username_Worker : "";
 
     return (
       <TouchableOpacity
         className="bg-white my-0.5 p-2"
-        onPress={() => setSelectedId(isSelected ? null : item.id)}
+        onPress={() => {
+          setSelectedId(isSelected ? null : item.id);
+          fetchRequestDetails(item.id, "private");
+        }}
       >
         {isSelected ? (
           <View className="p-4">
@@ -488,7 +506,7 @@ const PrivateRequests = () => {
               <View className="flex-1 pl-3">
                 <Text className="text-xl font-bold">{workerName}</Text>
                 <Text className="text-sm text-gray-600">
-                  {item.sent_time || item.RequestDate}
+                  {item.sent_time || parseWorkingTime(item.working_time).date}
                 </Text>
               </View>
               <View className="flex-row justify-between w-24">
@@ -522,7 +540,7 @@ const PrivateRequests = () => {
             </View>
 
             <View className="flex-row mt-4 justify-between">
-              {item.status === "pending_client_verification" && (
+              {item.status === RequestStatus.PENDING_CLIENT_VERIFICATION && (
                 <TouchableOpacity
                   className="flex-1 bg-blue-600 items-center justify-center py-3 mx-1 rounded"
                   onPress={() => handleVerifyCompletion(item.id)}
@@ -531,7 +549,7 @@ const PrivateRequests = () => {
                 </TouchableOpacity>
               )}
 
-              {item.status === "onhold" && (
+              {item.status === RequestStatus.ON_HOLD && (
                 <TouchableOpacity
                   className="flex-1 bg-red-600 items-center justify-center py-3 mx-1 rounded"
                   onPress={() => handleCancelRequest(item.id)}
@@ -551,28 +569,29 @@ const PrivateRequests = () => {
               <View className="flex-row justify-between pr-4">
                 <Text className="text-xl font-bold">{workerName}</Text>
                 <View className="items-center justify-center">
-                  {item.status === "accepted" && (
+                  {item.status === RequestStatus.ACCEPTED && (
                     <MaterialCommunityIcons
                       name="check-circle"
                       size={35}
                       color="green"
                     />
                   )}
-                  {item.status === "completed" && (
+                  {item.status === RequestStatus.COMPLETED && (
                     <MaterialCommunityIcons
                       name="check-all"
                       size={35}
                       color="blue"
                     />
                   )}
-                  {item.status === "pending_client_verification" && (
+                  {item.status ===
+                    RequestStatus.PENDING_CLIENT_VERIFICATION && (
                     <MaterialCommunityIcons
                       name="alert-circle-outline"
                       size={35}
                       color="#F8A100"
                     />
                   )}
-                  {item.status === "onhold" && (
+                  {item.status === RequestStatus.ON_HOLD && (
                     <MaterialCommunityIcons
                       name="clock-outline"
                       size={35}
@@ -582,10 +601,10 @@ const PrivateRequests = () => {
                 </View>
               </View>
               <Text className="font-medium">
-                Service:{" "}
-                <Text className="text-yellow-500">{item.AboutService}</Text>
+                category:{" "}
+                <Text className="text-yellow-500">{item.description}</Text>
               </Text>
-              {item.status === "pending_client_verification" && (
+              {item.status === RequestStatus.PENDING_CLIENT_VERIFICATION && (
                 <Text className="text-sm font-semibold text-orange-500">
                   Action needed: Verify completion
                 </Text>
@@ -605,11 +624,7 @@ const PrivateRequests = () => {
   };
 
   // Request item component for worker view
-  const RequestItemOnWorker = ({
-    item,
-  }: {
-    item: Request & { status: string };
-  }) => {
+  const RequestItemOnWorker = ({ item }: { item: Request }) => {
     const [isPressed, setIsPressed] = useState(false);
     const [selectedImage, setSelectedImage] = useState(0);
     const [imageModalVisible, setImageModalVisible] = useState(false);
@@ -620,14 +635,19 @@ const PrivateRequests = () => {
       require("../../../../assets/images/images (1).jpg"),
     ];
 
-    const clientName = "username_Client" in item ? item.username_Client : "";
+    // Type guard to check if the item has username_Client property
+    const isWorkerRequest = "username_Client" in item;
+    const clientName = isWorkerRequest ? item.username_Client : "";
 
     return (
       <View>
         {!isPressed ? (
           <TouchableOpacity
             className="flex-row bg-white py-3 px-4 mb-0.5"
-            onPress={() => setIsPressed(true)}
+            onPress={() => {
+              setIsPressed(true);
+              fetchRequestDetails(item.id, "priavte");
+            }}
           >
             <Image
               source={require("../../../../assets/images/images (1).jpg")}
@@ -637,11 +657,12 @@ const PrivateRequests = () => {
               <View className="flex-row justify-between">
                 <Text className="text-lg font-medium">{clientName}</Text>
                 <Text className="text-sm text-gray-600">
-                  {item.sent_time || item.RequestDate}
+                  {item.sent_time || parseWorkingTime(item.working_time).date}
                 </Text>
               </View>
               <Text className="text-sm">
-                Service: <Text className="text-yellow-500">{item.service}</Text>
+                category{" "}
+                <Text className="text-yellow-500">{item.category}</Text>
               </Text>
               <View className="flex-row items-center">
                 <Text className="text-sm mr-1">Status:</Text>
@@ -695,7 +716,7 @@ const PrivateRequests = () => {
             </View>
 
             <View className="flex-row mt-4">
-              {item.status === "onhold" && (
+              {item.status === RequestStatus.ON_HOLD && (
                 <>
                   <TouchableOpacity
                     className="flex-1 bg-green-600 items-center justify-center py-3 mx-1"
@@ -712,7 +733,7 @@ const PrivateRequests = () => {
                 </>
               )}
 
-              {item.status === "accepted" && (
+              {item.status === RequestStatus.ACCEPTED && (
                 <TouchableOpacity
                   className="flex-1 bg-blue-600 items-center justify-center py-3 mx-1"
                   onPress={() => handleMarkAsCompleted(item.id)}
@@ -721,7 +742,7 @@ const PrivateRequests = () => {
                 </TouchableOpacity>
               )}
 
-              {item.status === "pending_client_verification" && (
+              {item.status === RequestStatus.PENDING_CLIENT_VERIFICATION && (
                 <View className="flex-1 bg-yellow-500 items-center justify-center py-3 mx-1">
                   <Text className="text-white text-lg">
                     Waiting for Client Verification
@@ -729,7 +750,7 @@ const PrivateRequests = () => {
                 </View>
               )}
 
-              {item.status === "completed" && (
+              {item.status === RequestStatus.COMPLETED && (
                 <View className="flex-1 bg-green-500 items-center justify-center py-3 mx-1">
                   <Text className="text-white text-lg">Service Completed</Text>
                 </View>
@@ -763,13 +784,9 @@ const PrivateRequests = () => {
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) =>
             userRole === UserRole.CLIENT ? (
-              <RequestItemOnClient
-                item={item as Request & { status: string }}
-              />
+              <RequestItemOnClient item={item} />
             ) : (
-              <RequestItemOnWorker
-                item={item as Request & { status: string }}
-              />
+              <RequestItemOnWorker item={item} />
             )
           }
         />
