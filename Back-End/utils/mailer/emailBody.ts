@@ -70,13 +70,13 @@ export const passwordResetMail = ((otp : string) => {
 </html>
 `
 });
-export const emailConfirmationMail = ((token : string) => {
+export const emailConfirmationMail = ((otp : string) => {
     return `<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Email Verification</title>
+    <title>Account Verification</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -109,20 +109,15 @@ export const emailConfirmationMail = ((token : string) => {
             color: #555;
             margin-top: 15px;
         }
-        .btn {
-            display: inline-block;
-            background: #28a745;
-            color: #ffffff;
-            font-size: 16px;
-            font-weight: bold;
-            padding: 12px 20px;
+        .otp-input {
+            display: block;
+            width: 60%;
+            margin: 10px auto;
+            padding: 10px;
+            font-size: 18px;
+            text-align: center;
+            border: 2px solid #ccc;
             border-radius: 5px;
-            text-decoration: none;
-            margin-top: 20px;
-            transition: 0.3s;
-        }
-        .btn:hover {
-            background: #218838;
         }
         .footer {
             font-size: 13px;
@@ -134,11 +129,11 @@ export const emailConfirmationMail = ((token : string) => {
 <body>
     <div class="container">
         <div class="logo">Khdamli-Dev</div>
-        <p class="header">Verify Your Email</p>
+        <p class="header">Account Verification</p>
         <p class="message">Hello,</p>
-        <p class="message">Thank you for signing up! Click the button below to verify your email address.</p>
-        <a href="${process.env.APP_URL}/${token}" class="btn">Verify Email</a>
-        <p class="message">If you didn't request this, you can ignore this email.</p>
+        <p class="message">To start using the app, please verify your email address by entering the code below:</p>
+        <input type="text" class="otp-input" value="${otp}" readonly onclick="this.select();document.execCommand('copy');">
+        <p class="message">Thank you for joining us!</p>
         <p class="footer">The Khdamli-Dev Team</p>
     </div>
 </body>

@@ -1,15 +1,24 @@
 import { Request, Response } from "express";
-import confirmationEmail from "./confirmationEmail";
+import { sendEmailConfirmationMail} from "../../utils/authentication/sendMail";
 
-const resendEmail = async (req: Request, res : Response) => {
-    try {
-    const {userId, email} : {userId : number, email : string} = req.body;
-    await confirmationEmail(userId,email);
-    res.status(200).json({message : "resend email with success"});   
-    } catch (error) {
-      console.log(error); 
-      res.status(500).json({ message: 'internal error' }); 
-    }
-}
-
+export const resendEmail = async (req: Request, res: Response) => {
+  try {
+    const  userId = +req.params.userId; 
+    const { email} = req.body.credentials;
+    await sendEmailConfirmationMail(email , userId);
+    
+    res.json({
+      message: 'OTP sent successfully',
+      success : true,
+      userId,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ 
+      message: 'Internal server error',
+      success : false,
+      userId : null
+    });
+  }
+};
 export default resendEmail;
