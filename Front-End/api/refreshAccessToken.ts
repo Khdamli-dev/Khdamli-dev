@@ -14,7 +14,7 @@ const refreshAccessToken = async (): Promise<boolean> => {
 
     const response = await apiClient.post('/auth/refresh', null, {
       headers: {
-        'x-refresh-token': refreshToken,
+        'x-refresh-token': `Bearer ${refreshToken}`,
       },
     });
     
@@ -26,7 +26,7 @@ const refreshAccessToken = async (): Promise<boolean> => {
 
     // session expired or not valid tokens
     return await silentLogin();
-  } catch (error) {
+  } catch (error : any) {
     // session expired or not valid tokens
     return await silentLogin();
   }

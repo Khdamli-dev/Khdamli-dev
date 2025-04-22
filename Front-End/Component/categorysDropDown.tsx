@@ -38,7 +38,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
         );
         setCategories(filteredCategories);
       } catch (error: any) {
-        if (error.response?.status === 403) {
+        if (error.response?.status === 401) {
           if (await refreshAccessToken()){
             await fetchCategories();
           }  

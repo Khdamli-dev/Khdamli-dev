@@ -38,7 +38,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
         const response = await apiClient.get(`/work/categories`);
         setMainCategories(response.data.categories);
       } catch (error: any) {
-        if (error.response?.status === 403) {
+        if (error.response?.status === 401) {
           if (await refreshAccessToken()) {
             await fetchCategories();
           } else {

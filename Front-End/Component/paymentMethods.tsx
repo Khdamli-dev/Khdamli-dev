@@ -26,7 +26,7 @@ const PaymentMethod: React.FC<PaymentMethodProps> = ({
       if (response.status === 200)
         setPaymentMethods(response.data.paymentMethods);
     } catch (error: any) {
-      if (error.response?.status === 403) {
+      if (error.response?.status === 401) {
         if (await refreshAccessToken()) {
           await fetchPaymentMethods();
         } else {

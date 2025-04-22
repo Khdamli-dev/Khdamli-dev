@@ -41,7 +41,7 @@ const AddressDropdown: React.FC<AddressDropdownProps> = ({
       setMunicipalities(response.data.cities);
       setFilteredMunicipalities(response.data.cities);
     } catch (error: any) {
-      if (error.response?.status === 403) {
+      if (error.response?.status === 401) {
         if (await refreshAccessToken()) {
           await fetchMunicipalities(wilayaId);
         } else {

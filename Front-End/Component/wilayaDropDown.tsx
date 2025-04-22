@@ -37,7 +37,7 @@ const WilayaDropdown: React.FC<WilayaDropdownProps> = ({
       setWilayas(response.data.regions);
       setFilteredWilayas(response.data.regions);
     } catch (error: any) {
-      if (error.response?.status === 403) {
+      if (error.response?.status === 401) {
         if (await refreshAccessToken()){
           await fetchRegions();
         }  
