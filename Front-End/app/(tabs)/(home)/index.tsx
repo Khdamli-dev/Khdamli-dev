@@ -9,9 +9,10 @@ import {
   Dimensions,
   ActivityIndicator,
   ScrollView,
-  Modal, // Add this
-  Share, // Add this
-  Platform, // Add this
+  Modal,
+  Share,
+  Platform,
+  Alert,
 } from "react-native";
 import axios from "axios";
 import {
@@ -25,19 +26,20 @@ import { router } from "expo-router";
 import * as FileSystem from "expo-file-system";
 import * as MediaLibrary from "expo-media-library";
 import { Video, ResizeMode } from 'expo-av';
+
 // Media item can be image, video or none
 interface MediaItem {
   type: "image" | "video" | "none";
   url?: string;
 }
 
-// Post shape from backend
+// Post shape 
 interface Post {
   id: number;
   clientId: number;
-  clientName: string;
-  authorImage: string;
-  regine: string;
+  userName: string;
+  profileImage: string;
+  region: string;
   city: string;
   sent_time: string;
   working_time: string;
@@ -50,9 +52,10 @@ interface Post {
 interface Comment {
   id: number;
   workerId: number;
-  authorImage: string;
-  authorName: string;
+  profileImage: string;
+  userName: string;
   text: string;
+  expanded?: boolean; // New property to track expanded state
 }
 
 const HomeScreen = () => {
@@ -66,16 +69,18 @@ const HomeScreen = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
-const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
   // COMMENTS STATE
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState<Comment[]>([]);
+  const [downloadingMedia, setDownloadingMedia] = useState<boolean>(false);
 
-  const handleImageDownload = async (imageUrl: string) => {
+  // Improved media download function that handles both images and videos
+  const handleMediaDownload = async (mediaUrl: string, mediaType: 'image' | 'video') => {
     try {
       if (Platform.OS === "web") {
-        window.open(imageUrl, "_blank");
+        window.open(mediaUrl, "_blank");
         return;
       }
 
@@ -83,34 +88,55 @@ const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
       if (!status?.granted) {
         const permission = await requestPermission();
         if (!permission.granted) {
-          alert("Need permission to save images");
+          Alert.alert("Permission Needed", "Need permission to save media to your device");
           return;
         }
       }
 
-      // Get file extension from URL or default to .jpg
-      const match = imageUrl.match(/\.([^.]+)$/);
-      const extension = match ? match[1] : "jpg";
+      setDownloadingMedia(true);
+
+      // Get file extension from URL or use default
+      const match = mediaUrl.match(/\.([^.]+)$/);
+      const extension = match ? match[1] : mediaType === 'image' ? "jpg" : "mp4";
       const filename = `khdamli-${Date.now()}.${extension}`;
       const path = `${FileSystem.cacheDirectory}${filename}`;
 
-      // Download the image
-      const { uri } = await FileSystem.downloadAsync(imageUrl, path);
+      // Show download progress
+      const downloadResumable = FileSystem.createDownloadResumable(
+        mediaUrl,
+        path,
+        {},
+        (downloadProgress) => {
+          const progress = downloadProgress.totalBytesWritten / downloadProgress.totalBytesExpectedToWrite;
+          // You could update a progress state here if you want to show a progress bar
+        }
+      );
+
+      const { uri } = await downloadResumable.downloadAsync();
 
       // Save to media library
       if (uri) {
         await MediaLibrary.saveToLibraryAsync(uri);
-        alert("Image saved successfully!");
+        Alert.alert(
+          "Download Complete", 
+          `${mediaType === 'image' ? 'Image' : 'Video'} saved successfully!`
+        );
 
         // Clean up the cache file
         await FileSystem.deleteAsync(uri, { idempotent: true });
       }
     } catch (error) {
-      console.error("Error downloading image:", error);
-      alert("Failed to save image. Please try again.");
+      console.error(`Error downloading ${mediaType}:`, error);
+      Alert.alert("Download Failed", `Failed to save ${mediaType}. Please try again.`);
+    } finally {
+      setDownloadingMedia(false);
     }
   };
-  // FETCH POSTS HELPER
+
+  // Simplified wrappers for image/video downloads
+  const handleImageDownload = (imageUrl: string) => handleMediaDownload(imageUrl, 'image');
+  const handleVideoDownload = (videoUrl: string) => handleMediaDownload(videoUrl, 'video');
+
   // ====================
   // دالة جلب البوستات من الباكند (معطلة حالياً)
   // ====================
@@ -136,6 +162,7 @@ const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
   //   },
   //   [loading]
   // );
+
   const fetchPosts = useCallback(
     async (pageToFetch: number) => {
       if (loading) return;
@@ -145,9 +172,9 @@ const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
         const fakePosts: Post[] = Array.from({ length: 20 }, (_, index) => ({
           id: (pageToFetch - 1) * 20 + index + 1,
           clientId: index + 1,
-          clientName: `Client ${(pageToFetch - 1) * 20 + index + 1}`,
-          authorImage: `https://randomuser.me/api/portraits/men/${index + 10}.jpg`,
-          regine: `Region ${index + 1}`,
+          userName: `Client ${(pageToFetch - 1) * 20 + index + 1}`,
+          profileImage: `https://randomuser.me/api/portraits/men/${index + 10}.jpg`,
+          region: `Region ${index + 1}`,
           city: `City ${index + 1}`,
           sent_time: new Date(
             Date.now() - Math.random() * 86400000 * 7
@@ -178,6 +205,7 @@ const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
         setPage(pageToFetch);
       } catch (err) {
         console.error("Failed to load posts", err);
+        Alert.alert("Error", "Failed to load posts. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -202,13 +230,11 @@ const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
     setPosts([]);
     setSelectedPostId(null);
     fetchPosts(1);
-    // مرر FlatList للأعلى
     flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-    // مرر ScrollView للأعلى (عند عرض بوست واحد)
     scrollViewRef.current?.scrollTo({ y: 0, animated: true });
   };
 
-  // Open comment box and fetch fake comments
+  // Open comment box and fetch comments
   const openCommentBox = (postId: number) => {
     setSelectedPostId(postId);
 
@@ -223,15 +249,19 @@ const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
     //     console.error("Failed to load comments", err);
     //   }
     // };
+    // fetchComments(postId);
 
     const fakeComments: Comment[] = Array.from(
       { length: Math.floor(Math.random() * 9) + 2 },
       (_, i) => ({
         id: i + 1,
         workerId: i + 1,
-        authorImage: `https://randomuser.me/api/portraits/women/${i + 10}.jpg`,
-        authorName: `User ${i + 1}`,
-        text: `This is a fake comment #${i + 1} for post ${postId}.`,
+        profileImage: `https://randomuser.me/api/portraits/women/${i + 10}.jpg`,
+        userName: `User ${i + 1}`,
+        text: i % 2 === 0 
+          ? `This is a short comment #${i + 1}.`
+          : `This is a very long comment #${i + 1} that should be truncated in the UI. It contains a lot of text to demonstrate how we handle long comments in our application. When a comment is this long, we'll show just a part of it initially and provide a way for users to expand it to read the full content. This helps keep the UI clean while still allowing users to read all content.`,
+        expanded: false, // Initially all comments are collapsed
       })
     );
     setComments(fakeComments);
@@ -243,7 +273,16 @@ const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
     setComments([]);
   };
 
-  // Submit comment (fake)
+  // Toggle comment expanded state
+  const toggleCommentExpand = (commentId: number) => {
+    setComments(comments.map(comment => 
+      comment.id === commentId 
+        ? { ...comment, expanded: !comment.expanded } 
+        : comment
+    ));
+  };
+
+  // Submit comment
   const submitComment = () => {
     // ====================
     // دالة حفظ الكومنت في الباكند (معطلة حالياً)
@@ -263,16 +302,26 @@ const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
     //     console.error("Failed to submit comment", err);
     //   }
     // };
+
     if (!selectedPostId || commentText.trim() === "") return;
     const newComment: Comment = {
       id: comments.length + 1,
       workerId: comments.length + 1,
-      authorImage: `https://randomuser.me/api/portraits/women/20.jpg`,
-      authorName: "You",
+      profileImage: `https://randomuser.me/api/portraits/women/20.jpg`,
+      userName: "You",
       text: commentText,
+      expanded: true, // New comments are expanded by default
     };
     setComments((prev) => [...prev, newComment]);
     setCommentText("");
+  };
+
+  // Navigate to user profile
+  const navigateToProfile = (workerId: number) => {
+    router.push({
+      pathname: "/profileAsView",
+      params: { workerId: workerId },
+    });
   };
 
   // Render media item
@@ -291,23 +340,30 @@ const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
         </TouchableOpacity>
       );
     }
-   if (item.type === "video" && item.url) {
-     return (
-       <TouchableOpacity
-         className="mr-2"
-         onPress={() => setSelectedVideo(item.url ?? null)}
-       >
-         <Video
-           source={{ uri: item.url }}
-           useNativeControls
-           resizeMode={ResizeMode.COVER}
-           isLooping
-           style={{ width: 192, height: 128, borderRadius: 12 }}
-           posterSource={{ uri: "https://picsum.photos/800/400" }}
-         />
-       </TouchableOpacity>
-     );
-   }
+    if (item.type === "video" && item.url) {
+      return (
+        <TouchableOpacity
+          className="mr-2"
+          onPress={() => setSelectedVideo(item.url ?? null)}
+        >
+          <View className="relative w-48 h-32 rounded-xl overflow-hidden">
+            <Video
+              source={{ uri: item.url }}
+              useNativeControls={false}
+              resizeMode={ResizeMode.COVER}
+              isLooping={false}
+              style={{ width: 192, height: 128 }}
+              posterSource={{ uri: "https://picsum.photos/800/400" }}
+            />
+            <View className="absolute inset-0 flex items-center justify-center">
+              <View className="bg-black/40 rounded-full p-2">
+                <Ionicons name="play" size={28} color="white" />
+              </View>
+            </View>
+          </View>
+        </TouchableOpacity>
+      );
+    }
     return null;
   };
 
@@ -326,21 +382,60 @@ const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
     return `${Math.floor(diffInSeconds / 86400)} days ago`;
   };
 
+  // Render single comment with expand/collapse functionality
+  const renderComment = (comment: Comment) => {
+    const isLongComment = comment.text.length > 100;
+    const displayText = isLongComment && !comment.expanded 
+      ? `${comment.text.substring(0, 100)}...` 
+      : comment.text;
+    
+    return (
+      <View key={comment.id} className="bg-gray-100 p-4 rounded-2xl mb-2">
+        <View className="flex-row items-center mb-2">
+          <TouchableOpacity onPress={() => navigateToProfile(comment.workerId)}>
+            <Image
+              source={{ uri: comment.profileImage }}
+              className="w-8 h-8 rounded-full mr-2"
+            />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigateToProfile(comment.workerId)}>
+            <Text className="font-bold text-sm">{comment.userName}</Text>
+          </TouchableOpacity>
+        </View>
+        <Text className="text-gray-600">{displayText}</Text>
+        {isLongComment && (
+          <TouchableOpacity 
+            onPress={() => toggleCommentExpand(comment.id)}
+            className="mt-1"
+          >
+            <Text className="text-blue-500 text-sm">
+              {comment.expanded ? "Show less" : "Read more"}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  };
+
   // Render post
   const renderPost = ({ item }: { item: Post }) => (
     <View className="bg-white rounded-2xl shadow p-4 mb-4 mx-2">
       {/* Header */}
       <View className="flex-row items-center mb-2">
-        <Image
-          source={{ uri: item.authorImage }}
-          className="w-10 h-10 rounded-full mr-2"
-        />
-        <View>
-          <Text className="font-bold text-lg">{item.clientName}</Text>
-          <Text className="text-sm text-gray-500">
-            {item.regine}, {item.city}
-          </Text>
-        </View>
+        <TouchableOpacity onPress={() => navigateToProfile(item.clientId)}>
+          <Image
+            source={{ uri: item.profileImage }}
+            className="w-10 h-10 rounded-full mr-2"
+          />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigateToProfile(item.clientId)}>
+          <View>
+            <Text className="font-bold text-lg">{item.userName}</Text>
+            <Text className="text-sm text-gray-500">
+              {item.region}, {item.city}
+            </Text>
+          </View>
+        </TouchableOpacity>
       </View>
       {/* Description */}
       <Text className="text-gray-700">{item.description}</Text>
@@ -383,29 +478,7 @@ const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
       {/* Comments */}
       {selectedPostId === item.id && (
         <View className="mt-4">
-          {/* استبدل FlatList بهذا */}
-          {comments.map((c) => (
-            <TouchableOpacity
-              key={c.id}
-              onPress={() =>
-                router.push({
-                  pathname: "/profileAsView",
-                  params: { workerId: c.workerId },
-                })
-              }
-            >
-              <View className="bg-gray-100 p-4 rounded-2xl mb-2">
-                <View className="flex-row items-center mb-2">
-                  <Image
-                    source={{ uri: c.authorImage }}
-                    className="w-8 h-8 rounded-full mr-2"
-                  />
-                  <Text className="font-bold text-sm">{c.authorName}</Text>
-                </View>
-                <Text className="text-gray-600">{c.text}</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
+          {comments.map(renderComment)}
           <TextInput
             className="border border-gray-300 rounded-xl p-2 h-16 text-right mt-2"
             placeholder="Write your comment..."
@@ -501,6 +574,8 @@ const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
           }
         />
       )}
+
+      {/* Image Modal */}
       <Modal
         visible={!!selectedImage}
         transparent={true}
@@ -509,16 +584,20 @@ const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
         <View className="flex-1 bg-black/90">
           <View className="flex-row justify-end p-4">
             <TouchableOpacity
-              onPress={() =>
-                selectedImage && handleImageDownload(selectedImage)
-              }
+              onPress={() => selectedImage && handleImageDownload(selectedImage)}
               className="bg-white/20 rounded-full p-3 mr-2"
+              disabled={downloadingMedia}
             >
-              <Ionicons name="download-outline" size={24} color="white" />
+              {downloadingMedia ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Ionicons name="download-outline" size={24} color="white" />
+              )}
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => setSelectedImage(null)}
               className="bg-white/20 rounded-full p-3"
+              disabled={downloadingMedia}
             >
               <Ionicons name="close" size={24} color="white" />
             </TouchableOpacity>
@@ -534,6 +613,7 @@ const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
           )}
         </View>
       </Modal>
+
       {/* Video Modal */}
       <Modal
         visible={!!selectedVideo}
@@ -543,8 +623,20 @@ const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
         <View className="flex-1 bg-black">
           <View className="flex-row justify-end p-4">
             <TouchableOpacity
+              onPress={() => selectedVideo && handleVideoDownload(selectedVideo)}
+              className="bg-white/20 rounded-full p-3 mr-2"
+              disabled={downloadingMedia}
+            >
+              {downloadingMedia ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Ionicons name="download-outline" size={24} color="white" />
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
               onPress={() => setSelectedVideo(null)}
               className="bg-white/20 rounded-full p-3"
+              disabled={downloadingMedia}
             >
               <Ionicons name="close" size={24} color="white" />
             </TouchableOpacity>

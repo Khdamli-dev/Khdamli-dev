@@ -39,7 +39,6 @@ interface JobRequest {
   city: number | null;
   working_time: Date | null;
   category: number | null;
-  payment: number | null;
   description: string | null;
   type: number | null; // 1 for Public, 2 for Private
   status: number | null; // 3 for "On Hold" on new requests
@@ -69,10 +68,7 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
     name: string;
     id: number;
   } | null>(null);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<{
-    name: string;
-    id: number;
-  } | null>({ name: "Cash", id: 1 });
+
   const [date, setDate] = useState<string | null>(getTodayDateString()); // Initialize with today
   const [beginTime, setbeginTime] = useState<string | null>("08:00"); // HH:MM
   const [description, setDescription] = useState("");
@@ -110,15 +106,6 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
   const handleSelectedMunicipality = (municipalitie: any) => {
     setSelectedMunicipality(municipalitie);
     setIsAddressOpen(false);
-  };
-  //PaymentMethodDropDown ------------------------------------------------------------------------------------------
-  const [isPamentOpen, setIsPaymentOpen] = useState(false);
-  const togglePaymentDropdown = () => {
-    setIsPaymentOpen(!isPamentOpen);
-  };
-  const handleSelectedPaymentMethod = (PaymentMethod: any) => {
-    setSelectedPaymentMethod(PaymentMethod);
-    setIsPaymentOpen(false);
   };
 
   //The Time --------------------------------------------------------------------------------------
@@ -220,7 +207,6 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
     // Basic validation
     if (
       !selectedCategory ||
-      !selectedPaymentMethod ||
       !selectedWilaya || // Region is required
       !selectedMunicipality || // City is required
       !date ||
@@ -257,7 +243,6 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
           city: selectedMunicipality.id, // Convert Municipality ID to number
           working_time,
           category: Number(selectedCategory.id), // Convert to number
-          payment: selectedPaymentMethod.id, // Already a number
           description: trimmedDescription,
           type,
           status: 3, // "On Hold"
@@ -375,42 +360,7 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
                 )}
               </View>
             </View>
-            {/*  Payment Method ------------------------------------------------------------------------------------------ */}
-            <View className="w-11/12  px-2 mt-6">
-              <Text className="text-[#CB8400] text-lg font-bold pl-16 mb-1">
-                Payment Method
-              </Text>
-              <View className="w-full flex-row items-center">
-                <View className="w-2/12">
-                  <FontAwesome6 name="money-bills" size={30} color="#F8A100" />
-                </View>
-
-                <TouchableOpacity
-                  onPress={togglePaymentDropdown}
-                  className="flex-row w-9/12  ml-4  flex-grow items-center justify-between border-b-2 border-foncyYellow"
-                >
-                  <Text className="text-xl font-bold  ">
-                    {selectedPaymentMethod
-                      ? `${selectedPaymentMethod.name}`
-                      : "Select Your Payment Method"}
-                  </Text>
-                  <MaterialIcons
-                    name={
-                      isPamentOpen ? "keyboard-arrow-up" : "keyboard-arrow-down"
-                    }
-                    size={30}
-                  />
-                </TouchableOpacity>
-              </View>
-              <View className="items-center justify-center mt-1 ml-6">
-                {isPamentOpen && (
-                  <PaymentMethod
-                    selectedPayment={selectedPaymentMethod}
-                    onSelectPayment={handleSelectedPaymentMethod}
-                  />
-                )}
-              </View>
-            </View>
+ 
             {/*  The Region ------------------------------------------------------------------------------------------*/}
             <View className="w-11/12  px-2 mt-6  ">
               <Text className="text-[#CB8400] text-lg font-bold pl-16 mb-1">
