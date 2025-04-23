@@ -9,21 +9,17 @@ import {
   FlatList,
   Dimensions,
 } from "react-native";
-import MediaUploader, { MediaItem } from "@/Component/mediaUploader";
-
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Trash,
   Calendar,
-  Phone,
   Edit,
+  Clock,
   MapPin,
   Briefcase,
   Pencil,
-  Mail,
   Plus,
   CreditCard,
-  Star,
   User,
   Globe,
 } from "lucide-react-native";
@@ -46,11 +42,6 @@ type RootStackParamList = {
 type ProfileScreenProps = {
   navigation: NavigationProp<RootStackParamList>;
 };
-
-interface StarRatingProps {
-  rating: number;
-}
-
 interface ProfileItemProps {
   label: string;
   value: React.ReactNode;
@@ -97,7 +88,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     region: string | null;
     city: string | null;
     accountType: string | null;
-    workingDays: { day: string; from: string; to: string }[] | null;
+    workingDays: { day: string; begin: string; end: string }[] | null;
     age: number | null;
     gender: string | null;
     paymentMethod: string[] | null;
@@ -176,7 +167,11 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
 
     fetchUser();
   }, []);
-
+  const formatTime = (timeString: any) => {
+    if (!timeString) return "";
+    // Handle various formats, returning just HH:MM
+    return timeString.split(":").slice(0, 2).join(":");
+  };
   const pickGalleryMedia = async () => {
     const { granted } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!granted) {
@@ -214,23 +209,17 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         : null,
     }));
   };
+  const log = () => {
+    console.log(user.workingDays);
+  };
 
   const updateProfileImage = (newImage: string) => {
     setUser((prevUser) => ({
       ...prevUser,
-      image: newImage, // ✅ تحديث الصورة داخل `user`
+      image: newImage,
     }));
     console.log(newImage);
   };
-  const deleteGalleryImage = (itemToDelete: MediaItem) => {
-    setUser((prevUser) => ({
-      ...prevUser,
-      gallery: prevUser.gallery
-        ? prevUser.gallery.filter((item) => item.uri !== itemToDelete.uri)
-        : null,
-    }));
-  };
-
   const [fontsLoaded] = useFonts({ Itim_400Regular });
   if (!fontsLoaded) return <Text>Loading...</Text>;
 
@@ -268,7 +257,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           <>
             <TouchableOpacity
               className="absolute top-[30px] right-[30px]"
-              onPress={() => router.push("/(tabs)/(profile)/editprofile")}
+              onPress={() => router.push("/(tabs)/(profile)/editProfile")}
             >
               <Edit size={38} color="#BD7D06" />
             </TouchableOpacity>
@@ -352,13 +341,13 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                     className="mr-2 text-[#BD7D06]"
                     style={{ fontFamily: "Itim_400Regular" }}
                   >
-                    From {item.from}
+                    From {formatTime(item.begin)}
                   </Text>
                   <Text
                     className="mr-2 text-[#BD7D06]"
                     style={{ fontFamily: "Itim_400Regular" }}
                   >
-                    To {item.to}
+                    To {formatTime(item.end)}
                   </Text>
                 </View>
               ))}
@@ -368,8 +357,10 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
           <ProfileItem
             label="Registration Date"
-            value={user.registration_date}
-            Icon={(props) => <Phone {...props} />}
+            value={
+              user.registration_date ? user.registration_date.split("T")[0] : ""
+            }
+            Icon={(props) => <Calendar {...props} />}
           />
           <ProfileItem
             label="Region"
@@ -392,7 +383,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           <ProfileItem
             label="Age"
             value={`${user.age} Years`}
-            Icon={(props) => <Calendar {...props} />}
+            Icon={(props) => <Clock {...props} />}
           />
           <ProfileItem
             label="Gender"
@@ -404,8 +395,8 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
               {user.category?.map((cat, index) => (
                 <ProfileItem
                   key={index}
-                  label="Profession"
-                  value={`${cat.name} / price: ${cat.price} / unity: ${cat.unity}`}
+                  label={`Profession ${index + 1}`}
+                  value={`${cat.name}`}
                   Icon={(props) => <Briefcase {...props} />}
                 />
               ))}
@@ -451,15 +442,15 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                       source={{ uri: item.uri }}
                       className="h-[300px] rounded-[10px] my-1.5"
                       style={{ width: width - 32 }}
-                      useNativeControls={true} // لتمكين أدوات التحكم في الفيديو
+                      useNativeControls={true}
                       resizeMode={ResizeMode.CONTAIN}
-                      shouldPlay={false} // يمكنك تحديد ما إذا كان يجب تشغيل الفيديو تلقائيًا
+                      shouldPlay={false}
                     />
                   )}
 
                   <TouchableOpacity
                     className="absolute top-[10px] right-[10px] bg-[rgba(255,0,0,0.7)] rounded-[15px] p-2"
-                    onPress={() => deleteGalleryImage(item)}
+                    onPress={() => log()}
                   >
                     <Trash size={20} color="white" />
                   </TouchableOpacity>

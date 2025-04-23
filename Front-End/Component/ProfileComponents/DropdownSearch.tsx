@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -31,30 +31,48 @@ const DropdownSearch = <T extends unknown>({
   renderItem,
   keyExtractor,
   placeholder,
-}: DropdownSearchProps<T>) => (
-  <View style={styles.inputContainer}>
-    <Text style={styles.label}>{label}</Text>
-    <View style={styles.inputWrapper}>
-      {icon}
-      <TextInput
-        style={styles.input}
-        defaultValue={value}
-        onChangeText={onTextChange}
-        placeholder={placeholder}
-      />
-    </View>
-    <FlatList
-      scrollEnabled={false}
-      data={data}
-      keyExtractor={keyExtractor}
-      renderItem={({ item }) => (
-        <TouchableOpacity onPress={() => onSelectItem(item)}>
-          {renderItem(item)}
-        </TouchableOpacity>
+}: DropdownSearchProps<T>) => {
+  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
+
+  const handleTextChange = (text: string) => {
+    onTextChange(text);
+    setIsDropdownVisible(text.length > 0); // Show dropdown only if there is text
+  };
+
+  return (
+    <View style={styles.inputContainer}>
+      <Text style={styles.label}>{label}</Text>
+      <View style={styles.inputWrapper}>
+        {icon}
+        <TextInput
+          style={styles.input}
+          value={value} // Use value instead of defaultValue
+          onChangeText={handleTextChange}
+          placeholder={placeholder}
+        />
+      </View>
+      {isDropdownVisible && data.length > 0 && (
+        <FlatList
+          scrollEnabled={false}
+          data={data}
+          keyExtractor={keyExtractor}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              onPress={() => {
+                onSelectItem(item);
+                setIsDropdownVisible(false); // Hide dropdown after selection
+              }}
+            >
+              {renderItem(item)}
+            </TouchableOpacity>
+          )}
+          style={styles.dropdownList}
+        />
       )}
-    />
-  </View>
-);
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
   inputContainer: { marginBottom: 12 },
   label: {
@@ -73,5 +91,12 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 8,
   },
+  dropdownList: {
+    maxHeight: 150,
+    backgroundColor: "#f8f8f8",
+    borderRadius: 4,
+    marginTop: 4,
+  },
 });
+
 export default DropdownSearch;

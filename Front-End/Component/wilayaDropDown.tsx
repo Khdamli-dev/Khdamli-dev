@@ -9,10 +9,8 @@ import {
   Animated,
 } from "react-native";
 
-
 import Icon from "react-native-vector-icons/MaterialIcons";
-import CONFIG from "../config";
-
+import CONFIG from "@/config";
 
 interface Wilaya {
   name: string;
@@ -30,7 +28,7 @@ const WilayaDropdown: React.FC<WilayaDropdownProps> = ({
 }) => {
   const [wilayas, setWilayas] = useState<Wilaya[]>([]);
   const [filteredWilayas, setFilteredWilayas] = useState<Wilaya[]>([]);
-  
+
   const [search, setSearch] = useState("");
   const rotateAnim = useState(new Animated.Value(0))[0];
 
@@ -40,15 +38,13 @@ const WilayaDropdown: React.FC<WilayaDropdownProps> = ({
       setWilayas(response.data.regions);
       setFilteredWilayas(response.data.regions);
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
   };
 
   useEffect(() => {
     fetchRegions();
   }, []);
-
-  
 
   const handleSearch = (text: string) => {
     setSearch(text);
@@ -65,45 +61,35 @@ const WilayaDropdown: React.FC<WilayaDropdownProps> = ({
 
   const handleSelect = (wilaya: Wilaya) => {
     onSelectWilaya(wilaya);
-   
   };
 
-  
-
-  
-
   return (
-    
-     
-      
-        <View className="w-10/12 bg-white border-2 border-specialGreen rounded-xl shadow-xl py-4  mt-2">
-          <TextInput
-            className="border-b-2  border-gray-400 rounded-lg p-3 mb-3 text-lg"
-            placeholder="Search Wilaya..."
-            value={search}
-            onChangeText={handleSearch}
-          />
-          <ScrollView
-            style={{ maxHeight: 200 }}
-            nestedScrollEnabled={true}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
+    <View className="w-10/12 bg-white border-2 border-specialGreen rounded-xl shadow-xl py-4  mt-2">
+      <TextInput
+        className="border-b-2  border-gray-400 rounded-lg p-3 mb-3 text-lg"
+        placeholder="Search Wilaya..."
+        value={search}
+        onChangeText={handleSearch}
+      />
+      <ScrollView
+        style={{ maxHeight: 200 }}
+        nestedScrollEnabled={true}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {filteredWilayas.map((item) => (
+          <TouchableOpacity
+            key={item.id.toString()}
+            className="py-3 h-14 px-4 border-2 mx-2 border-gray-300 rounded-md mb-2 bg-white justify-center items-center"
+            onPress={() => handleSelect(item)}
           >
-            {filteredWilayas.map((item) => (
-              <TouchableOpacity
-                key={item.id.toString()}
-                className="py-3 h-14 px-4 border-2 mx-2 border-gray-300 rounded-md mb-2 bg-white justify-center items-center"
-                onPress={() => handleSelect(item)}
-              >
-                <Text className="text-lg font-semibold text-gray-700">
-                  {item.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-     
- 
+            <Text className="text-lg font-semibold text-gray-700">
+              {item.name}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
   );
 };
 

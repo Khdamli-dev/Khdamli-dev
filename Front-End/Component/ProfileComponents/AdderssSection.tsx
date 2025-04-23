@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { View, Text } from "react-native";
+import {
+  View,
+  Text,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from "react-native";
 import { MapPin, Home } from "lucide-react-native";
-import { useFonts, Itim_400Regular } from "@expo-google-fonts/itim";
-import { createClient } from "@supabase/supabase-js";
+import axios from "axios";
+import CONFIG from "@/config";
 
 import DropdownSearch from "./DropdownSearch";
-
-const supabase = createClient(
-  "https://dliadftpwivpugrbopnh.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRsaWFkZnRwd2l2cHVncmJvcG5oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc4NDI1NzUsImV4cCI6MjA1MzQxODU3NX0.krisX5f0AluQrd9SHnn_gncUqP8tgLB1OQKq-wKQY3k"
-);
 
 const AddressSection = ({
   onChange,
@@ -23,237 +24,235 @@ const AddressSection = ({
 }) => {
   const [loading, setLoading] = useState(false);
 
-  const fetchData = async (
-    table: string,
-    filters?: {
-      column: string;
-      value: any[] | any;
-      operator?: "eq" | "in" | "is";
-    }
-  ) => {
-    let query = supabase.from(table).select("*");
+  const [wilayas, setWilayas] = useState<{ id: number; name: string }[]>([]);
+  const [filteredWilayas, setFilteredWilayas] = useState<
+    { id: number; name: string }[]
+  >([]);
+  const [selectedWilaya, setSelectedWilaya] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
 
-    if (filters) {
-      const { column, value, operator } = filters;
+  const [dairas, setDairas] = useState<{ id: number; name: string }[]>([]);
+  const [filteredDairas, setFilteredDairas] = useState<
+    { id: number; name: string }[]
+  >([]);
+  const [selectedDaira, setSelectedDaira] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
 
-      if (operator === "in") {
-        if (!Array.isArray(value)) {
-          console.error("Value must be an array when using 'in' operator");
-          return [];
-        }
-        query = query.in(column, value);
-      } else if (operator === "is") {
-        query = query.is(column, value);
-      } else {
-        query = query.eq(column, value);
-      }
-    }
+  const [addresses, setAddresses] = useState<
+    { id: number; street: string; address_number: number }[]
+  >([]);
+  const [filteredAddresses, setFilteredAddresses] = useState<
+    { id: number; street: string; address_number: number }[]
+  >([]);
+  const [selectedAddress, setSelectedAddress] = useState<{
+    id: number;
+    street: string;
+    address_number: number;
+  } | null>(null);
 
-    const { data, error } = await query;
+  const [wilayaInput, setWilayaInput] = useState("");
+  const [dairaInput, setDairaInput] = useState("");
+  const [addressInput, setAddressInput] = useState("");
 
-    if (error) {
-      console.error("Fetch Error:", error);
-      return [];
-    }
-
-    return data;
-  };
   useEffect(() => {
-    const loadInitialData = async () => {
+    const fetchRegions = async () => {
       try {
         setLoading(true);
-        const [regionsData] = await Promise.all([fetchData("region")]);
-        setRegions(regionsData);
+        const response = await axios.get(`${CONFIG.API_URL}/address/regions/1`);
+        setWilayas(response.data.regions);
+        setFilteredWilayas(response.data.regions);
       } catch (error) {
-        console.error("Error fetching data:", error);
-        alert("there is the wrong to fetch data ");
+        console.error("خطأ أثناء جلب الولايات:", error);
+        alert("حدث خطأ أثناء جلب الولايات");
       } finally {
         setLoading(false);
       }
     };
-    loadInitialData();
+    fetchRegions();
   }, []);
+
+  useEffect(() => {
+    if (selectedWilaya) {
+      const fetchMunicipalities = async () => {
+        try {
+          const response = await axios.get(
+            `${CONFIG.API_URL}/address/cities/${selectedWilaya.id}`
+          );
+          setDairas(response.data.cities);
+          setFilteredDairas(response.data.cities);
+        } catch (error) {
+          console.error("خطأ أثناء جلب البلديات:", error);
+        }
+      };
+      fetchMunicipalities();
+    } else {
+      setDairas([]);
+      setFilteredDairas([]);
+    }
+  }, [selectedWilaya]);
+
+  // useEffect(() => {
+  //   if (selectedDaira) {
+  //     const fetchAddresses = async () => {
+  //       try {
+  //         // افتراض وجود نقطة نهاية لجلب العناوين بناءً على معرف البلدية
+  //         const response = await axios.get(
+  //           `${CONFIG.API_URL}/address/addresses/${selectedDaira.id}`
+  //         );
+  //         setAddresses(response.data.addresses);
+  //         setFilteredAddresses(response.data.addresses);
+  //       } catch (error) {
+  //         console.error("خطأ أثناء جلب العناوين:", error);
+  //       }
+  //     };
+  //     fetchAddresses();
+  //   } else {
+  //     setAddresses([]);
+  //     setFilteredAddresses([]);
+  //   }
+  // }, [selectedDaira]);
+
   const handleFilterChange = (
     text: string,
     data: any[],
     setFilteredData: (filtered: any[]) => void,
     key: string
   ) => {
-    setFilteredData(
-      data.filter((item) =>
-        item[key].toLowerCase().includes(text.toLowerCase())
-      )
-    );
-  };
-  const [regions, setRegions] = useState<{ id: number; name: string }[]>([]);
-
-  const [wilaya, setWilaya] = useState<{ id: number; name: string } | null>(
-    null
-  );
-  const [daira, setdaira] = useState<{ id: number; name: string } | null>(null);
-  const [baladiya, setbaladiya] = useState<{
-    id: number;
-    name: string;
-    num: number;
-  } | null>(null);
-  interface Region {
-    id: number;
-    name: string;
-    region?: string;
-  }
-
-  const [filteredRegions, setFilteredRegions] = useState<Region[]>([]);
-
-  interface adress {
-    id: number;
-    street: string;
-    city: number;
-    address_number: number;
-  }
-  const [address, setaddress] = useState<adress[]>([]);
-  const [filteredaddress, setFilteredaddress] = useState<adress[]>([]);
-  interface City {
-    id: number;
-    name: string;
-    region: number;
-  }
-
-  const [cities, setCities] = useState<City[]>([]);
-  const [filteredCities, setFilteredCities] = useState<City[]>([]);
-  {
-    /*fetch cities from databases*/
-  }
-  const fetchCities = async (regionId: number) => {
-    const { data, error } = await supabase
-      .from("city")
-      .select("id, name, region")
-      .eq("region", regionId);
-    if (!error) setCities(data || []);
-  };
-
-  /*fetch address*/
-  const fetchAddress = async (cityId: number) => {
-    console.log("Fetching address for cityId:", cityId);
-    const { data, error } = await supabase
-      .from("address")
-      .select("id, street, city, address_number")
-      .eq("city", cityId);
-
-    if (error) {
-      console.error("Fetch Address Error:", error);
-      return;
-    }
-
-    if (!data || data.length === 0) {
-      console.log("No address found in database.");
-      setaddress([]);
+    if (text.length === 0) {
+      setFilteredData([]);
     } else {
-      console.log("Fetched Addresses:", data);
-      setaddress(data);
+      setFilteredData(
+        data.filter((item) =>
+          item[key].toLowerCase().includes(text.toLowerCase())
+        )
+      );
     }
   };
 
   return (
-    <View className="bg-white p-4 rounded-2xl mb-[18px] shadow-md">
-      <Text className="text-[19px] font-bold mb-3 font-itim">Edit Address</Text>
-
-      <DropdownSearch<Region>
-        label="Your Wilaya"
-        icon={<MapPin size={22} color="#F8A100" />}
-        value={wilaya?.name || ""}
-        onTextChange={(text) =>
-          handleFilterChange(text, regions, setFilteredRegions, "name")
-        }
-        data={filteredRegions}
-        onSelectItem={(item) => {
-          setWilaya(item);
-          fetchCities(item.id);
-          setFilteredRegions([]);
-          onChange({
-            wilayaId: item.id,
-            dairaId: daira?.id || null,
-            addressname: baladiya?.name || null,
-            addressId: baladiya?.id || null,
-          });
-        }}
-        renderItem={(item) => (
-          <Text className="p-[10px] bg-[#f8f8f8] border-b border-black">
-            {item.name}
+    <View className="flex-1 bg-white p-4 rounded-2xl mb-[18px] shadow-md">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 20}
+        style={{ flex: 1 }}
+      >
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: 20 }}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text className="text-[19px] font-bold mb-3 font-itim">
+            Edit Address
           </Text>
-        )}
-        keyExtractor={(item) => item.id.toString()}
-        placeholder="Enter Wilaya"
-      />
+          <DropdownSearch
+            label="Wilaya"
+            icon={<MapPin size={22} color="#F8A100" />}
+            value={wilayaInput}
+            onTextChange={(text) => {
+              setWilayaInput(text);
+              handleFilterChange(text, wilayas, setFilteredWilayas, "name");
+            }}
+            data={filteredWilayas}
+            onSelectItem={(item) => {
+              setSelectedWilaya(item);
+              setWilayaInput(item.name);
+              setFilteredWilayas([]);
+              setSelectedDaira(null);
+              setDairaInput("");
+              // setSelectedAddress(null);
+              // setAddressInput("");
+              onChange({
+                wilayaId: item.id,
+                dairaId: null,
+                addressname: null,
+                addressId: null,
+              });
+            }}
+            renderItem={(item) => (
+              <Text className="p-[10px] bg-[#f8f8f8] border-b border-black">
+                {item.name}
+              </Text>
+            )}
+            keyExtractor={(item) => item.id.toString()}
+            placeholder=" Enter Your Wilaya"
+          />
 
-      <DropdownSearch<City>
-        label="Your Daira"
-        icon={<Home size={22} color="#F8A100" />}
-        value={daira?.name || ""}
-        onTextChange={(text) =>
-          handleFilterChange(text, cities, setFilteredCities, "name")
-        }
-        data={filteredCities}
-        onSelectItem={(item) => {
-          setdaira(item);
-          setFilteredCities([]);
-          fetchAddress(item.id);
-          onChange({
-            wilayaId: wilaya?.id || null,
-            dairaId: item.id,
-            addressname: baladiya?.name || null,
-            addressId: baladiya?.id || null,
-          });
-        }}
-        renderItem={(item) => (
-          <Text className="p-[10px] bg-[#f8f8f8] border-b border-black">
-            {item.name}
-          </Text>
-        )}
-        keyExtractor={(item) => item.id.toString()}
-        placeholder="Enter Daira"
-      />
+          {/* قائمة منسدلة للبلديات */}
+          <DropdownSearch
+            label="Baladiya"
+            icon={<Home size={22} color="#F8A100" />}
+            value={dairaInput}
+            onTextChange={(text) => {
+              setDairaInput(text);
+              handleFilterChange(text, dairas, setFilteredDairas, "name");
+            }}
+            data={filteredDairas}
+            onSelectItem={(item) => {
+              setSelectedDaira(item);
+              setDairaInput(item.name);
+              setFilteredDairas([]);
+              // إعادة تعيين العنوان
+              // setSelectedAddress(null);
+              // setAddressInput("");
+              onChange({
+                wilayaId: selectedWilaya?.id || null,
+                dairaId: item.id,
+                addressname: null,
+                addressId: null,
+              });
+            }}
+            renderItem={(item) => (
+              <Text className="p-[10px] bg-[#f8f8f8] border-b border-black">
+                {item.name}
+              </Text>
+            )}
+            keyExtractor={(item) => item.id.toString()}
+            placeholder=" Enter Your Baladiya"
+          />
 
-      <DropdownSearch<adress>
-        label="Your Address"
-        icon={<Home size={22} color="#F8A100" />}
-        value={
-          baladiya
-            ? `${baladiya.name}${baladiya.num ? ` - ${baladiya.num}` : ""}`
-            : ""
-        }
-        onTextChange={(text) => {
-          handleFilterChange(text, address, setFilteredaddress, "street");
-          setbaladiya({ id: -1, name: text, num: 0 });
-          onChange({
-            wilayaId: wilaya?.id || null,
-            dairaId: daira?.id || null,
-            addressname: text,
-            addressId: baladiya?.id || null,
-          });
-        }}
-        data={filteredaddress}
-        onSelectItem={(item) => {
-          setbaladiya({
-            id: item.id,
-            name: item.street,
-            num: item.address_number,
-          });
-          setFilteredaddress([]);
-          onChange({
-            wilayaId: wilaya?.id || null,
-            dairaId: daira?.id || null,
-            addressname: item.street,
-            addressId: baladiya?.id || null,
-          });
-        }}
-        renderItem={(item) => (
-          <Text className="p-[10px] bg-[#f8f8f8] border-b border-black">
-            {`${item.street}, Num: ${item.address_number}`}
-          </Text>
-        )}
-        keyExtractor={(item: adress) => item.id?.toString() || ""}
-        placeholder="Enter Address"
-      />
+          {/* قائمة منسدلة للعناوين */}
+          {/* <DropdownSearch
+            label="عنوانك"
+            icon={<Home size={22} color="#F8A100" />}
+            value={addressInput}
+            onTextChange={(text) => {
+              setAddressInput(text);
+              handleFilterChange(text, addresses, setFilteredAddresses, "street");
+              setSelectedAddress({ id: -1, street: text, address_number: 0 });
+              onChange({
+                wilayaId: selectedWilaya?.id || null,
+                dairaId: selectedDaira?.id || null,
+                addressname: text,
+                addressId: null, // يشير إلى عنوان جديد
+              });
+            }}
+            data={filteredAddresses}
+            onSelectItem={(item) => {
+              setSelectedAddress(item);
+              setAddressInput(
+                `${item.street}${item.address_number ? ` - ${item.address_number}` : ""}`
+              );
+              setFilteredAddresses([]);
+              onChange({
+                wilayaId: selectedWilaya?.id || null,
+                dairaId: selectedDaira?.id || null,
+                addressname: item.street,
+                addressId: item.id,
+              });
+            }}
+            renderItem={(item) => (
+              <Text className="p-[10px] bg-[#f8f8f8] border-b border-black">
+                {`${item.street}، رقم: ${item.address_number}`}
+              </Text>
+            )}
+            keyExtractor={(item) => item.id.toString()}
+            placeholder="أدخل العنوان"
+          /> */}
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 };
