@@ -1,10 +1,11 @@
-import { View, Text, Image } from "react-native";
-import React, { useEffect, useRef } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Animated, Easing } from "react-native";
-import { useRouter } from "expo-router";
-
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Animated, Easing } from 'react-native';
+import { useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
+import apiClient from '@/api/appClient';
+import refreshAccessToken from '@/api/refreshAccessToken';
 
 const AppStartUp = () => {
   const router = useRouter();
@@ -64,7 +65,7 @@ const AppStartUp = () => {
           </Animated.Text>
           <View className=" items-end flex-col">
             <Animated.Image
-              source={require("../assets/images/startUpPhoto.jpg")}
+              source={require('../assets/images/startUpPhoto.jpg')}
               className="w-full h-32"
               style={{
                 transform: [{ translateX: imageAnim }],
