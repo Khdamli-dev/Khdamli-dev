@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,10 @@ import {
   TextInput,
   Dimensions,
   ActivityIndicator,
+  ScrollView,
+  Modal, // Add this
+  Share, // Add this
+  Platform, // Add this
 } from "react-native";
 import axios from "axios";
 import {
@@ -18,7 +22,9 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import { router } from "expo-router";
-
+import * as FileSystem from "expo-file-system";
+import * as MediaLibrary from "expo-media-library";
+import { Video, ResizeMode } from 'expo-av';
 // Media item can be image, video or none
 interface MediaItem {
   type: "image" | "video" | "none";
@@ -51,19 +57,85 @@ interface Comment {
 
 const HomeScreen = () => {
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
-
+  const flatListRef = useRef<FlatList>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [status, requestPermission] = MediaLibrary.usePermissions();
   // POSTS + PAGINATION STATE
   const [posts, setPosts] = useState<Post[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
-
+const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
   // COMMENTS STATE
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState<Comment[]>([]);
 
+  const handleImageDownload = async (imageUrl: string) => {
+    try {
+      if (Platform.OS === "web") {
+        window.open(imageUrl, "_blank");
+        return;
+      }
+
+      // Check permissions
+      if (!status?.granted) {
+        const permission = await requestPermission();
+        if (!permission.granted) {
+          alert("Need permission to save images");
+          return;
+        }
+      }
+
+      // Get file extension from URL or default to .jpg
+      const match = imageUrl.match(/\.([^.]+)$/);
+      const extension = match ? match[1] : "jpg";
+      const filename = `khdamli-${Date.now()}.${extension}`;
+      const path = `${FileSystem.cacheDirectory}${filename}`;
+
+      // Download the image
+      const { uri } = await FileSystem.downloadAsync(imageUrl, path);
+
+      // Save to media library
+      if (uri) {
+        await MediaLibrary.saveToLibraryAsync(uri);
+        alert("Image saved successfully!");
+
+        // Clean up the cache file
+        await FileSystem.deleteAsync(uri, { idempotent: true });
+      }
+    } catch (error) {
+      console.error("Error downloading image:", error);
+      alert("Failed to save image. Please try again.");
+    }
+  };
   // FETCH POSTS HELPER
+  // ====================
+  // دالة جلب البوستات من الباكند (معطلة حالياً)
+  // ====================
+  // const fetchPosts = useCallback(
+  //   async (pageToFetch: number) => {
+  //     if (loading) return;
+  //     setLoading(true);
+  //     try {
+  //       const response = await axios.get(`${CONFIG.API_URL}/posts`, {
+  //         params: { page: pageToFetch, limit: 20 },
+  //       });
+  //       const { posts: fetchedPosts, totalPages: backendTotalPages } = response.data;
+  //       setPosts((prev) =>
+  //         pageToFetch === 1 ? fetchedPosts : [...prev, ...fetchedPosts]
+  //       );
+  //       setTotalPages(backendTotalPages);
+  //       setPage(pageToFetch);
+  //     } catch (err) {
+  //       console.error("Failed to load posts", err);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   },
+  //   [loading]
+  // );
   const fetchPosts = useCallback(
     async (pageToFetch: number) => {
       if (loading) return;
@@ -130,11 +202,28 @@ const HomeScreen = () => {
     setPosts([]);
     setSelectedPostId(null);
     fetchPosts(1);
+    // مرر FlatList للأعلى
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+    // مرر ScrollView للأعلى (عند عرض بوست واحد)
+    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
   };
 
   // Open comment box and fetch fake comments
   const openCommentBox = (postId: number) => {
     setSelectedPostId(postId);
+
+    // ====================
+    // دالة جلب الكومنتات من الباكند (معطلة حالياً)
+    // ====================
+    // const fetchComments = async (postId: number) => {
+    //   try {
+    //     const response = await axios.get(`${CONFIG.API_URL}/posts/${postId}/comments`);
+    //     setComments(response.data.comments);
+    //   } catch (err) {
+    //     console.error("Failed to load comments", err);
+    //   }
+    // };
+
     const fakeComments: Comment[] = Array.from(
       { length: Math.floor(Math.random() * 9) + 2 },
       (_, i) => ({
@@ -156,6 +245,24 @@ const HomeScreen = () => {
 
   // Submit comment (fake)
   const submitComment = () => {
+    // ====================
+    // دالة حفظ الكومنت في الباكند (معطلة حالياً)
+    // ====================
+    // const submitComment = async () => {
+    //   if (!selectedPostId || commentText.trim() === "") return;
+    //   try {
+    //     await axios.post(`${CONFIG.API_URL}/posts/${selectedPostId}/comments`, {
+    //       postId: selectedPostId,
+    //       workerId: user.id, // أو أي متغير يمثل الـworker الحالي
+    //       text: commentText,
+    //     });
+    //     // بعد الحفظ يمكنك إعادة جلب الكومنتات أو إضافته محلياً
+    //     // fetchComments(selectedPostId);
+    //     setCommentText("");
+    //   } catch (err) {
+    //     console.error("Failed to submit comment", err);
+    //   }
+    // };
     if (!selectedPostId || commentText.trim() === "") return;
     const newComment: Comment = {
       id: comments.length + 1,
@@ -172,23 +279,35 @@ const HomeScreen = () => {
   const renderMediaItem = ({ item }: { item: MediaItem }) => {
     if (item.type === "image" && item.url) {
       return (
-        <View className="mr-2">
+        <TouchableOpacity
+          className="mr-2"
+          onPress={() => setSelectedImage(item.url ?? null)}
+        >
           <Image
             source={{ uri: item.url }}
             className="w-48 h-32 rounded-xl"
             resizeMode="cover"
           />
-        </View>
+        </TouchableOpacity>
       );
     }
-    if (item.type === "video" && item.url) {
-      return (
-        <View className="mr-2 bg-gray-200 w-48 h-32 rounded-xl justify-center items-center">
-          <Ionicons name="play-circle" size={40} color="gray" />
-          <Text className="text-gray-600 text-xs mt-1">Video</Text>
-        </View>
-      );
-    }
+   if (item.type === "video" && item.url) {
+     return (
+       <TouchableOpacity
+         className="mr-2"
+         onPress={() => setSelectedVideo(item.url ?? null)}
+       >
+         <Video
+           source={{ uri: item.url }}
+           useNativeControls
+           resizeMode={ResizeMode.COVER}
+           isLooping
+           style={{ width: 192, height: 128, borderRadius: 12 }}
+           posterSource={{ uri: "https://picsum.photos/800/400" }}
+         />
+       </TouchableOpacity>
+     );
+   }
     return null;
   };
 
@@ -264,31 +383,29 @@ const HomeScreen = () => {
       {/* Comments */}
       {selectedPostId === item.id && (
         <View className="mt-4">
-          <FlatList
-            data={comments}
-            keyExtractor={(c) => c.id.toString()}
-            renderItem={({ item: c }) => (
-              <TouchableOpacity
-                onPress={() =>
-                  router.push({
-                    pathname: "/(tabs)/(home)/profileAsView", // Ensure this route exists in your project
-                    params: { workerId: c.workerId },
-                  })
-                }
-              >
-                <View className="bg-gray-100 p-4 rounded-2xl mb-2">
-                  <View className="flex-row items-center mb-2">
-                    <Image
-                      source={{ uri: c.authorImage }}
-                      className="w-8 h-8 rounded-full mr-2"
-                    />
-                    <Text className="font-bold text-sm">{c.authorName}</Text>
-                  </View>
-                  <Text className="text-gray-600">{c.text}</Text>
+          {/* استبدل FlatList بهذا */}
+          {comments.map((c) => (
+            <TouchableOpacity
+              key={c.id}
+              onPress={() =>
+                router.push({
+                  pathname: "/profileAsView",
+                  params: { workerId: c.workerId },
+                })
+              }
+            >
+              <View className="bg-gray-100 p-4 rounded-2xl mb-2">
+                <View className="flex-row items-center mb-2">
+                  <Image
+                    source={{ uri: c.authorImage }}
+                    className="w-8 h-8 rounded-full mr-2"
+                  />
+                  <Text className="font-bold text-sm">{c.authorName}</Text>
                 </View>
-              </TouchableOpacity>
-            )}
-          />
+                <Text className="text-gray-600">{c.text}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
           <TextInput
             className="border border-gray-300 rounded-xl p-2 h-16 text-right mt-2"
             placeholder="Write your comment..."
@@ -367,16 +484,85 @@ const HomeScreen = () => {
           </View>
         </View>
       </LinearGradient>
-      <FlatList
-        data={posts}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderPost}
-        onEndReached={handleEndReached}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={
-          loading ? <ActivityIndicator style={{ margin: 20 }} /> : null
-        }
-      />
+      {selectedPostId !== null ? (
+        <ScrollView ref={scrollViewRef}>
+          {renderPost({ item: posts.find((p) => p.id === selectedPostId)! })}
+        </ScrollView>
+      ) : (
+        <FlatList
+          ref={flatListRef}
+          data={posts}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderPost}
+          onEndReached={handleEndReached}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            loading ? <ActivityIndicator style={{ margin: 20 }} /> : null
+          }
+        />
+      )}
+      <Modal
+        visible={!!selectedImage}
+        transparent={true}
+        onRequestClose={() => setSelectedImage(null)}
+      >
+        <View className="flex-1 bg-black/90">
+          <View className="flex-row justify-end p-4">
+            <TouchableOpacity
+              onPress={() =>
+                selectedImage && handleImageDownload(selectedImage)
+              }
+              className="bg-white/20 rounded-full p-3 mr-2"
+            >
+              <Ionicons name="download-outline" size={24} color="white" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setSelectedImage(null)}
+              className="bg-white/20 rounded-full p-3"
+            >
+              <Ionicons name="close" size={24} color="white" />
+            </TouchableOpacity>
+          </View>
+          {selectedImage && (
+            <View className="flex-1 justify-center items-center">
+              <Image
+                source={{ uri: selectedImage }}
+                className="w-full h-[80%]"
+                resizeMode="contain"
+              />
+            </View>
+          )}
+        </View>
+      </Modal>
+      {/* Video Modal */}
+      <Modal
+        visible={!!selectedVideo}
+        transparent={true}
+        onRequestClose={() => setSelectedVideo(null)}
+      >
+        <View className="flex-1 bg-black">
+          <View className="flex-row justify-end p-4">
+            <TouchableOpacity
+              onPress={() => setSelectedVideo(null)}
+              className="bg-white/20 rounded-full p-3"
+            >
+              <Ionicons name="close" size={24} color="white" />
+            </TouchableOpacity>
+          </View>
+          {selectedVideo && (
+            <View className="flex-1 justify-center">
+              <Video
+                source={{ uri: selectedVideo }}
+                useNativeControls
+                resizeMode={ResizeMode.CONTAIN}
+                isLooping
+                shouldPlay
+                style={{ width: "100%", height: 300 }}
+              />
+            </View>
+          )}
+        </View>
+      </Modal>
     </View>
   );
 };
