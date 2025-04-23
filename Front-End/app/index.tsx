@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import apiClient from '@/api/appClient';
 import refreshAccessToken from '@/api/refreshAccessToken';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AppStartUp = () => {
   const router = useRouter();

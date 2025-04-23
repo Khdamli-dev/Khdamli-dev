@@ -199,7 +199,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           <>
             <TouchableOpacity
               className="absolute top-[30px] left-[30px]"
-              onPress={() => router.push("/(tabs)/(profile)/(settings)")}
+              onPress={() => router.push("./(settings)")}
             >
               <FontAwesome name="user" size={38} color="#BD7D06" />
             </TouchableOpacity>

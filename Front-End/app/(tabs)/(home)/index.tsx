@@ -389,7 +389,7 @@ const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
               key={c.id}
               onPress={() =>
                 router.push({
-                  pathname: "/profileAsView",
+                  pathname: "./profileAsView",
                   params: { workerId: c.workerId },
                 })
               }
