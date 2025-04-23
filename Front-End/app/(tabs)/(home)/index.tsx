@@ -25,7 +25,7 @@ import { BlurView } from "expo-blur";
 import { router } from "expo-router";
 import * as FileSystem from "expo-file-system";
 import * as MediaLibrary from "expo-media-library";
-import { Video, ResizeMode } from 'expo-av';
+import { Video, ResizeMode } from "expo-av";
 
 // Media item can be image, video or none
 interface MediaItem {
@@ -33,7 +33,7 @@ interface MediaItem {
   url?: string;
 }
 
-// Post shape 
+// Post shape
 interface Post {
   id: number;
   clientId: number;
@@ -64,6 +64,8 @@ const HomeScreen = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [status, requestPermission] = MediaLibrary.usePermissions();
+  const [scrollPosition, setScrollPosition] = useState(0);
+  const [viewingSinglePost, setViewingSinglePost] = useState(false);
   // POSTS + PAGINATION STATE
   const [posts, setPosts] = useState<Post[]>([]);
   const [page, setPage] = useState(1);
@@ -73,11 +75,14 @@ const HomeScreen = () => {
   // COMMENTS STATE
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const [commentText, setCommentText] = useState("");
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [comments, setComments] = useState<Array<Comment>>([]);
   const [downloadingMedia, setDownloadingMedia] = useState<boolean>(false);
 
   // Improved media download function that handles both images and videos
-  const handleMediaDownload = async (mediaUrl: string, mediaType: 'image' | 'video') => {
+  const handleMediaDownload = async (
+    mediaUrl: string,
+    mediaType: "image" | "video"
+  ) => {
     try {
       if (Platform.OS === "web") {
         window.open(mediaUrl, "_blank");
@@ -88,17 +93,37 @@ const HomeScreen = () => {
       if (!status?.granted) {
         const permission = await requestPermission();
         if (!permission.granted) {
-          Alert.alert("Permission Needed", "Need permission to save media to your device");
+          Alert.alert(
+            "Permission Needed",
+            "Need permission to save media to your device"
+          );
           return;
         }
       }
 
       setDownloadingMedia(true);
 
-      // Get file extension from URL or use default
-      const match = mediaUrl.match(/\.([^.]+)$/);
-      const extension = match ? match[1] : mediaType === 'image' ? "jpg" : "mp4";
-      const filename = `khdamli-${Date.now()}.${extension}`;
+      // Extract a clean filename from the URL
+      // For picsum.photos URLs, we need to handle the format correctly
+      let filename = `khdamli-${Date.now()}`;
+
+      // For URLs like https://picsum.photos/800/400?random=123
+      // We need to remove the dimensions from the path
+      if (mediaUrl.includes("picsum.photos")) {
+        // Just use the default extension based on media type
+        filename += mediaType === "image" ? ".jpg" : ".mp4";
+      } else {
+        // For regular URLs, try to extract extension from the URL
+        const match = mediaUrl.match(/\.([^.?]+)(?:\?|$)/);
+        const extension = match
+          ? match[1]
+          : mediaType === "image"
+            ? "jpg"
+            : "mp4";
+        filename += `.${extension}`;
+      }
+
+      // Use the cache directory directly without additional folders
       const path = `${FileSystem.cacheDirectory}${filename}`;
 
       // Show download progress
@@ -107,19 +132,22 @@ const HomeScreen = () => {
         path,
         {},
         (downloadProgress) => {
-          const progress = downloadProgress.totalBytesWritten / downloadProgress.totalBytesExpectedToWrite;
+          const progress =
+            downloadProgress.totalBytesWritten /
+            downloadProgress.totalBytesExpectedToWrite;
           // You could update a progress state here if you want to show a progress bar
         }
       );
 
-      const { uri } = await downloadResumable.downloadAsync();
+      const result = await downloadResumable.downloadAsync();
 
       // Save to media library
-      if (uri) {
+      if (result?.uri) {
+        const uri = result.uri;
         await MediaLibrary.saveToLibraryAsync(uri);
         Alert.alert(
-          "Download Complete", 
-          `${mediaType === 'image' ? 'Image' : 'Video'} saved successfully!`
+          "Download Complete",
+          `${mediaType === "image" ? "Image" : "Video"} saved successfully!`
         );
 
         // Clean up the cache file
@@ -127,15 +155,20 @@ const HomeScreen = () => {
       }
     } catch (error) {
       console.error(`Error downloading ${mediaType}:`, error);
-      Alert.alert("Download Failed", `Failed to save ${mediaType}. Please try again.`);
+      Alert.alert(
+        "Download Failed",
+        `Failed to save ${mediaType}. Please try again.`
+      );
     } finally {
       setDownloadingMedia(false);
     }
   };
 
   // Simplified wrappers for image/video downloads
-  const handleImageDownload = (imageUrl: string) => handleMediaDownload(imageUrl, 'image');
-  const handleVideoDownload = (videoUrl: string) => handleMediaDownload(videoUrl, 'video');
+  const handleImageDownload = (imageUrl: string) =>
+    handleMediaDownload(imageUrl, "image");
+  const handleVideoDownload = (videoUrl: string) =>
+    handleMediaDownload(videoUrl, "video");
 
   // ====================
   // دالة جلب البوستات من الباكند (معطلة حالياً)
@@ -236,7 +269,10 @@ const HomeScreen = () => {
 
   // Open comment box and fetch comments
   const openCommentBox = (postId: number) => {
+  
+
     setSelectedPostId(postId);
+    setViewingSinglePost(true);
 
     // ====================
     // دالة جلب الكومنتات من الباكند (معطلة حالياً)
@@ -258,9 +294,10 @@ const HomeScreen = () => {
         workerId: i + 1,
         profileImage: `https://randomuser.me/api/portraits/women/${i + 10}.jpg`,
         userName: `User ${i + 1}`,
-        text: i % 2 === 0 
-          ? `This is a short comment #${i + 1}.`
-          : `This is a very long comment #${i + 1} that should be truncated in the UI. It contains a lot of text to demonstrate how we handle long comments in our application. When a comment is this long, we'll show just a part of it initially and provide a way for users to expand it to read the full content. This helps keep the UI clean while still allowing users to read all content.`,
+        text:
+          i % 2 === 0
+            ? `This is a short comment #${i + 1}.`
+            : `This is a very long comment #${i + 1} that should be truncated in the UI. It contains a lot of text to demonstrate how we handle long comments in our application. When a comment is this long, we'll show just a part of it initially and provide a way for users to expand it to read the full content. This helps keep the UI clean while still allowing users to read all content.`,
         expanded: false, // Initially all comments are collapsed
       })
     );
@@ -271,15 +308,29 @@ const HomeScreen = () => {
   const closeCommentBox = () => {
     setSelectedPostId(null);
     setComments([]);
+    setViewingSinglePost(false);
+
+    // أعط وقتًا للتطبيق لإعادة عرض القائمة قبل محاولة التمرير
+    setTimeout(() => {
+      if (flatListRef.current) {
+        // استخدم scrollToOffset للتمرير إلى الموقع المحفوظ
+        flatListRef.current.scrollToOffset({
+          offset: scrollPosition,
+          animated: false,
+        });
+      }
+    }, 1000);
   };
 
   // Toggle comment expanded state
   const toggleCommentExpand = (commentId: number) => {
-    setComments(comments.map(comment => 
-      comment.id === commentId 
-        ? { ...comment, expanded: !comment.expanded } 
-        : comment
-    ));
+    setComments(
+      comments.map((comment) =>
+        comment.id === commentId
+          ? { ...comment, expanded: !comment.expanded }
+          : comment
+      )
+    );
   };
 
   // Submit comment
@@ -385,10 +436,11 @@ const HomeScreen = () => {
   // Render single comment with expand/collapse functionality
   const renderComment = (comment: Comment) => {
     const isLongComment = comment.text.length > 100;
-    const displayText = isLongComment && !comment.expanded 
-      ? `${comment.text.substring(0, 100)}...` 
-      : comment.text;
-    
+    const displayText =
+      isLongComment && !comment.expanded
+        ? `${comment.text.substring(0, 100)}...`
+        : comment.text;
+
     return (
       <View key={comment.id} className="bg-gray-100 p-4 rounded-2xl mb-2">
         <View className="flex-row items-center mb-2">
@@ -404,7 +456,7 @@ const HomeScreen = () => {
         </View>
         <Text className="text-gray-600">{displayText}</Text>
         {isLongComment && (
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => toggleCommentExpand(comment.id)}
             className="mt-1"
           >
@@ -557,7 +609,7 @@ const HomeScreen = () => {
           </View>
         </View>
       </LinearGradient>
-      {selectedPostId !== null ? (
+      {viewingSinglePost ? (
         <ScrollView ref={scrollViewRef}>
           {renderPost({ item: posts.find((p) => p.id === selectedPostId)! })}
         </ScrollView>
@@ -568,10 +620,19 @@ const HomeScreen = () => {
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderPost}
           onEndReached={handleEndReached}
+          onScroll={(event) => {
+            setScrollPosition(event.nativeEvent.contentOffset.y);
+          }}
+          scrollEventThrottle={16}
           onEndReachedThreshold={0.5}
           ListFooterComponent={
             loading ? <ActivityIndicator style={{ margin: 20 }} /> : null
           }
+          // هذا الخيار يحافظ على مخزون البوستات في الذاكرة
+          removeClippedSubviews={false}
+          // هذا الخيار يضمن عدم إعادة استرجاع العناصر من الذاكرة
+          maxToRenderPerBatch={10}
+          windowSize={21}
         />
       )}
 
@@ -584,7 +645,9 @@ const HomeScreen = () => {
         <View className="flex-1 bg-black/90">
           <View className="flex-row justify-end p-4">
             <TouchableOpacity
-              onPress={() => selectedImage && handleImageDownload(selectedImage)}
+              onPress={() =>
+                selectedImage && handleImageDownload(selectedImage)
+              }
               className="bg-white/20 rounded-full p-3 mr-2"
               disabled={downloadingMedia}
             >
@@ -623,7 +686,9 @@ const HomeScreen = () => {
         <View className="flex-1 bg-black">
           <View className="flex-row justify-end p-4">
             <TouchableOpacity
-              onPress={() => selectedVideo && handleVideoDownload(selectedVideo)}
+              onPress={() =>
+                selectedVideo && handleVideoDownload(selectedVideo)
+              }
               className="bg-white/20 rounded-full p-3 mr-2"
               disabled={downloadingMedia}
             >
