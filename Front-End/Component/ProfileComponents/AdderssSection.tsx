@@ -180,7 +180,6 @@ const AddressSection = ({
             placeholder=" Enter Your Wilaya"
           />
 
-          {/* قائمة منسدلة للبلديات */}
           <DropdownSearch
             label="Baladiya"
             icon={<Home size={22} color="#F8A100" />}
@@ -194,7 +193,7 @@ const AddressSection = ({
               setSelectedDaira(item);
               setDairaInput(item.name);
               setFilteredDairas([]);
-              // إعادة تعيين العنوان
+
               // setSelectedAddress(null);
               // setAddressInput("");
               onChange({

@@ -35,10 +35,7 @@ const AddressDropdown: React.FC<AddressDropdownProps> = ({
 
   const fetchMunicipalities = async (wilayaId: number) => {
     try {
-      const response = await axios.get(
-        `${CONFIG.API_URL}/address/cities/${wilayaId}`
-      const response = await apiClient.get(`/address/cities/${wilayaId}`, 
-      );
+      const response = await apiClient.get(`/address/cities/${wilayaId}`);
       setMunicipalities(response.data.cities);
       setFilteredMunicipalities(response.data.cities);
     } catch (error: any) {
@@ -47,7 +44,7 @@ const AddressDropdown: React.FC<AddressDropdownProps> = ({
           await fetchMunicipalities(wilayaId);
         } else {
           // need to login
-          router.push('/(auth)');
+          router.push("/(auth)");
         }
       }
       console.log(error);

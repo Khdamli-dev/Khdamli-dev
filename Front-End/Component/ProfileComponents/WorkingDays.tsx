@@ -5,12 +5,7 @@ import { useFonts, Itim_400Regular } from "@expo-google-fonts/itim";
 
 import DayRow from "./DayRow";
 import TimePicker from "./TimePicker";
-type Day = {
-  name: string;
-  isEnabled: boolean;
-  from?: Date;
-  to?: Date;
-};
+
 const WorkingDays = ({
   onChange,
 }: {

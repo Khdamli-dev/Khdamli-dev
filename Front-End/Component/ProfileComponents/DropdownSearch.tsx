@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from "react-native";
-import { MapPin, Home } from "lucide-react-native";
 
 interface DropdownSearchProps<T> {
   label: string;

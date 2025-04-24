@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -6,10 +6,10 @@ import {
   TouchableOpacity,
   ScrollView,
   Animated,
-} from 'react-native';
-import apiClient from '@/api/appClient';
-import refreshAccessToken from '@/api/refreshAccessToken';
-import { router } from 'expo-router';
+} from "react-native";
+import apiClient from "@/api/appClient";
+import refreshAccessToken from "@/api/refreshAccessToken";
+import { router } from "expo-router";
 
 interface Wilaya {
   name: string;
@@ -29,8 +29,6 @@ const WilayaDropdown: React.FC<WilayaDropdownProps> = ({
   const [filteredWilayas, setFilteredWilayas] = useState<Wilaya[]>([]);
 
   const [search, setSearch] = useState("");
-
-  const [search, setSearch] = useState('');
   const rotateAnim = useState(new Animated.Value(0))[0];
 
   const fetchRegions = async () => {
@@ -38,16 +36,13 @@ const WilayaDropdown: React.FC<WilayaDropdownProps> = ({
       const response = await apiClient.get(`/address/regions/1`);
       setWilayas(response.data.regions);
       setFilteredWilayas(response.data.regions);
-    } catch (error) {
-      console.log(error);
     } catch (error: any) {
       if (error.response?.status === 401) {
-        if (await refreshAccessToken()){
+        if (await refreshAccessToken()) {
           await fetchRegions();
-        }  
-        else{
+        } else {
           // need to login
-          router.push('/(auth)');
+          router.push("/(auth)");
         }
       }
       console.log(error);
@@ -60,13 +55,13 @@ const WilayaDropdown: React.FC<WilayaDropdownProps> = ({
 
   const handleSearch = (text: string) => {
     setSearch(text);
-    if (text === '') {
+    if (text === "") {
       setFilteredWilayas(wilayas);
     } else {
       setFilteredWilayas(
         wilayas.filter((item) =>
-          item.name.toLowerCase().includes(text.toLowerCase()),
-        ),
+          item.name.toLowerCase().includes(text.toLowerCase())
+        )
       );
     }
   };
