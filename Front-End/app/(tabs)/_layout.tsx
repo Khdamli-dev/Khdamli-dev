@@ -23,7 +23,7 @@ const CustomTabBarIcon = ({
           </View>
         </View>
       ) : (
-        <FontAwesome name={name} size={24} color="#DADADA" />
+        <FontAwesome name={name} size={26} color="#DADADA" />
       )}
     </View>
   );

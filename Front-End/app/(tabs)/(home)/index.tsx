@@ -269,8 +269,6 @@ const HomeScreen = () => {
 
   // Open comment box and fetch comments
   const openCommentBox = (postId: number) => {
-  
-
     setSelectedPostId(postId);
     setViewingSinglePost(true);
 
