@@ -1,3 +1,4 @@
+import apiClient from "@/api/appClient";
 import CONFIG from "@/config";
 import { EvilIcons } from "@expo/vector-icons";
 import axios from "axios";
@@ -35,8 +36,8 @@ const HomeScreen = () => {
   // Example fetch - replace with your actual API call
   const fetchCategories = async () => {
     try {
-      const response = await axios.get(
-        `${CONFIG.API_URL}/work/categories`
+      const response = await apiClient.get(
+        `/work/categories`
       );
       // Filter categories to include only top-level categories
       const filteredCategories = response.data.categories.filter(

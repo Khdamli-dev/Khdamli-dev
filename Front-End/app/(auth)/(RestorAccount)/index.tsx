@@ -19,6 +19,7 @@ import { useRouter } from "expo-router";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
+import * as SecureStore from 'expo-secure-store';
 import { LinearGradient } from "expo-linear-gradient";
 
 export default function ForgotPassword() {
@@ -43,6 +44,7 @@ export default function ForgotPassword() {
         console.log(response.data);
         const id: number = response.data.userId;
         await AsyncStorage.setItem("userId", JSON.stringify(id));
+        await SecureStore.setItemAsync('email', values.email);
         router.push({
           pathname: "./Verification",
           params: { email: values.email },

@@ -38,6 +38,7 @@ export const uploadMedia = async (req: Request, res: Response) => {
     uploadedFiles.forEach(async (File) => {
       await updateRequestMedia(File , requestId);
     })
+    console.log(uploadedFiles);
 
      res.status(201).json({
       message: 'Media uploaded successfully',

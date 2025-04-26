@@ -28,6 +28,7 @@
     "axios": "^1.8.2",
     "config": "^3.3.12",
     "expo": "~52.0.37",
+    "expo-av": "^15.0.2",
     "expo-blur": "~14.0.3",
     "expo-constants": "~17.0.5",
     "expo-font": "~13.0.4",

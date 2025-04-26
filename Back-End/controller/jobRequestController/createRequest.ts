@@ -20,9 +20,9 @@ const createRequest = async (req: Request, res: Response ) => {
       INSERT INTO "request" 
         (worker, client, client_address, working_time, category, description, type, status)
       VALUES 
-        ($1, $2, $3, $4, $5, $6, $7, $8, 3)
+        ($1, $2, $3, $4, $5, $6, $7, 3)
       RETURNING *;
-    `, [worker, client, client_address, working_time, category, description, type]);
+    `, [worker || null, client, client_address, working_time, category, description, type]);
 
     // send to it to workers to make it real time
     await jobRequestEmitter(rows[0]);
