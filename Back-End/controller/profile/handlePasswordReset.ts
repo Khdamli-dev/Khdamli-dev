@@ -3,6 +3,7 @@ import pool from '../../database/dbConnection';
 import crypto from 'crypto';
 import sendMail from '../../utils/mailer/sendMail';
 import { passwordResetMail } from '../../utils/mailer/emailBody';
+import produceTokens from '../../utils/authentication/produceTokens';
 
 
 export const sendOTP = async (req: Request, res: Response) => {
@@ -61,11 +62,16 @@ export const verifyOTP = async (req: Request, res: Response) => {
     }
 
     // Verify OTP from otp_codes table
-    const { rows } = await pool.query(
-      `SELECT expires_at FROM otp_codes WHERE user_id = $1 AND otp = $2 AND purpose = $3`,
+    const { rows : user } = await pool.query(
+      `SELECT oc.expires_at, u.*
+FROM otp_codes oc
+LEFT JOIN "user" u ON oc.user_id = u.id
+WHERE oc.user_id = $1 AND oc.otp = $2 AND oc.purpose = $3;
+`,
       [id, otp , "password_reset"],
     );
-    if (!rows.length) {
+    console.log(otp)
+    if (!user.length) {
       res.status(400).json({
         message: 'Invalid OTP',
         success: false,
@@ -74,7 +80,7 @@ export const verifyOTP = async (req: Request, res: Response) => {
       return;
     }
 
-    if (new Date() > new Date(rows[0].expires_at)) {
+    if (new Date() > new Date(user[0].expires_at)) {
       res.status(400).json({
         message: 'OTP has expired',
         success: false,
@@ -82,13 +88,17 @@ export const verifyOTP = async (req: Request, res: Response) => {
       });
       return;
     }
-
     await pool.query(`
       DELETE FROM otp_codes WHERE user_id = $1
       `, [id]);
+      const { accessToken, refreshToken } = produceTokens(id , user[0].role);
+      const {password : _, ...returnedUser} = user[0];
     res.status(200).json({
       message: 'OTP successfully verified',
       success: true,
+      user : returnedUser,
+      accessToken,
+      refreshToken,
       resend : null
     });
   } catch (error) {
