@@ -12,6 +12,7 @@ import getRequestMessages from "../../controller/jobRequestController/getRequest
 import getRequestDetails from "../../controller/jobRequestController/getRequestDetails";
 import checkRole from "../../middleware/checkRole";
 import getRequests from "../../controller/jobRequestController/getRequests";
+import getPublicRequests from "../../controller/jobRequestController/getPublicRequests";
 
 const request: Router = express.Router();
 
@@ -43,4 +44,7 @@ request.post("/:requestId/comment", checkRole([workerRoleId]), createComment);
 request.get("/:requestId/messages", getRequestMessages);
 
 request.get("/", getRequests);
+
+request.get("/public/:id",getPublicRequests)
+
 export default request;
