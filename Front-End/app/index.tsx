@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import apiClient from '@/api/appClient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getSocket, connectSocket } from '@/api/socket';
 
 const AppStartUp = () => {
   const router = useRouter();
@@ -41,7 +42,7 @@ const AppStartUp = () => {
     const checkLoginStatus = async () => {
       // refresh the access token
       const refreshToken = await SecureStore.getItemAsync('refreshToken');
-      if (!refreshToken){
+      if (!refreshToken) {
         router.replace('/(auth)');
         return;
       }
@@ -55,11 +56,22 @@ const AppStartUp = () => {
         if (response.data.success) {
           const { accessToken }: { accessToken: string } = response.data;
           await SecureStore.setItemAsync('accessToken', accessToken);
-          await AsyncStorage.setItem('userId', response.data.userId);
-          await AsyncStorage.setItem('role', response.data.role);
+          const {userId, role} : {userId : number, role : number} = response.data;
+          await AsyncStorage.setItem('userId', String(userId));
+          await AsyncStorage.setItem('role', String(role));
+
+          // enter worker to his rooms
+          const workerRoleId : string | undefined = process.env.WORKER_ROLE_ID;
+          if (workerRoleId){
+            if (role === +workerRoleId) {
+              connectSocket();
+              const socket = getSocket();
+              socket.emit('worker-rooms', userId);
+            }
+          }
+
           router.replace('/(tabs)/(home)');
-        } else
-          router.replace('/(auth)');
+        } else router.replace('/(auth)');
       } catch (error) {
         router.replace('/(auth)');
       }

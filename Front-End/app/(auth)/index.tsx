@@ -19,6 +19,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CONFIG from '../../config';
 import * as SecureStore from 'expo-secure-store';
+import { getSocket, connectSocket } from '@/api/socket';
 
 export default function Login() {
   const router = useRouter();
@@ -63,6 +64,13 @@ export default function Login() {
         await SecureStore.setItemAsync('refreshToken', refreshToken);
         await SecureStore.setItemAsync('email', values.email);
         await SecureStore.setItemAsync('password', values.password);
+
+        // enter worker to his rooms
+        if (user.role === process.env.WORKER_ROLE_ID){
+          connectSocket();
+          const socket = getSocket();
+          socket.emit('worker-rooms', user.id);
+        }
 
         // go to home page
         router.replace('/(tabs)/(home)');
