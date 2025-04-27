@@ -52,6 +52,8 @@ const refreshAccessToken = (req: Request, res: Response) => {
         success: true,
         message: "generate new access token with success",
         accessToken,
+        userId,
+        role
     });
   });
 };

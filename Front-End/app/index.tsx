@@ -5,7 +5,7 @@ import { Animated, Easing } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import apiClient from '@/api/appClient';
-import refreshAccessToken from '@/api/refreshAccessToken';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AppStartUp = () => {
   const router = useRouter();
@@ -55,6 +55,8 @@ const AppStartUp = () => {
         if (response.data.success) {
           const { accessToken }: { accessToken: string } = response.data;
           await SecureStore.setItemAsync('accessToken', accessToken);
+          await AsyncStorage.setItem('userId', response.data.userId);
+          await AsyncStorage.setItem('role', response.data.role);
           router.replace('/(tabs)/(home)');
         } else
           router.replace('/(auth)');

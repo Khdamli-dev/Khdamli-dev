@@ -13,6 +13,7 @@ import {
   SafeAreaView,
 
 } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 // If you're using NativeWind or another Tailwind RN library, import the tailwind function
 // import { useTailwind } from "nativewind"; // for example
 
@@ -27,10 +28,18 @@ const HomeScreen = () => {
   // const tailwind = useTailwind(); // If using the NativeWind hook
   const [categories, setCategories] = useState<Category[]>([]);
   const [search, setSearch] = useState("");
+  const [hasClientRole, setHasClientRole] = useState<boolean>(false);
 
   useEffect(() => {
+    setWorkerRole();
     fetchCategories();
   }, []);
+
+  const setWorkerRole = async () => {
+    const userRole = await AsyncStorage.getItem('role');
+    if (userRole)
+    setHasClientRole(userRole === process.env.CLIENT_ROLE_ID);
+  }
 
   // Example fetch - replace with your actual API call
   const fetchCategories = async () => {
@@ -130,7 +139,9 @@ const HomeScreen = () => {
         />
       </View>
       {/* FLOATING ADD REQUEST BUTTON */}
-      <View className="absolute bottom-4 right-4">
+      {
+        hasClientRole &&
+        <View className="absolute bottom-4 right-4">
         <TouchableOpacity
           className="bg-foncyYellow p-4 rounded-full shadow-lg"
           onPress={() => router.push("/requeste")}
@@ -138,6 +149,7 @@ const HomeScreen = () => {
           <Text className="text-white font-bold px-2">+ Add Request</Text>
         </TouchableOpacity>
       </View>
+      }
     </SafeAreaView>
   );
 };
