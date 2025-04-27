@@ -17,12 +17,14 @@ import { useRouter } from "expo-router";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
-import CONFIG from "../../../config"
+import CONFIG from "../../../config";
+import * as SecureStore from 'expo-secure-store';
 
 
 
 import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import apiClient from "@/api/appClient";
 
 export default function NewPassword() {
   const { width: screenWidth } = Dimensions.get("window");
@@ -49,21 +51,21 @@ export default function NewPassword() {
     confirmPassword:string;
   }) => {
     try {
+      console.log('jjjj');
       const storedId = await AsyncStorage.getItem("userId");
       const id: number = Number(storedId);
       
-      const response = await axios.put(
-        `${CONFIG.API_URL}/users/${id}`,
-        { credentials: { password: values.newPassword } }
-      );
+       const response = await apiClient.put(`/users/${id}` , {
+        credentials : {password : values.newPassword}
+       });
      
       if (response.status == 200) {
-        
-        router.back();
+        await SecureStore.setItemAsync('password', values.newPassword);
+        router.replace('/(tabs)/(home)');
         alert("Your password has been changed successfully");
       } 
     } catch (error: any) {
-      console.log(error)
+      console.log(error.response.status)
       setError("Internal server error");
       setTimeout(() => setError(""), 50000); 
     }

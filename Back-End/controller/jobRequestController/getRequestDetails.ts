@@ -73,13 +73,13 @@ const getRequestDetails = async (req: Request, res: Response) => {
         uw.username AS worker_username,
         uw.profile_image AS worker_profile_image
       FROM request r
-      JOIN category c ON r.category = c.id
-      JOIN address a ON r.client_address = a.id
-      JOIN city ct ON a.city = ct.id
-      JOIN region rg ON a.region = rg.id
-      JOIN country co ON rg.country = co.id
-      JOIN request_status rs ON r.status = rs.id
-      JOIN "user" uc ON r.client = uc.id
+      LEFT JOIN category c ON r.category = c.id
+      LEFT JOIN address a ON r.client_address = a.id
+      LEFT JOIN city ct ON a.city = ct.id
+      LEFT JOIN region rg ON a.region = rg.id
+      LEFT JOIN country co ON rg.country = co.id
+      LEFT JOIN request_status rs ON r.status = rs.id
+      LEFT JOIN "user" uc ON r.client = uc.id
       LEFT JOIN worker w ON r.worker = w.id
       LEFT JOIN "user" uw ON w.id = uw.id
       WHERE r.id = $1
@@ -101,7 +101,7 @@ const getRequestDetails = async (req: Request, res: Response) => {
       `
       SELECT mt.name AS type, rm.url
       FROM request_media rm
-      JOIN media_type mt ON rm.media_type = mt.id
+      LEFT JOIN media_type mt ON rm.media_type = mt.id
       WHERE rm.request = $1
       `,
       [requestId]
@@ -130,7 +130,6 @@ const getRequestDetails = async (req: Request, res: Response) => {
         commentDate = commentData.rows[0].created_at.toISOString();
       }
     }
-
     // Validate request_type against request.worker
     const isPublic = requestRow.worker_id === null;
     if (request_type === "public" && !isPublic) {
@@ -154,6 +153,7 @@ const getRequestDetails = async (req: Request, res: Response) => {
     const response: { [key: string]: any } = {};
 
     // Common fields across scenarios
+    response.id = requestId;
     response.category = requestRow.category;
     response.description = requestRow.description || null;
     response.media = media;

@@ -9,7 +9,7 @@ const mainRouter: Router = express.Router();
 
 mainRouter.use('/auth', auth);
 mainRouter.use('/address', verifyJWT, address);
-mainRouter.use('/work', verifyJWT, work);
+mainRouter.use('/work' , verifyJWT ,work);
 mainRouter.use('/users', verifyJWT, users);
 
 export default mainRouter;

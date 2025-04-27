@@ -30,8 +30,8 @@ import TheTime from "@/Component/time";
 import DatePicker from "@/Component/date";
 import MediaUploader, { MediaItem } from "@/Component/mediaUploader";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
-import CONFIG from "@/config";
+import apiClient from "@/api/appClient";
+import refreshAccessToken from '@/api/refreshAccessToken';
 
 interface JobRequest {
   client: number | null;
@@ -194,8 +194,8 @@ const uploadSelectedMedia = async (requestId: number) => {
   console.log("📤 FormData being sent:", formData);
 
   try {
-    const response = await axios.put(
-      `${CONFIG.API_URL}/work/job-request/media/${requestId}`,
+    const response = await apiClient.put(
+      `/work/job-request/media/${requestId}`,
       formData,
       {
         headers: {
@@ -207,7 +207,15 @@ const uploadSelectedMedia = async (requestId: number) => {
 
     console.log("✅ Media uploaded successfully:", response.data);
   } catch (error: any) {
-    console.log(error)
+    if (error.response?.status === 401) {
+      if (await refreshAccessToken()) {
+        await uploadSelectedMedia(requestId);
+      } else {
+        // need to login
+        router.push('/(auth)');
+      }
+    }
+    console.log(error.response)
   }
 };
 
@@ -259,9 +267,10 @@ const uploadSelectedMedia = async (requestId: number) => {
          type: 1, // Public request
          status: 3, // "On Hold"
        };
-       const response = await axios.post(
-         `${CONFIG.API_URL}/work/job-request/`,
-         jobRequest
+       console.log(user.role);
+       const response = await apiClient.post(
+         `/work/job-request/`,
+         jobRequest 
        );
 
        if (response.status === 201) {
@@ -274,8 +283,17 @@ const uploadSelectedMedia = async (requestId: number) => {
        console.log("No user data found in AsyncStorage");
        setError("User data not found. Please log in again.");
      }
-   } catch (error) {
-     console.error("Error submitting job request:", error);
+   } catch (error : any) {
+     if (error.response?.status === 401) {
+              if (await refreshAccessToken()) {
+                await handleSubmit();
+              } else {
+                // need to login
+                router.push('/(auth)');
+              }
+            }
+
+     console.error("Error submitting job request:", error.response.data.message);
      setError("There was an error submitting your request. Please try again.");
    }
  };
