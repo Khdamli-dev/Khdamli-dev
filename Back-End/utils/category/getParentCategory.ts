@@ -1,19 +1,19 @@
 import pool from "../../database/dbConnection";
 
-const getParentCategory = async (workerId : number) : Promise<string[]> => {
+const getParentCategory = async (childCategory : number) : Promise<string> => {
     try {
         const {rows : result} = await pool.query(`
-            SELECT DISTINCT parent.name
-            FROM category child
-            JOIN category parent ON child.parent_category = parent.id
-            JOIN worker_category wc ON wc.category = child.id
-            WHERE wc.worker = $1;
-            `, [workerId]);
+            SELECT e2.name AS parent_name, e1.name AS child_name
+            FROM category e1
+            LEFT JOIN category e2
+            ON e1.parent_category = e2.id
+            WHERE e1.id = $1
+            `, [childCategory]);
         // there is the case where category don't have parent
-        return result;
+        return result[0].parent_name || result[0].child_name;
     } catch (error) {
         console.log("error in getParentCategory : ", error);
-        return [];
+        return '';
     }
 }
 
