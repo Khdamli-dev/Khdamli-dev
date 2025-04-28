@@ -11,11 +11,6 @@ import {
   Alert,
 } from "react-native";
 import React, { useEffect, useState } from "react";
-import {
-  Ionicons,
-  FontAwesome6,
-  MaterialCommunityIcons,
-} from "@expo/vector-icons";
 import { Dispatch, SetStateAction } from "react";
 import axios from "axios";
 import { useLocalSearchParams } from "expo-router";
