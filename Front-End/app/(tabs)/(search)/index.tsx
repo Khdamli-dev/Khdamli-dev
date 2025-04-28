@@ -1,3 +1,4 @@
+import apiClient from "@/api/appClient";
 import CONFIG from "@/config";
 import { EvilIcons } from "@expo/vector-icons";
 import axios from "axios";
@@ -176,27 +177,27 @@ const HomeScreen = () => {
   // Fetch categories for initial display
   const fetchCategories = async () => {
     try {
-      setIsLoading(true);
+  //     setIsLoading(true);
 
-      // For testing: use mock data instead of API call
-      setTimeout(() => {
-        setCategories(MOCK_CATEGORIES);
-        setError(null);
-        setIsLoading(false);
-      }, 1000);
+  //     // For testing: use mock data instead of API call
+  //     setTimeout(() => {
+  //       setCategories(MOCK_CATEGORIES);
+  //       setError(null);
+  //       setIsLoading(false);
+  //     }, 1000);
 
       // Uncomment this for real API usage
-      /*
-      const response = await axios.get(`${CONFIG.API_URL}/work/categories/`);
+      
+      const response = await apiClient.get(`/work/categories`);
       // Filter categories to include only top-level categories
       const filteredCategories = response.data.categories.filter(
         (category: Category) => category.parent_category === null
       );
       setCategories(filteredCategories);
       setError(null);
-      */
-    } catch (error) {
-      console.error("Error fetching categories:", error);
+     
+    } catch (error : any) {
+      console.error("Error fetching categories:", error.response.data);
       setError("فشل في تحميل الفئات. يرجى المحاولة مرة أخرى.");
     } finally {
       setIsLoading(false);
