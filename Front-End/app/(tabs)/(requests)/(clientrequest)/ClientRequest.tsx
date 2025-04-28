@@ -220,6 +220,7 @@ const PublicRequest = () => {
       const userData = await AsyncStorage.getItem("user");
       const user = JSON.parse(userData || "");
       let params: { role: string; request_type: string; worker_id?: number };
+     
       if (userRole === UserRole.CLIENT) {
         params = { role: "client", request_type: "public" };
       } else {
@@ -585,11 +586,11 @@ const PublicRequest = () => {
   // Render worker view - using WorkerPublicRequest interface
   const renderWorkerRequest = (item: WorkerPublicRequest) => {
     const isExpanded = expandedRequestId === item.id;
-  
+
     if (!isExpanded) {
       return renderWorkerCollapsedView(item);
     }
-  
+
     return (
       <View className="bg-white mt-3 mb-4 p-4 rounded-lg shadow">
         <TouchableOpacity
@@ -629,7 +630,7 @@ const PublicRequest = () => {
             </View>
           </View>
         </TouchableOpacity>
-  
+
         <View className="flex-row mb-3">
           <View className="flex-1">
             <Text className="text-lg font-medium">
@@ -663,7 +664,7 @@ const PublicRequest = () => {
             </TouchableOpacity>
           </View>
         </View>
-  
+
         <View className="pl-2">
           <Text className="text-base mb-1">
             <Text className="font-bold">Request Date: </Text>
@@ -701,7 +702,7 @@ const PublicRequest = () => {
             <Text className="text-green-500">{item.payment_method}</Text>
           </Text>
         </View>
-  
+
         <View className="mt-4">
           <Text className="text-lg font-medium mb-2">Request Media:</Text>
           <ScrollView
@@ -752,48 +753,45 @@ const PublicRequest = () => {
             )}
           </ScrollView>
         </View>
-  
+
         {/* Action buttons based on status */}
         {item.status === RequestStatus.ACCEPTED && (
-        <TouchableOpacity
-          className="bg-blue-500 items-center justify-center py-3 mt-3 rounded"
-          onPress={() => console.log("Mark as completed")}
-        >
-          <Text className="text-base text-white">Mark as Completed</Text>
-        </TouchableOpacity>
-      )}
+          <TouchableOpacity
+            className="bg-blue-500 items-center justify-center py-3 mt-3 rounded"
+            onPress={() => console.log("Mark as completed")}
+          >
+            <Text className="text-base text-white">Mark as Completed</Text>
+          </TouchableOpacity>
+        )}
 
         {/* For PENDING_CLIENT_VERIFICATION requests - Worker sees waiting status */}
         {item.status === RequestStatus.PENDING_CLIENT_VERIFICATION && (
-        <View className="bg-yellow-100 border border-yellow-400 items-center justify-center py-3 mt-3 rounded">
-          <Text className="text-base text-yellow-800">
-            Waiting for client confirmation
-          </Text>
-        </View>
-      )}
-
+          <View className="bg-yellow-100 border border-yellow-400 items-center justify-center py-3 mt-3 rounded">
+            <Text className="text-base text-yellow-800">
+              Waiting for client confirmation
+            </Text>
+          </View>
+        )}
 
         {/* For COMPLETED requests - Worker sees completed status */}
         {item.status === RequestStatus.COMPLETED && (
-        <View className="bg-green-100 border border-green-400 items-center justify-center py-3 mt-3 rounded">
-          <Text className="text-base text-green-800">
-            Job completed and verified by client
-          </Text>
-        </View>
-      )}
+          <View className="bg-green-100 border border-green-400 items-center justify-center py-3 mt-3 rounded">
+            <Text className="text-base text-green-800">
+              Job completed and verified by client
+            </Text>
+          </View>
+        )}
 
         {/* ONLY show Edit Comment button for worker */}
         <TouchableOpacity
-        className="bg-blue-500 items-center justify-center py-3 mt-3 rounded"
-        onPress={() => handleEditComment(item.id)}
-      >
-        <Text className="text-base text-white">Edit Comment</Text>
-      </TouchableOpacity>
-    </View>
-  );
-};
-       
-  ;
+          className="bg-blue-500 items-center justify-center py-3 mt-3 rounded"
+          onPress={() => handleEditComment(item.id)}
+        >
+          <Text className="text-base text-white">Edit Comment</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-gray-100">
