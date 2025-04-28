@@ -101,12 +101,9 @@ export default function SignUp() {
       password,
     };
     try {
-      const response = await axios.post(
-        `${CONFIG.API_URL}/auth/signup`,
-        {
-          credentials
-        }
-      );
+      const response = await axios.post(`${CONFIG.API_URL}/auth/signup`, {
+        credentials,
+      });
       if (response?.status === 201) {
         const user = response.data.user;
         await AsyncStorage.setItem("user", JSON.stringify(user));
@@ -133,6 +130,7 @@ export default function SignUp() {
         setEmailError("");
         setPhoneNumberError("");
         alert("Server is busy, please try again later");
+        console.log(error);
       }
     }
   };

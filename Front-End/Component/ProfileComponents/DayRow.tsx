@@ -3,8 +3,8 @@ import { View, Text, StyleSheet, Switch, TouchableOpacity } from "react-native";
 type Day = {
   name: string;
   isEnabled: boolean;
-  from?: Date;
-  to?: Date;
+  begin?: Date;
+  end?: Date;
 };
 
 type Props = {
@@ -12,7 +12,7 @@ type Props = {
   index: number;
   toggleDay: (index: number) => void;
   setShowPicker: (
-    picker: { index: number; type: "from" | "to" } | null
+    picker: { index: number; type: "begin" | "end" } | null
   ) => void;
   formatTime: (time: Date | string | undefined | null) => string;
 };
@@ -40,15 +40,15 @@ const DayRow: React.FC<Props> = ({
         <>
           <TouchableOpacity
             style={{ flex: 1, alignItems: "center" }}
-            onPress={() => setShowPicker({ index, type: "from" })}
+            onPress={() => setShowPicker({ index, type: "begin" })}
           >
-            <Text>{formatTime(day.from)}</Text>
+            <Text>{formatTime(day.begin)}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={{ flex: 1, alignItems: "center" }}
-            onPress={() => setShowPicker({ index, type: "to" })}
+            onPress={() => setShowPicker({ index, type: "end" })}
           >
-            <Text>{formatTime(day.to)}</Text>
+            <Text>{formatTime(day.end)}</Text>
           </TouchableOpacity>
         </>
       ) : (

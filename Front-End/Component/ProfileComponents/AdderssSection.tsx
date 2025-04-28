@@ -66,8 +66,8 @@ const AddressSection = ({
         setWilayas(response.data.regions);
         setFilteredWilayas(response.data.regions);
       } catch (error) {
-        console.error("خطأ أثناء جلب الولايات:", error);
-        alert("حدث خطأ أثناء جلب الولايات");
+        console.error("wrong fetching data", error);
+        alert("wrong fetching data");
       } finally {
         setLoading(false);
       }
@@ -85,7 +85,7 @@ const AddressSection = ({
           setDairas(response.data.cities);
           setFilteredDairas(response.data.cities);
         } catch (error) {
-          console.error("خطأ أثناء جلب البلديات:", error);
+          console.error("wrong fecthing data", error);
         }
       };
       fetchMunicipalities();
@@ -212,7 +212,6 @@ const AddressSection = ({
             placeholder=" Enter Your Baladiya"
           />
 
-          {/* قائمة منسدلة للعناوين */}
           {/* <DropdownSearch
             label="عنوانك"
             icon={<Home size={22} color="#F8A100" />}

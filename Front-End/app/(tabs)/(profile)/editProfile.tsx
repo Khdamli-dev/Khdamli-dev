@@ -20,7 +20,7 @@ type ProfileScreenProps = {
 const EditProfileScreen = ({ navigation }: ProfileScreenProps) => {
   const [userInfo, setUserInfo] = useState({});
   const [workingDays, setWorkingDays] = useState<
-    { name: string; from: string; to: string }[]
+    { name: string; begin: string; end: string }[]
   >([]);
   type AddressInfo = {
     wilayaId: number | null;
@@ -37,16 +37,41 @@ const EditProfileScreen = ({ navigation }: ProfileScreenProps) => {
   });
 
   const handleSave = () => {
-    console.log("User Info:", userInfo);
-    console.log("Working Days:", workingDays);
-    console.log("Address Info:", addressInfo);
+    const dataToSend: any = {};
+
+    // Check userInfo
+    if (Object.keys(userInfo).length > 0) {
+      dataToSend.userInfo = userInfo;
+    }
+
+    // Check workingDays
+    if (workingDays.length > 0) {
+      dataToSend.workingDays = workingDays;
+    }
+
+    // Check addressInfo (only include if any field is not null or not empty)
+    const hasAddressInfo = Object.values(addressInfo).some(
+      (val) => val !== null && val !== ""
+    );
+
+    if (hasAddressInfo) {
+      dataToSend.addressInfo = addressInfo;
+    }
+
+    // Now only send the dataToSend if it has content
+    if (Object.keys(dataToSend).length > 0) {
+      console.log("Sending to backend:", dataToSend);
+      // Send `dataToSend` to your backend here (e.g., via fetch or axios)
+    } else {
+      console.log("No data to send, all fields are empty.");
+    }
   };
 
   const renderItem = () => (
     <>
       <GeneralInfo onInfoChange={setUserInfo} />
       <WorkingDays onChange={setWorkingDays} />
-      <AdderssSection onChange={setAddressInfo } />
+      <AdderssSection onChange={setAddressInfo} />
       <View className="flex-row justify-between mt-5 mb-7">
         <TouchableOpacity
           className="border-2 border-[#396F65] bg-white mr-0.5 py-1.5 rounded-[25px] flex-1 items-center shadow-lg"

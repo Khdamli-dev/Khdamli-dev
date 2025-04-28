@@ -9,13 +9,13 @@ import TimePicker from "./TimePicker";
 const WorkingDays = ({
   onChange,
 }: {
-  onChange: (days: { name: string; from: string; to: string }[]) => void;
+  onChange: (days: { name: string; begin: string; end: string }[]) => void;
 }) => {
   type Day = {
     name: string;
     isEnabled: boolean;
-    from?: Date;
-    to?: Date;
+    begin?: Date;
+    end?: Date;
   };
 
   const [days, setDays] = useState<Day[]>([
@@ -30,7 +30,7 @@ const WorkingDays = ({
 
   const [showPicker, setShowPicker] = useState<{
     index: number;
-    type: "from" | "to";
+    type: "begin" | "end";
   } | null>(null);
 
   const updateDays = (newDays: Day[]) => {
@@ -39,15 +39,15 @@ const WorkingDays = ({
       .filter((day) => day.isEnabled)
       .map((day) => ({
         name: day.name,
-        from: day.from
-          ? new Date(day.from).toLocaleTimeString([], {
+        begin: day.begin
+          ? new Date(day.begin).toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
               hour12: false,
             })
           : "--:--",
-        to: day.to
-          ? new Date(day.to).toLocaleTimeString([], {
+        end: day.end
+          ? new Date(day.end).toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
               hour12: false,
@@ -70,7 +70,7 @@ const WorkingDays = ({
     event: any,
     selectedDate: Date | undefined,
     index: number,
-    type: "from" | "to"
+    type: "begin" | "end"
   ) => {
     setShowPicker(null);
     if (selectedDate) {
