@@ -18,9 +18,9 @@ export const initializeWebSocket = (server: http.Server): Server => {
   io.on('connection', (socket: Socket) => {
     console.log(`client connected to websocket with id : ${socket.id}`);
 
-    socket.on('worker-room', async (workerId: number) => {
+    socket.on('user-room', async (userId: number) => {
       // create private room for worker
-      const roomName: string = workerId.toString();
+      const roomName: string = userId.toString();
       socket.join(roomName);
       console.log(`worker join to his private room ${roomName}`);
     });

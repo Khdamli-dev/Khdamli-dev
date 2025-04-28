@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import pool from '../../database/dbConnection';
 import JobRequest from '../../interface/jobRequest';
-import jobRequestEmitter from './jobRequestEmitter';
+import {sendPrivateRequest} from './jobRequestEmitter';
 
 const createRequest = async (req: Request, res: Response ) => {
   try {
@@ -25,7 +25,7 @@ const createRequest = async (req: Request, res: Response ) => {
     `, [worker || null, client, client_address, working_time, category, description, type]);
 
     // send to it to workers to make it real time
-    await jobRequestEmitter(rows[0]);
+    await sendPrivateRequest(rows[0]);
     res.status(201).json({
       message : 'Job request created successfully',
       request : rows[0], 
