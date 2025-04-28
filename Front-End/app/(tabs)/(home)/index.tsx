@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   View,
@@ -84,6 +85,7 @@ const HomeScreen = () => {
     mediaType: "image" | "video"
   ) => {
     try {
+
       if (Platform.OS === "web") {
         window.open(mediaUrl, "_blank");
         return;
@@ -137,6 +139,7 @@ const HomeScreen = () => {
             downloadProgress.totalBytesExpectedToWrite;
           // You could update a progress state here if you want to show a progress bar
         }
+
       );
 
       const result = await downloadResumable.downloadAsync();
