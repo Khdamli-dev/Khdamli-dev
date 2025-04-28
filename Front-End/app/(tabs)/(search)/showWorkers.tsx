@@ -124,6 +124,7 @@ const ServiceProvidersScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     fetchWorkers();
@@ -184,8 +185,11 @@ const ServiceProvidersScreen = () => {
   const handleSearch = () => {
     if (!searchQuery.trim()) {
       setFilteredWorkers(workers);
+      setIsSearching(false);
       return;
     }
+
+    setIsSearching(true);
 
     const filtered = workers.filter(
       (worker) =>
@@ -195,6 +199,13 @@ const ServiceProvidersScreen = () => {
     );
 
     setFilteredWorkers(filtered);
+  };
+
+  // Cancel search and return to all workers
+  const cancelSearch = () => {
+    setIsSearching(false);
+    setSearchQuery("");
+    setFilteredWorkers(workers);
   };
 
   // Navigate directly to worker profile
@@ -332,6 +343,11 @@ const ServiceProvidersScreen = () => {
             >
               <EvilIcons name="search" size={24} color="white" />
             </TouchableOpacity>
+            {isSearching && (
+              <TouchableOpacity onPress={cancelSearch} className="ml-2">
+                <Text className="text-red-500">Cancel</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </LinearGradient>

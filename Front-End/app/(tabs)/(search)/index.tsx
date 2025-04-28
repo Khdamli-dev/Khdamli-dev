@@ -276,6 +276,12 @@ const HomeScreen = () => {
       ? text.substring(0, maxLength) + "..."
       : text;
   };
+   const handleSendRequest = (worker: Worker) => {
+    router.push({
+      pathname: "./requeste",
+      params: { type: "2" },
+    });
+  };
 
   const renderCategoryItem = ({ item }: { item: Category }) => {
     return (
@@ -300,45 +306,52 @@ const HomeScreen = () => {
     );
   };
 
-  const renderWorkerItem = ({ item }: { item: Worker }) => {
+ const renderWorkerItem = ({ item }: { item: Worker }) => {
     return (
       <TouchableOpacity
         onPress={() => handleWorkerPress(item)}
         className="w-full mb-3"
       >
-        <View className="bg-white p-4 rounded-lg shadow-sm flex-row">
-          <Image
-            source={{ uri: item.profileImage }}
-            className="w-16 h-16 rounded-full"
-            resizeMode="cover"
-          />
-          <View className="flex-1 ml-3 justify-center">
-            <Text className="font-bold text-lg">
-              {truncateText(item.workerName, 20)}
-            </Text>
+        <View className="bg-white p-4 rounded-lg shadow-sm">
+          <View className="flex-row">
+            {/* Worker Image */}
+            <Image
+              source={{ uri: item.profileImage }}
+              className="w-20 h-20 rounded-full"
+              resizeMode="cover"
+            />
 
-            <View className="flex-row items-center mt-1">
-              <View className="bg-green-100 px-2 py-1 rounded-md">
-                <Text className="text-green-800 text-xs">
+            {/* Worker Details */}
+            <View className="flex-1 ml-3 justify-center">
+              <Text className="font-bold text-lg">
+                {truncateText(item.workerName, 20)}
+              </Text>
+
+              {/* Subcategory name */}
+              <View className="bg-[#4C8479]/20 px-2 py-1 rounded-md mt-1 self-start">
+                <Text className="text-[#4C8479] text-xs font-medium">
                   {item.parentCategory?.name || "Professional"}
                 </Text>
               </View>
-            </View>
 
-            <View className="flex-row items-center mt-2">
-              <EvilIcons name="location" size={16} color="#4C8479" />
-              <Text className="text-gray-600 text-xs">
-                {item.city}
-                {item.region ? `, ${item.region}` : ""}
-              </Text>
+              {/* Location */}
+              <View className="flex-row items-center mt-2">
+                <EvilIcons name="location" size={16} color="#4C8479" />
+                <Text className="text-gray-600 text-xs">
+                  {item.city}
+                  {item.region ? `, ${item.region}` : ""}
+                </Text>
+              </View>
             </View>
           </View>
 
+          {/* Send Request Button */}
           <TouchableOpacity
-            className="bg-[#F8A100] h-8 w-8 rounded-full items-center justify-center self-center"
-            onPress={() => console.log(`Contact worker ${item.workerId}`)}
+            className="bg-[#F8A100] py-2 px-4 rounded-md mt-3 flex-row items-center justify-center"
+            onPress={() => handleSendRequest(item)}
           >
-            <EvilIcons name="envelope" size={22} color="white" />
+            <EvilIcons name="envelope" size={24} color="white" />
+            <Text className="text-white font-medium ml-1">Send Request</Text>
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
