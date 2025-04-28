@@ -39,23 +39,21 @@ interface JobRequest {
   city: number | null;
   working_time: Date | null;
   category: number | null;
+  payment: number | null;
   description: string | null;
   type: number | null; // 1 for Public, 2 for Private
   status: number | null; // 3 for "On Hold" on new requests
 }
-interface Props {
-  type: number; // 1 for Public, 2 for Private
-}
 
-const CreateRequestScreen: React.FC<Props> = ({ type }) => {
+const CreateRequestScreen = () => {
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
-  const getTodayDateString = () => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    const day = String(today.getDate()).padStart(2, "0");
-    return `${year}/${month}/${day}`;
-  };
+ const getTodayDateString = () => {
+   const today = new Date();
+   const year = today.getFullYear();
+   const month = String(today.getMonth() + 1).padStart(2, "0");
+   const day = String(today.getDate()).padStart(2, "0");
+   return `${year}/${month}/${day}`;
+ };
   const [selectedCategory, setSelectedCategory] = useState<{
     name: string;
     id: string;
@@ -68,7 +66,10 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
     name: string;
     id: number;
   } | null>(null);
-
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<{
+    name: string;
+    id: number;
+  } | null>({ name: "Cash", id: 1 });
   const [date, setDate] = useState<string | null>(getTodayDateString()); // Initialize with today
   const [beginTime, setbeginTime] = useState<string | null>("08:00"); // HH:MM
   const [description, setDescription] = useState("");
@@ -106,6 +107,15 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
   const handleSelectedMunicipality = (municipalitie: any) => {
     setSelectedMunicipality(municipalitie);
     setIsAddressOpen(false);
+  };
+  //PaymentMethodDropDown ------------------------------------------------------------------------------------------
+  const [isPamentOpen, setIsPaymentOpen] = useState(false);
+  const togglePaymentDropdown = () => {
+    setIsPaymentOpen(!isPamentOpen);
+  };
+  const handleSelectedPaymentMethod = (PaymentMethod: any) => {
+    setSelectedPaymentMethod(PaymentMethod);
+    setIsPaymentOpen(false);
   };
 
   //The Time --------------------------------------------------------------------------------------
@@ -161,28 +171,27 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
     return dateObject;
   };
   //UploaderMedia ------------------------------------------------------------------------------------------
-  const uploadSelectedMedia = async (requestId: number) => {
-    if (!selectedMedia.length) {
-      console.warn("❌ No media selected to upload.");
-      return;
-    }
-    if (isNaN(requestId)) {
-      return;
-    }
+const uploadSelectedMedia = async (requestId: number) => {
+  if (!selectedMedia.length) {
+    console.warn("❌ No media selected to upload.");
+    return;
+  }
+  if (isNaN(requestId)) {
+    return;
+  }
 
-    const formData = new FormData();
+  const formData = new FormData();
 
-    selectedMedia.forEach((item, index) => {
-      const fileExtension = item.type === "image" ? "jpg" : "mp4";
-      formData.append("file", {
-        uri: item.uri,
-        name: `media-${index}.${fileExtension}`,
-        type: item.type === "image" ? "image/jpeg" : "video/mp4",
-      } as any);
-    });
+  selectedMedia.forEach((item, index) => {
+    const fileExtension = item.type === "image" ? "jpg" : "mp4";
+    formData.append("file", {
+      uri: item.uri,
+      name: `media-${index}.${fileExtension}`,
+      type: item.type === "image" ? "image/jpeg" : "video/mp4",
+    } as any);
+  });
 
-    console.log("📤 FormData being sent:", formData);
-
+  console.log("📤 FormData being sent:", formData);
 
   try {
     const response = await apiClient.put(
@@ -212,70 +221,82 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
 
   //Handle Save ------------------------------------------------------------------------------------------
   const [error, setError] = useState<string>("");
-  const handleSubmit = async () => {
-    // Basic validation
-    if (
-      !selectedCategory ||
-      !selectedWilaya || // Region is required
-      !selectedMunicipality || // City is required
-      !date ||
-      !beginTime ||
-      !description
-    ) {
-      setError("Please fill in all required fields.");
-      return;
-    }
+ const handleSubmit = async () => {
+   // Basic validation
+   if (
+     !selectedCategory ||
+     !selectedPaymentMethod ||
+     !selectedWilaya || // Region is required
+     !selectedMunicipality || // City is required
+     !date ||
+     !beginTime ||
+     !description
+   ) {
+     setError("Please fill in all required fields.");
+     return;
+   }
 
-    // Validate description length
-    const trimmedDescription = description.trim();
-    if (trimmedDescription.length < 5) {
-      setError("Description must be at least 5 characters.");
-      return;
-    }
+   // Validate description length
+   const trimmedDescription = description.trim();
+   if (trimmedDescription.length < 5) {
+     setError("Description must be at least 5 characters.");
+     return;
+   }
 
-    // Clear any previous errors
-    setError("");
+   // Clear any previous errors
+   setError("");
 
-    // Convert date and time to a valid Date object
-    const working_time = convertToDate();
-    try {
-      // Retrieve user object from AsyncStorage
-      const userData = await AsyncStorage.getItem("user");
+   // Convert date and time to a valid Date object
+   const working_time = convertToDate();
+   try {
+     // Retrieve user object from AsyncStorage
+     const userData = await AsyncStorage.getItem("user");
 
-      if (userData) {
-        const user: any = JSON.parse(userData); // Parse the user data
+     if (userData) {
+       const user: any = JSON.parse(userData); // Parse the user data
 
-        // Build the job request payload
-        const jobRequest: JobRequest = {
-          client: user.id, // Use the user ID from AsyncStorage
-          region: selectedWilaya.id, // Convert Wilaya ID to number
-          city: selectedMunicipality.id, // Convert Municipality ID to number
-          working_time,
-          category: Number(selectedCategory.id), // Convert to number
-          description: trimmedDescription,
-          type,
-          status: 3, // "On Hold"
-        };
-        const response = await axios.post(
-          `${CONFIG.API_URL}/work/job-request/`,
-          jobRequest
-        );
+       // Build the job request payload
+       const jobRequest: JobRequest = {
+         client: user.id, // Use the user ID from AsyncStorage
+         region: selectedWilaya.id, // Convert Wilaya ID to number
+         city: selectedMunicipality.id, // Convert Municipality ID to number
+         working_time,
+         category: Number(selectedCategory.id), // Convert to number
+         payment: selectedPaymentMethod.id, // Already a number
+         description: trimmedDescription,
+         type: 1, // Public request
+         status: 3, // "On Hold"
+       };
+       console.log(user.role);
+       const response = await apiClient.post(
+         `/work/job-request/`,
+         jobRequest 
+       );
 
-        if (response.status === 201) {
-          const requestId: number = +response.data.request.id;
-          uploadSelectedMedia(requestId);
-        }
-        router.back();
-      } else {
-        console.log("No user data found in AsyncStorage");
-        setError("User data not found. Please log in again.");
-      }
-    } catch (error) {
-      console.error("Error submitting job request:", error);
-      setError("There was an error submitting your request. Please try again.");
-    }
-  };
+       if (response.status === 201) {
+         const requestId: number = +response.data.request.id;
+         uploadSelectedMedia(requestId);
+        
+       }
+       router.back();
+     } else {
+       console.log("No user data found in AsyncStorage");
+       setError("User data not found. Please log in again.");
+     }
+   } catch (error : any) {
+     if (error.response?.status === 401) {
+              if (await refreshAccessToken()) {
+                await handleSubmit();
+              } else {
+                // need to login
+                router.push('/(auth)');
+              }
+            }
 
+     console.error("Error submitting job request:", error.response.data.message);
+     setError("There was an error submitting your request. Please try again.");
+   }
+ };
 
   return (
     <SafeAreaView className="flex-1 ">
@@ -370,7 +391,42 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
                 )}
               </View>
             </View>
- 
+            {/*  Payment Method ------------------------------------------------------------------------------------------ */}
+            <View className="w-11/12  px-2 mt-6">
+              <Text className="text-[#CB8400] text-lg font-bold pl-16 mb-1">
+                Payment Method
+              </Text>
+              <View className="w-full flex-row items-center">
+                <View className="w-2/12">
+                  <FontAwesome6 name="money-bills" size={30} color="#F8A100" />
+                </View>
+
+                <TouchableOpacity
+                  onPress={togglePaymentDropdown}
+                  className="flex-row w-9/12  ml-4  flex-grow items-center justify-between border-b-2 border-foncyYellow"
+                >
+                  <Text className="text-xl font-bold  ">
+                    {selectedPaymentMethod
+                      ? `${selectedPaymentMethod.name}`
+                      : "Select Your Payment Method"}
+                  </Text>
+                  <MaterialIcons
+                    name={
+                      isPamentOpen ? "keyboard-arrow-up" : "keyboard-arrow-down"
+                    }
+                    size={30}
+                  />
+                </TouchableOpacity>
+              </View>
+              <View className="items-center justify-center mt-1 ml-6">
+                {isPamentOpen && (
+                  <PaymentMethod
+                    selectedPayment={selectedPaymentMethod}
+                    onSelectPayment={handleSelectedPaymentMethod}
+                  />
+                )}
+              </View>
+            </View>
             {/*  The Region ------------------------------------------------------------------------------------------*/}
             <View className="w-11/12  px-2 mt-6  ">
               <Text className="text-[#CB8400] text-lg font-bold pl-16 mb-1">

@@ -45,7 +45,6 @@ request.get("/:requestId/messages", getRequestMessages);
 
 request.get("/", getRequests);
 
-
 request.get("/public/:id",getPublicRequests)
 
 export default request;

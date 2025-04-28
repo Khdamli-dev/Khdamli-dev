@@ -45,7 +45,7 @@ const getPublicRequests = async (req: Request, res: Response) => {
       [userId]
     );
 
-    if (!userData.rows.length || !userData.rows[0].city) {
+    if (!userData.rows.length || !userData.rows[0].region) {
       res.status(404).json({
         message: "User not found or no address assigned",
         requests: null,
@@ -131,7 +131,6 @@ const getPublicRequests = async (req: Request, res: Response) => {
 
     const { rows } = await pool.query(query, values);
 
-    // Step 4: Fetch media for each request
     const requests = await Promise.all(
       rows.map(async (row) => {
         const mediaData = await pool.query(
