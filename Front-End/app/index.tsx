@@ -56,19 +56,15 @@ const AppStartUp = () => {
         if (response.data.success) {
           const { accessToken }: { accessToken: string } = response.data;
           await SecureStore.setItemAsync('accessToken', accessToken);
-          const {userId, role} : {userId : number, role : number} = response.data;
+          const { userId, role }: { userId: number; role: number } =
+            response.data;
           await AsyncStorage.setItem('userId', String(userId));
           await AsyncStorage.setItem('role', String(role));
 
-          // enter worker to his rooms
-          const workerRoleId : string | undefined = process.env.WORKER_ROLE_ID;
-          if (workerRoleId){
-            if (role === +workerRoleId) {
-              connectSocket();
-              const socket = getSocket();
-              socket.emit('worker-room', userId);
-            }
-          }
+          // enter user to his private room
+          connectSocket();
+          const socket = getSocket();
+          socket.emit('user-room', userId);
 
           router.replace('/(tabs)/(home)');
         } else router.replace('/(auth)');

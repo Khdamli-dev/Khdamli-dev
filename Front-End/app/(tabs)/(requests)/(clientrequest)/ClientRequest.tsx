@@ -3,7 +3,6 @@ import {
   Text,
   TouchableOpacity,
   Image,
-  StyleSheet,
   ScrollView,
   Modal,
   Dimensions,
@@ -29,7 +28,7 @@ import apiClient from '@/api/appClient';
 import refreshAccessToken from '@/api/refreshAccessToken';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ResizeMode, Video } from 'expo-av'; // Import for video playback
-import { getSocket } from '@/api/socket';
+import { realTimePublicRequestStatus } from '@/api/realTime';
 
 // Define the UserRole enum
 enum UserRole {
@@ -304,6 +303,10 @@ const PublicRequest = () => {
   useEffect(() => {
     fetchRequests();
   }, [userRole]);
+
+  useEffect(() => {
+    realTimePublicRequestStatus(setRequests);
+  }, []);
 
   useEffect(() => {
     if (requestIds.length > 0) {

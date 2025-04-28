@@ -3,7 +3,6 @@ import {
   Text,
   TouchableOpacity,
   Image,
-  StyleSheet,
   ScrollView,
   Modal,
   Dimensions,
@@ -18,7 +17,6 @@ import {
   MaterialCommunityIcons,
   Ionicons,
   MaterialIcons,
-  AntDesign,
 } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -29,7 +27,7 @@ import {
   ClientPrivateRequest,
 } from '../../../../Interfaces/Requestsinterfaces';
 import { ResizeMode, Video } from 'expo-av';
-import { getSocket } from '@/api/socket';
+import { realTimePrivateRequestStatus, realTimeRequests } from '@/api/realTime';
 
 // Define the UserRole enum
 enum UserRole {
@@ -422,21 +420,12 @@ const PrivateRequests = () => {
 
   useEffect(() => {
     fetchRequests();
-    realTimeRequests();
   }, [userRole]);
-
-  const realTimeRequests = async () => {
-    const workerRoleId: string | undefined = process.env.WORKER_ROLE_ID;
-    if (workerRoleId) {
-      const role = await AsyncStorage.getItem('role');
-      if (role == workerRoleId) {
-        const socket = getSocket();
-        socket.on('private-request', (data) => {
-          setRequestIds((prev) => [...prev, data]);
-        });
-      }
-    }
-  };
+  
+  useEffect(() => {
+    realTimeRequests(setRequestIds);
+    realTimePrivateRequestStatus(setRequests);
+  }, []);
 
   useEffect(() => {
     if (requestIds.length >= 0) {

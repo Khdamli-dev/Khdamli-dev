@@ -2,6 +2,7 @@ import { Server } from 'socket.io';
 import { getIo } from '../../config/websocket';
 import JobRequest from '../../interface/jobRequest';
 import dotenv from 'dotenv';
+import pool from '../../database/dbConnection';
 
 dotenv.config();
 const io: Server = getIo();
@@ -32,10 +33,15 @@ export const changeRequestStatus = async (request: JobRequest): Promise<void> =>
       destination = request.client;
     }
 
+    const status = await pool.query(`
+      SELECT name FROM request_status
+      WHERE id = $1
+      `, [request.id]);
+
     if (destination) {
       io.to(destination.toString()).emit('change-request-status', {
         requestId : request.id,
-        status : request.status
+        status
       });
     }
   }
