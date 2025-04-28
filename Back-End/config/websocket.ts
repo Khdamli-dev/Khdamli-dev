@@ -1,6 +1,5 @@
 import { Server, Socket } from 'socket.io';
 import http from 'http';
-import getWorkerParentCategories from '../utils/category/getWorkerParentCategories';
 
 let io: Server;
 
@@ -19,18 +18,11 @@ export const initializeWebSocket = (server: http.Server): Server => {
   io.on('connection', (socket: Socket) => {
     console.log(`client connected to websocket with id : ${socket.id}`);
 
-    socket.on('worker-rooms', async (workerId: number) => {
+    socket.on('worker-room', async (workerId: number) => {
       // create private room for worker
       const roomName: string = workerId.toString();
       socket.join(roomName);
       console.log(`worker join to his private room ${roomName}`);
-
-      // create public room for workers who have the same parent_category
-      const workerCategories: string[] = await getWorkerParentCategories(workerId);
-      for (const category in workerCategories) {
-        socket.join(category);
-        console.log(`worker join to public room ${category}`);
-      }
     });
 
     // disconnect event

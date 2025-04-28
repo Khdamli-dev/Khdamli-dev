@@ -66,7 +66,7 @@ const AppStartUp = () => {
             if (role === +workerRoleId) {
               connectSocket();
               const socket = getSocket();
-              socket.emit('worker-rooms', userId);
+              socket.emit('worker-room', userId);
             }
           }
 

@@ -69,7 +69,7 @@ export default function Login() {
         if (user.role === process.env.WORKER_ROLE_ID){
           connectSocket();
           const socket = getSocket();
-          socket.emit('worker-rooms', user.id);
+          socket.emit('worker-room', user.id);
         }
 
         // go to home page
