@@ -1,11 +1,11 @@
-import { View } from 'react-native';
-import React, { useEffect, useRef } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Animated, Easing } from 'react-native';
-import { useRouter } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
-import apiClient from '@/api/appClient';
-import refreshAccessToken from '@/api/refreshAccessToken';
+import { View } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Animated, Easing } from "react-native";
+import { useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
+import apiClient from "@/api/appClient";
+import refreshAccessToken from "@/api/refreshAccessToken";
 
 const AppStartUp = () => {
   const router = useRouter();
@@ -40,26 +40,25 @@ const AppStartUp = () => {
     // التحقق من تسجيل الدخول بعد 3 ثوانٍ
     const checkLoginStatus = async () => {
       // refresh the access token
-      const refreshToken = await SecureStore.getItemAsync('refreshToken');
-      if (!refreshToken){
-        router.replace('/(auth)');
+      const refreshToken = await SecureStore.getItemAsync("refreshToken");
+      if (!refreshToken) {
+        router.replace("/(auth)");
         return;
       }
 
       try {
-        const response = await apiClient.post('/auth/refresh', null, {
+        const response = await apiClient.post("/auth/refresh", null, {
           headers: {
-            'x-refresh-token': `Bearer ${refreshToken}`,
+            "x-refresh-token": `Bearer ${refreshToken}`,
           },
         });
         if (response.data.success) {
           const { accessToken }: { accessToken: string } = response.data;
-          await SecureStore.setItemAsync('accessToken', accessToken);
-          router.replace('/(tabs)/(home)');
-        } else
-          router.replace('/(auth)');
+          await SecureStore.setItemAsync("accessToken", accessToken);
+          router.replace("/(tabs)/(home)");
+        } else router.replace("/(auth)");
       } catch (error) {
-        router.replace('/(auth)');
+        router.replace("/(auth)");
       }
     };
 
@@ -80,7 +79,7 @@ const AppStartUp = () => {
           </Animated.Text>
           <View className=" items-end flex-col">
             <Animated.Image
-              source={require('../assets/images/startUpPhoto.jpg')}
+              source={require("../assets/images/startUpPhoto.jpg")}
               className="w-full h-32"
               style={{
                 transform: [{ translateX: imageAnim }],
