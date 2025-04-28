@@ -33,9 +33,9 @@ interface SearchResult {
 }
 
 interface Worker {
-  workerId: number;
-  workerName: string;
-  profileImage: string;
+  id: number;
+  username: string;
+  profile_image: string;
   region: string | null;
   city: string | null;
   parentCategory?: {
@@ -90,49 +90,7 @@ const MOCK_CATEGORIES: Category[] = [
   },
 ];
 
-// Modified mock workers data to match the new Worker interface
-const MOCK_WORKERS: Worker[] = [
-  {
-    workerId: 1,
-    workerName: "Ahmed Hassan",
-    profileImage: "https://randomuser.me/api/portraits/men/20.jpg",
-    region: "Algeria",
-    city: "Sidi Bel Abbes",
-    parentCategory: { name: "Plumbing", id: 1 },
-  },
-  {
-    workerId: 2,
-    workerName: "Mohammed Ali",
-    profileImage: "https://randomuser.me/api/portraits/men/22.jpg",
-    region: "Algeria",
-    city: "Oran",
-    parentCategory: { name: "Electrical", id: 2 },
-  },
-  {
-    workerId: 3,
-    workerName: "Said Mezouar",
-    profileImage: "https://randomuser.me/api/portraits/men/23.jpg",
-    region: "Algeria",
-    city: "Algiers",
-    parentCategory: { name: "Carpentry", id: 3 },
-  },
-  {
-    workerId: 4,
-    workerName: "Karim Benali",
-    profileImage: "https://randomuser.me/api/portraits/men/24.jpg",
-    region: "Algeria",
-    city: "Constantine",
-    parentCategory: { name: "Painting", id: 4 },
-  },
-  {
-    workerId: 5,
-    workerName: "Omar Taleb with a very long name that should be truncated",
-    profileImage: "https://randomuser.me/api/portraits/men/25.jpg",
-    region: "Algeria",
-    city: "Annaba",
-    parentCategory: { name: "Cleaning", id: 5 },
-  },
-];
+
 
 const MOCK_SEARCH_RESULTS: SearchResult[] = [
   {
@@ -216,27 +174,27 @@ const HomeScreen = () => {
       setIsSearching(true);
 
       // For testing: use mock data instead of API call
-      setTimeout(() => {
-        // Filter mock workers by name containing the search query
-        const filteredWorkers = MOCK_WORKERS.filter((worker) =>
-          worker.workerName.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-        setSearchResults(filteredWorkers);
-        setError(null);
-        setIsLoading(false);
-      }, 1000);
+      // setTimeout(() => {
+      //   // Filter mock workers by name containing the search query
+      //   const filteredWorkers = MOCK_WORKERS.filter((worker) =>
+      //     worker.workerName.toLowerCase().includes(searchQuery.toLowerCase())
+      //   );
+      //   setSearchResults(filteredWorkers);
+      //   setError(null);
+      //   setIsLoading(false);
+      // }, 1000);
 
       // Uncomment this for real API usage
-      /*
+      
       // Make API call to backend with search query
-      const response = await axios.get(`${CONFIG.API_URL}/work/search-workers/`, {
-        params: { query: searchQuery }
+      const response = await apiClient.get(`/work/worker/`, {
+        params: { name: searchQuery }
       });
       
       // Assuming the API returns data that matches the Worker interface
-      setSearchResults(response.data.results);
+      setSearchResults(response.data.workers);
       setError(null);
-      */
+     
     } catch (error) {
       console.error("Error searching:", error);
       setError("فشل في البحث. يرجى المحاولة مرة أخرى.");
@@ -259,14 +217,14 @@ const HomeScreen = () => {
     console.log("Category pressed:", category.name);
     router.push({
       pathname: "./subCategory",
-      params: { parentCategoryId: category.id },
+      params: { category: JSON.stringify(category) },
     }); 
   };
 
   // Handle worker selection
   const handleWorkerPress = (worker: Worker) => {
     // Navigate or show details for the selected worker
-    console.log("Worker pressed:", worker.workerName);
+    console.log("Worker pressed:", worker.username);
     // Example: router.push(`/workers/${worker.workerId}`);
   };
 
@@ -316,7 +274,7 @@ const HomeScreen = () => {
           <View className="flex-row">
             {/* Worker Image */}
             <Image
-              source={{ uri: item.profileImage }}
+              source={{ uri: item.profile_image }}
               className="w-20 h-20 rounded-full"
               resizeMode="cover"
             />
@@ -324,7 +282,7 @@ const HomeScreen = () => {
             {/* Worker Details */}
             <View className="flex-1 ml-3 justify-center">
               <Text className="font-bold text-lg">
-                {truncateText(item.workerName, 20)}
+                {truncateText(item.username, 20)}
               </Text>
 
               {/* Subcategory name */}
@@ -441,7 +399,7 @@ const HomeScreen = () => {
               <FlatList
                 key="searchResults"
                 data={searchResults}
-                keyExtractor={(item) => item.workerId.toString()}
+                keyExtractor={(item) => item.id.toString()}
                 renderItem={renderWorkerItem}
                 contentContainerStyle={{ paddingBottom: 20 }}
                 showsVerticalScrollIndicator={false}
