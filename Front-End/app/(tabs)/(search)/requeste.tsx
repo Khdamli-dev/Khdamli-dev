@@ -30,8 +30,8 @@ import TheTime from "@/Component/time";
 import DatePicker from "@/Component/date";
 import MediaUploader, { MediaItem } from "@/Component/mediaUploader";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import apiClient from "@/api/appClient";
-import refreshAccessToken from '@/api/refreshAccessToken';
+import axios from "axios";
+import CONFIG from "@/config";
 
 interface JobRequest {
   client: number | null;
@@ -183,32 +183,23 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
 
     console.log("📤 FormData being sent:", formData);
 
+    try {
+      const response = await axios.put(
+        `${CONFIG.API_URL}/work/job-request/media/${requestId}`,
+        formData,
+        {
+          headers: {
+            // Let Axios handle Content-Type with the correct boundary
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
-  try {
-    const response = await apiClient.put(
-      `/work/job-request/media/${requestId}`,
-      formData,
-      {
-        headers: {
-          // Let Axios handle Content-Type with the correct boundary
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    );
-
-    console.log("✅ Media uploaded successfully:", response.data);
-  } catch (error: any) {
-    if (error.response?.status === 401) {
-      if (await refreshAccessToken()) {
-        await uploadSelectedMedia(requestId);
-      } else {
-        // need to login
-        router.push('/(auth)');
-      }
+      console.log("✅ Media uploaded successfully:", response.data);
+    } catch (error: any) {
+      console.log(error);
     }
-    console.log(error.response)
-  }
-};
+  };
 
   //Handle Save ------------------------------------------------------------------------------------------
   const [error, setError] = useState<string>("");
@@ -275,7 +266,6 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
       setError("There was an error submitting your request. Please try again.");
     }
   };
-
 
   return (
     <SafeAreaView className="flex-1 ">

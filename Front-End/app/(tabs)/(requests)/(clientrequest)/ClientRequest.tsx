@@ -30,6 +30,7 @@ import CONFIG from "@/config";
 import apiClient from "@/api/appClient";
 import refreshAccessToken from "@/api/refreshAccessToken";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ResizeMode, Video } from "expo-av"; // Import for video playback
 
 // Define the UserRole enum
 enum UserRole {
@@ -39,46 +40,37 @@ enum UserRole {
 
 // Define the RequestStatus enum
 enum RequestStatus {
-  PENDING = "pending",
-  ACCEPTED = "accepted",
-  ON_HOLD = "on_hold",
+  PENDING = "Pending",
+  ACCEPTED = "Accepted",
+  ON_HOLD = "On Hold",
   PENDING_CLIENT_VERIFICATION = "pending_client_verification",
-  COMPLETED = "completed",
-  CANCELLED = "cancelled",
+  COMPLETED = "Completed",
+  CANCELLED = "Cancelled",
+}
+
+// Define media types
+enum MediaType {
+  IMAGE = "image",
+  VIDEO = "video",
+}
+
+// Interface for media item with type
+interface MediaItem {
+  url: string;
+  type: MediaType;
 }
 
 // Default placeholder image for missing profile images
 const defaultProfileImage = require("../../../../assets/images/images (1).jpg");
 
 const PublicRequest = () => {
-  const [selectedImage, setSelectedImage] = useState(0);
-  const [imageModalVisible, setImageModalVisible] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState(0);
+  const [mediaModalVisible, setMediaModalVisible] = useState(false);
   const [userRole, setUserRole] = useState<UserRole>();
-  const [requestIds, setRequestIds] = useState<number[]>([1]);
+  const [requestIds, setRequestIds] = useState<number[]>([]);
   const [requests, setRequests] = useState<
     (WorkerPublicRequest | ClientPublicRequest)[]
-  >([
-    {
-      id: 1,
-      category: "Plumbing",
-      location: {
-        city: "Tunis",
-        region: "Tunis",
-        country: "Tunisia",
-      },
-      sent_date: "2025-04-15T10:00:00Z",
-      work_date: "2025-04-20T09:00:00Z",
-      description: "Leaky pipe under kitchen sink",
-      media: [
-        {
-          type: "Photo",
-          url: "https://example.com/pipe.jpg",
-        },
-      ],
-      payment_method: "Cash",
-      status: "On Hold",
-    },
-  ]);
+  >([]);
   const [loading, setLoading] = useState(true);
   const [expandedRequestId, setExpandedRequestId] = useState<number | null>(
     null
@@ -91,10 +83,11 @@ const PublicRequest = () => {
     profile_image: "",
   });
 
-  // Store current viewing request for modal access
-  const [currentViewingImages, setCurrentViewingImages] = useState<string[]>(
+  // Store current viewing media for modal access
+  const [currentViewingMedia, setCurrentViewingMedia] = useState<MediaItem[]>(
     []
   );
+  const videoRef = useRef<Video>(null);
 
   const { width: windowWidth, height: windowHeight } = Dimensions.get("window");
   const scrollViewRef = useRef<ScrollView>(null);
@@ -121,15 +114,68 @@ const PublicRequest = () => {
   }, []);
 
   useEffect(() => {
-    if (imageModalVisible && scrollViewRef.current) {
+    if (mediaModalVisible && scrollViewRef.current) {
       setTimeout(() => {
         scrollViewRef.current?.scrollTo({
-          x: windowWidth * selectedImage,
+          x: windowWidth * selectedMedia,
           animated: false,
         });
       }, 50);
     }
-  }, [imageModalVisible, selectedImage, windowWidth]);
+  }, [mediaModalVisible, selectedMedia, windowWidth]);
+
+  // Helper function to detect media type from URL or MIME type
+  const detectMediaType = (url: string, mimeType?: string): MediaType => {
+    if (mimeType) {
+      return mimeType.startsWith("video/") ? MediaType.VIDEO : MediaType.IMAGE;
+    }
+
+    // Check file extension if MIME type is not available
+    const videoExtensions = [
+      ".mp4",
+      ".mov",
+      ".avi",
+      ".wmv",
+      ".flv",
+      ".mkv",
+      ".webm",
+    ];
+    const lowerCaseUrl = url.toLowerCase();
+
+    return videoExtensions.some((ext) => lowerCaseUrl.endsWith(ext))
+      ? MediaType.VIDEO
+      : MediaType.IMAGE;
+  };
+
+  const deleteRequest = async (requestId: number) => {
+    try {
+      console.log(requestId);
+      const response = await apiClient.delete(`work/job-request/${requestId}`);
+      if (response.data.success) {
+        Alert.alert("request deleted successfully");
+        setRequestIds((prevIds) => prevIds.filter((id) => id !== requestId));
+      }
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        if (await refreshAccessToken()) {
+          await deleteRequest(requestId);
+        } else {
+          // need to login
+          router.push("/(auth)");
+        }
+      } else {
+        console.error(
+          "Error deleting request:",
+          err.response?.data?.message || err.message
+        );
+      }
+    }
+  };
+
+  const handleEditComment = (requestId: number) => {
+    // Navigate to comment editing page or show modal
+    console.log("Edit comment for request:", requestId);
+  };
 
   const fetchRequests = async () => {
     setLoading(true);
@@ -194,10 +240,10 @@ const PublicRequest = () => {
     } catch (err: any) {
       if (err.response?.status === 401) {
         if (await refreshAccessToken()) {
-          await fetchRequestsDetails(requestId, worker_id); // why we use like this the same function under it's selfe?
+          await fetchRequestsDetails(requestId, worker_id);
         } else {
           // need to login
-          router.push("/(auth)"); // we have to review this push or replace ?
+          router.push("/(auth)");
         }
       }
       console.error("Error fetching request details:", err.response?.data);
@@ -216,10 +262,16 @@ const PublicRequest = () => {
     setExpandedRequestId(expandedRequestId === id ? null : id);
   };
 
-  const handleOpenImageModal = (images: string[], initialIndex: number) => {
-    setCurrentViewingImages(images);
-    setSelectedImage(initialIndex);
-    setImageModalVisible(true);
+  const handleOpenMediaModal = (media: any[], initialIndex: number) => {
+    // Transform the media array to include media type
+    const mediaWithType: MediaItem[] = media.map((item) => ({
+      url: item.url,
+      type: detectMediaType(item.url, item.mime_type || item.type),
+    }));
+
+    setCurrentViewingMedia(mediaWithType);
+    setSelectedMedia(initialIndex);
+    setMediaModalVisible(true);
   };
 
   // Get status icon based on request status
@@ -259,7 +311,7 @@ const PublicRequest = () => {
       // Clear previous requests when fetching new ones
       setRequests([]);
       requestIds.forEach((id) => {
-        fetchRequestsDetails(id); // we have to add the functionnality of press
+        fetchRequestsDetails(id);
       });
     }
   }, [requestIds]);
@@ -439,32 +491,52 @@ const PublicRequest = () => {
         </View>
 
         <View className="mt-4">
-          <Text className="text-lg font-medium mb-2">Request Images:</Text>
+          <Text className="text-lg font-medium mb-2">Request Media:</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             className="mb-3"
           >
             {item.media && item.media.length > 0 ? (
-              item.media.map((img, idx) => (
-                <TouchableOpacity
-                  key={idx}
-                  onPress={() => {
-                    handleOpenImageModal(
-                      item.media.map((m) => m.url),
-                      idx
-                    );
-                  }}
-                  className="mr-2"
-                >
-                  <Image
-                    source={{ uri: img.url }}
-                    className="w-24 h-24 rounded"
-                  />
-                </TouchableOpacity>
-              ))
+              item.media.map((media, idx) => {
+                const mediaType = detectMediaType(media.url, media.type);
+                return (
+                  <TouchableOpacity
+                    key={idx}
+                    onPress={() => {
+                      handleOpenMediaModal(item.media, idx);
+                    }}
+                    className="mr-2 relative"
+                  >
+                    {mediaType === MediaType.VIDEO ? (
+                      <>
+                        <Video
+                          source={{ uri: media.url }}
+                          style={{ width: 96, height: 96, borderRadius: 4 }}
+                          resizeMode={"cover" as ResizeMode}
+                          shouldPlay={false}
+                          isLooping={false}
+                          useNativeControls={false}
+                        />
+                        <View className="absolute inset-0 items-center justify-center bg-black bg-opacity-30 rounded">
+                          <Ionicons
+                            name="play-circle"
+                            size={32}
+                            color="white"
+                          />
+                        </View>
+                      </>
+                    ) : (
+                      <Image
+                        source={{ uri: media.url }}
+                        className="w-24 h-24 rounded"
+                      />
+                    )}
+                  </TouchableOpacity>
+                );
+              })
             ) : (
-              <Text className="italic text-gray-500">No images available</Text>
+              <Text className="italic text-gray-500">No media available</Text>
             )}
           </ScrollView>
         </View>
@@ -478,7 +550,7 @@ const PublicRequest = () => {
           </TouchableOpacity>
           <TouchableOpacity
             className="bg-red-500 w-1/2 justify-center items-center py-2 rounded-r"
-            onPress={() => console.log("Cancel request")}
+            onPress={() => deleteRequest(item.id)}
           >
             <Text className="text-base text-white">Cancel</Text>
           </TouchableOpacity>
@@ -513,11 +585,11 @@ const PublicRequest = () => {
   // Render worker view - using WorkerPublicRequest interface
   const renderWorkerRequest = (item: WorkerPublicRequest) => {
     const isExpanded = expandedRequestId === item.id;
-
+  
     if (!isExpanded) {
       return renderWorkerCollapsedView(item);
     }
-
+  
     return (
       <View className="bg-white mt-3 mb-4 p-4 rounded-lg shadow">
         <TouchableOpacity
@@ -557,7 +629,7 @@ const PublicRequest = () => {
             </View>
           </View>
         </TouchableOpacity>
-
+  
         <View className="flex-row mb-3">
           <View className="flex-1">
             <Text className="text-lg font-medium">
@@ -591,7 +663,7 @@ const PublicRequest = () => {
             </TouchableOpacity>
           </View>
         </View>
-
+  
         <View className="pl-2">
           <Text className="text-base mb-1">
             <Text className="font-bold">Request Date: </Text>
@@ -629,84 +701,99 @@ const PublicRequest = () => {
             <Text className="text-green-500">{item.payment_method}</Text>
           </Text>
         </View>
-
+  
         <View className="mt-4">
-          <Text className="text-lg font-medium mb-2">Request Images:</Text>
+          <Text className="text-lg font-medium mb-2">Request Media:</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             className="mb-3"
           >
             {item.media && item.media.length > 0 ? (
-              item.media.map((img, idx) => (
-                <TouchableOpacity
-                  key={idx}
-                  onPress={() => {
-                    handleOpenImageModal(
-                      item.media.map((m) => m.url),
-                      idx
-                    );
-                  }}
-                  className="mr-2"
-                >
-                  <Image
-                    source={{ uri: img.url }}
-                    className="w-24 h-24 rounded"
-                  />
-                </TouchableOpacity>
-              ))
+              item.media.map((media, idx) => {
+                const mediaType = detectMediaType(media.url, media.type);
+                return (
+                  <TouchableOpacity
+                    key={idx}
+                    onPress={() => {
+                      handleOpenMediaModal(item.media, idx);
+                    }}
+                    className="mr-2 relative"
+                  >
+                    {mediaType === MediaType.VIDEO ? (
+                      <>
+                        <Video
+                          source={{ uri: media.url }}
+                          style={{ width: 96, height: 96, borderRadius: 4 }}
+                          resizeMode={"cover" as ResizeMode}
+                          shouldPlay={false}
+                          isLooping={false}
+                          useNativeControls={false}
+                        />
+                        <View className="absolute inset-0 items-center justify-center bg-black bg-opacity-30 rounded">
+                          <Ionicons
+                            name="play-circle"
+                            size={32}
+                            color="white"
+                          />
+                        </View>
+                      </>
+                    ) : (
+                      <Image
+                        source={{ uri: media.url }}
+                        className="w-24 h-24 rounded"
+                      />
+                    )}
+                  </TouchableOpacity>
+                );
+              })
             ) : (
-              <Text className="italic text-gray-500">No images available</Text>
+              <Text className="italic text-gray-500">No media available</Text>
             )}
           </ScrollView>
         </View>
-
+  
         {/* Action buttons based on status */}
         {item.status === RequestStatus.ACCEPTED && (
-          <TouchableOpacity
-            className="bg-blue-500 items-center justify-center py-3 mt-3 rounded"
-            onPress={() => console.log("Mark as completed")}
-          >
-            <Text className="text-base text-white">Mark as Completed</Text>
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity
+          className="bg-blue-500 items-center justify-center py-3 mt-3 rounded"
+          onPress={() => console.log("Mark as completed")}
+        >
+          <Text className="text-base text-white">Mark as Completed</Text>
+        </TouchableOpacity>
+      )}
 
         {/* For PENDING_CLIENT_VERIFICATION requests - Worker sees waiting status */}
         {item.status === RequestStatus.PENDING_CLIENT_VERIFICATION && (
-          <View className="bg-yellow-100 border border-yellow-400 items-center justify-center py-3 mt-3 rounded">
-            <Text className="text-base text-yellow-800">
-              Waiting for client confirmation
-            </Text>
-          </View>
-        )}
+        <View className="bg-yellow-100 border border-yellow-400 items-center justify-center py-3 mt-3 rounded">
+          <Text className="text-base text-yellow-800">
+            Waiting for client confirmation
+          </Text>
+        </View>
+      )}
+
 
         {/* For COMPLETED requests - Worker sees completed status */}
         {item.status === RequestStatus.COMPLETED && (
-          <View className="bg-green-100 border border-green-400 items-center justify-center py-3 mt-3 rounded">
-            <Text className="text-base text-green-800">
-              Job completed and verified by client
-            </Text>
-          </View>
-        )}
+        <View className="bg-green-100 border border-green-400 items-center justify-center py-3 mt-3 rounded">
+          <Text className="text-base text-green-800">
+            Job completed and verified by client
+          </Text>
+        </View>
+      )}
 
-        {/* Comments button */}
+        {/* ONLY show Edit Comment button for worker */}
         <TouchableOpacity
-          className="bg-green-600 items-center justify-center py-3 mt-3 rounded"
-          onPress={() => handleSelectRequest(item.id)}
-        >
-          <Text className="text-base text-white">View Comments</Text>
-        </TouchableOpacity>
-
-        {/* Delete button */}
-        <TouchableOpacity
-          className="bg-red-600 items-center justify-center py-3 mt-3 rounded"
-          onPress={() => console.log("Delete request")}
-        >
-          <Text className="text-base text-white">Delete</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
+        className="bg-blue-500 items-center justify-center py-3 mt-3 rounded"
+        onPress={() => handleEditComment(item.id)}
+      >
+        <Text className="text-base text-white">Edit Comment</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+       
+  ;
 
   return (
     <SafeAreaView className="flex-1 bg-gray-100">
@@ -738,17 +825,17 @@ const PublicRequest = () => {
           />
         )}
 
-        {/* Improved centered image modal */}
+        {/* Enhanced media modal that supports both images and videos */}
         <Modal
           animationType="fade"
           transparent={true}
-          visible={imageModalVisible}
-          onRequestClose={() => setImageModalVisible(false)}
+          visible={mediaModalVisible}
+          onRequestClose={() => setMediaModalVisible(false)}
         >
           <View className="flex-1 bg-black bg-opacity-95 justify-center items-center">
             <TouchableOpacity
               className="absolute top-10 right-5 z-10"
-              onPress={() => setImageModalVisible(false)}
+              onPress={() => setMediaModalVisible(false)}
             >
               <Ionicons name="close-circle" size={40} color="white" />
             </TouchableOpacity>
@@ -763,7 +850,7 @@ const PublicRequest = () => {
                   const newIndex = Math.round(
                     e.nativeEvent.contentOffset.x / windowWidth
                   );
-                  setSelectedImage(newIndex);
+                  setSelectedMedia(newIndex);
                 }}
                 className="flex-grow"
                 contentContainerStyle={{
@@ -771,9 +858,9 @@ const PublicRequest = () => {
                   justifyContent: "center",
                 }}
               >
-                {currentViewingImages?.map((imgUrl, idx) => (
+                {currentViewingMedia?.map((media, idx) => (
                   <View
-                    key={`image-container-${idx}`}
+                    key={`media-container-${idx}`}
                     style={{
                       width: windowWidth,
                       height: windowHeight * 0.6,
@@ -781,26 +868,40 @@ const PublicRequest = () => {
                       alignItems: "center",
                     }}
                   >
-                    <Image
-                      key={`image-${idx}`}
-                      source={{ uri: imgUrl }}
-                      style={{
-                        width: windowWidth * 0.9,
-                        height: windowHeight * 0.5,
-                      }}
-                      resizeMode="contain"
-                    />
+                    {media.type === MediaType.VIDEO ? (
+                      <Video
+                        ref={videoRef}
+                        source={{ uri: media.url }}
+                        style={{
+                          width: windowWidth * 0.9,
+                          height: windowHeight * 0.5,
+                        }}
+                        resizeMode={ResizeMode.CONTAIN}
+                        useNativeControls
+                        shouldPlay={selectedMedia === idx}
+                        isLooping={false}
+                      />
+                    ) : (
+                      <Image
+                        source={{ uri: media.url }}
+                        style={{
+                          width: windowWidth * 0.9,
+                          height: windowHeight * 0.5,
+                        }}
+                        resizeMode="contain"
+                      />
+                    )}
                   </View>
                 ))}
               </ScrollView>
             </View>
 
             <View className="flex-row mt-4 mb-12 items-center justify-center">
-              {currentViewingImages?.map((_, index) => (
+              {currentViewingMedia?.map((_, index) => (
                 <TouchableOpacity
                   key={`dot-${index}`}
                   onPress={() => {
-                    setSelectedImage(index);
+                    setSelectedMedia(index);
                     if (scrollViewRef.current) {
                       scrollViewRef.current.scrollTo({
                         x: windowWidth * index,
@@ -809,7 +910,7 @@ const PublicRequest = () => {
                     }
                   }}
                   className={`w-3 h-3 rounded-full mx-1 ${
-                    selectedImage === index ? "bg-white" : "bg-gray-500"
+                    selectedMedia === index ? "bg-white" : "bg-gray-500"
                   }`}
                 />
               ))}
@@ -817,7 +918,7 @@ const PublicRequest = () => {
 
             <View className="absolute bottom-10 flex-row justify-center w-full">
               <Text className="text-white text-center">
-                {selectedImage + 1} / {currentViewingImages?.length}
+                {selectedMedia + 1} / {currentViewingMedia?.length}
               </Text>
             </View>
           </View>

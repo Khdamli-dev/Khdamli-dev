@@ -28,6 +28,7 @@ import {
   WorkerPrivateRequest,
   ClientPrivateRequest,
 } from "../../../../Interfaces/Requestsinterfaces";
+import { ResizeMode, Video } from "expo-av";
 
 // Define the UserRole enum
 enum UserRole {
@@ -38,38 +39,42 @@ enum UserRole {
 // Define the RequestStatus enum
 enum RequestStatus {
   PENDING = "pending",
-  ACCEPTED = "accepted",
-  ON_HOLD = "on_hold",
+  ACCEPTED = "Accepted",
+  ON_HOLD = "On Hold",
   PENDING_CLIENT_VERIFICATION = "pending_client_verification",
-  COMPLETED = "completed",
-  CANCELLED = "cancelled",
-  REJECTED = "rejected",
+  COMPLETED = "Completed",
+  CANCELLED = "Cancelled",
+  REJECTED = "Rejected",
 }
 
+// Default placeholder image for missing profile images
+const defaultProfileImage = require("../../../../assets/images/images (1).jpg");
+
 const PrivateRequests = () => {
-  const [selectedImage, setSelectedImage] = useState(0);
-  const [imageModalVisible, setImageModalVisible] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState(0);
+  const [mediaModalVisible, setMediaModalVisible] = useState(false);
   const [userRole, setUserRole] = useState<UserRole>();
   const [requestIds, setRequestIds] = useState<number[]>([]);
   const [requests, setRequests] = useState<
     (WorkerPrivateRequest | ClientPrivateRequest)[]
   >([]);
   const [loading, setLoading] = useState(true);
-  const [expandedRequests, setExpandedRequests] = useState<{
-    [key: number]: boolean;
-  }>({});
+  const [expandedRequestId, setExpandedRequestId] = useState<number | null>(
+    null
+  );
   const [userData, setUserData] = useState<{
     username: string;
     profile_image: string;
   }>({ username: "", profile_image: "" });
 
-  // Store current viewing request for modal access
-  const [currentViewingImages, setCurrentViewingImages] = useState<string[]>(
-    []
-  );
+  // Store current viewing media for modal access
+  const [currentViewingMedia, setCurrentViewingMedia] = useState<
+    { url: string; type: string }[]
+  >([]);
 
   const { width: windowWidth, height: windowHeight } = Dimensions.get("window");
   const scrollViewRef = useRef<ScrollView>(null);
+  const videoRef = useRef<Video>(null);
 
   // Determine if user is client or worker and get user data
   useEffect(() => {
@@ -93,24 +98,21 @@ const PrivateRequests = () => {
   }, []);
 
   useEffect(() => {
-    if (imageModalVisible && scrollViewRef.current) {
+    if (mediaModalVisible && scrollViewRef.current) {
       setTimeout(() => {
         scrollViewRef.current?.scrollTo({
-          x: windowWidth * selectedImage,
+          x: windowWidth * selectedMedia,
           animated: false,
         });
       }, 50);
     }
-  }, [imageModalVisible, selectedImage, windowWidth]);
+  }, [mediaModalVisible, selectedMedia, windowWidth]);
 
-  const toggleRequestExpansion = (id: number) => {
-    setExpandedRequests((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
+  const toggleExpandRequest = (id: number) => {
+    setExpandedRequestId(expandedRequestId === id ? null : id);
   };
 
-  /*  const fetchRequests = async () => {
+  const fetchRequests = async () => {
     setLoading(true);
     try {
       const userData = await AsyncStorage.getItem("user");
@@ -186,19 +188,27 @@ const PrivateRequests = () => {
         Alert.alert("Error", "Failed to fetch request details");
       }
     }
-  }; */
-
-  const handleSelectRequest = (id: number) => {
-    router.push({
-      pathname: "/WorkerComments",
-      params: { id },
-    });
   };
 
-  const handleOpenImageModal = (images: string[], initialIndex: number) => {
-    setCurrentViewingImages(images);
-    setSelectedImage(initialIndex);
-    setImageModalVisible(true);
+  const handleOpenMediaModal = (media: any[], initialIndex: number) => {
+    // Transform media to include type
+    const mediaWithType = media.map((item) => {
+      // Simple check for video files - could be improved based on actual API response
+      const isVideo =
+        item.url.toLowerCase().includes(".mp4") ||
+        item.url.toLowerCase().includes(".mov") ||
+        item.url.toLowerCase().includes(".avi") ||
+        (item.type && item.type.includes("video"));
+
+      return {
+        url: item.url,
+        type: isVideo ? "video" : "image",
+      };
+    });
+
+    setCurrentViewingMedia(mediaWithType);
+    setSelectedMedia(initialIndex);
+    setMediaModalVisible(true);
   };
 
   // Get status icon based on request status
@@ -223,17 +233,25 @@ const PrivateRequests = () => {
     }
   };
 
+  // Truncate text to specified length
+  const truncateText = (text: string | undefined, maxLength: number) => {
+    if (!text) return "";
+    return text.length > maxLength
+      ? text.substring(0, maxLength) + "..."
+      : text;
+  };
+
   // Handle accepting request
-  const handleAcceptRequest = async (id: number) => {
+  const handleAcceptRequest = async (requestId: number) => {
     try {
-      await apiClient.put(`/work/job-request/${id}/state`, {
-        state: RequestStatus.ACCEPTED,
+      await apiClient.put(`/work/job-request/status/${requestId}`, {
+        status: 1,
       });
 
       // Update local state
       setRequests(
         requests.map((request) =>
-          request.id === id
+          request.id === requestId
             ? { ...request, status: RequestStatus.ACCEPTED }
             : request
         )
@@ -241,31 +259,60 @@ const PrivateRequests = () => {
 
       Alert.alert("Success", "Request accepted successfully");
     } catch (err: any) {
+      if (err.response?.status === 401) {
+        if (await refreshAccessToken()) {
+          await handleAcceptRequest(requestId);
+        } else {
+          router.push("/(auth)");
+        }} else {
+
       console.error("Failed to accept request:", err);
       Alert.alert("Error", "Failed to accept request");
-    }
+    }}
   };
 
   // Handle rejecting request
-  const handleRejectRequest = async (id: number) => {
+  const handleRejectRequest = async (requestId: number) => {
     try {
-      await apiClient.put(`/work/job-request/${id}/state`, {
-        state: RequestStatus.REJECTED,
+      await apiClient.put(`/work/job-request/status/${requestId}`, {
+        status: 2,
       });
 
       // Update local state
-      setRequests(
-        requests.map((request) =>
-          request.id === id
-            ? { ...request, status: RequestStatus.REJECTED }
-            : request
-        )
-      );
+      setRequestIds((prev) => prev.filter((id) => id != requestId));
 
       Alert.alert("Success", "Request rejected successfully");
     } catch (err: any) {
+      if (err.response?.status === 401) {
+        if (await refreshAccessToken()) {
+          await handleRejectRequest(requestId);
+        } else {
+          router.push("/(auth)");
+        }} else {
       console.error("Failed to reject request:", err);
       Alert.alert("Error", "Failed to reject request");
+    }}
+  };
+
+  // Handle deleting request
+  const handleDeleteRequest = async (id: number) => {
+    try {
+      const response = await apiClient.delete(`/work/job-request/${id}`);
+      if (response.data.success) {
+        Alert.alert("Success", "Request deleted successfully");
+        setRequestIds((prevIds) => prevIds.filter((reqId) => reqId !== id));
+      }
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        if (await refreshAccessToken()) {
+          await handleDeleteRequest(id);
+        } else {
+          router.push("/(auth)");
+        }
+      } else {
+        console.error("Failed to delete request:", err);
+        Alert.alert("Error", "Failed to delete request");
+      }
     }
   };
 
@@ -297,23 +344,24 @@ const PrivateRequests = () => {
   };
 
   // Handle confirming completion
-  const handleConfirmCompletion = async (id: number) => {
+  const handleConfirmCompletion = async (requestId: number) => {
     try {
-      await apiClient.put(`/work/job-request/${id}/state`, {
-        state: RequestStatus.COMPLETED,
+      await apiClient.put(`/work/job-request/status/${requestId}`, {
+        status: 4,
       });
 
       // Update local state
-      setRequests(
-        requests.map((request) =>
-          request.id === id
-            ? { ...request, status: RequestStatus.COMPLETED }
-            : request
-        )
-      );
+      setRequestIds((prevIds) => prevIds.filter((id) => id !== requestId));
 
       Alert.alert("Success", "Request confirmed as completed");
     } catch (err: any) {
+      if (err.response?.status === 401) {
+        if (await refreshAccessToken()) {
+          await handleConfirmCompletion(requestId);
+        } else {
+          router.push("/(auth)");
+        }
+      }
       console.error("Failed to confirm completion:", err);
       Alert.alert("Error", "Failed to confirm completion");
     }
@@ -368,115 +416,153 @@ const PrivateRequests = () => {
     }
   };
 
-  /*  useEffect(() => {
+  useEffect(() => {
     fetchRequests();
-  }, [userRole]); */
+  }, [userRole]);
 
-  /* useEffect(() => {
-    if (requestIds.length > 0) {
+  useEffect(() => {
+    if (requestIds.length >= 0) {
       // Clear previous requests when fetching new ones
       setRequests([]);
       requestIds.forEach((id) => {
         fetchRequestsDetails(id);
       });
     }
-  }, [requestIds]); */
+  }, [requestIds]);
 
-  // Render collapsed client request
-  const renderCollapsedClientRequest = (item: ClientPrivateRequest) => {
+  // Render client collapsed view
+  const renderClientCollapsedView = (item: ClientPrivateRequest) => {
     return (
       <TouchableOpacity
-        onPress={() => toggleRequestExpansion(item.id)}
-        className="bg-white mt-2 p-4 mb-2 rounded-lg shadow flex-row items-center"
+        onPress={() => toggleExpandRequest(item.id)}
+        className="bg-white mt-2 p-4 mb-4 rounded-lg shadow"
       >
-        <Image
-          source={{ uri: item.worker_profile_image }}
-          style={{ width: 50, height: 50 }}
-          className="rounded-full mr-3"
-        />
-        <View className="flex-1">
-          <Text className="text-lg font-medium">
-            {item.worker_username || "Worker"}
-          </Text>
-          <View className="flex-row items-center">
-            {getStatusIcon(item.status)}
-            <Text className="ml-1 text-gray-600 capitalize">{item.status}</Text>
-          </View>
-          <Text numberOfLines={1} className="text-gray-600 mt-1">
-            {item.description || "No description available"}
-          </Text>
-        </View>
-        <AntDesign name="down" size={24} color="gray" />
-      </TouchableOpacity>
-    );
-  };
-
-  // Render collapsed worker request
-  const renderCollapsedWorkerRequest = (item: WorkerPrivateRequest) => {
-    return (
-      <TouchableOpacity
-        onPress={() => toggleRequestExpansion(item.id)}
-        className="bg-white mt-2 p-4 mb-2 rounded-lg shadow flex-row items-center"
-      >
-        <Image
-          source={{ uri: item.client_profile_image }}
-          style={{ width: 50, height: 50 }}
-          className="rounded-full mr-3"
-        />
-        <View className="flex-1">
-          <Text className="text-lg font-medium">
-            {item.client_username || "Client"}
-          </Text>
-          <View className="flex-row items-center">
-            {getStatusIcon(item.status)}
-            <Text className="ml-1 text-gray-600 capitalize">
-              {item.status === RequestStatus.ON_HOLD
-                ? "On Hold"
-                : item.status === RequestStatus.PENDING_CLIENT_VERIFICATION
-                  ? "Pending Verification"
-                  : item.status === RequestStatus.COMPLETED
-                    ? "Completed"
-                    : item.status === RequestStatus.ACCEPTED
-                      ? "Accepted"
-                      : item.status || "On Hold"}
-            </Text>
-          </View>
-          <Text numberOfLines={1} className="text-gray-600 mt-1">
-            {item.description || "No description available"}
-          </Text>
-        </View>
-        <AntDesign name="down" size={24} color="gray" />
-      </TouchableOpacity>
-    );
-  };
-
-  // Render expanded client view - using ClientPrivateRequest interface
-  const renderExpandedClientRequest = (item: ClientPrivateRequest) => {
-    return (
-      <View className="bg-white mt-2 p-4 mb-4 rounded-lg shadow">
-        <TouchableOpacity
-          onPress={() => toggleRequestExpansion(item.id)}
-          className="flex-row items-center mb-3"
-        >
-          <View className="items-center justify-center mr-4">
+        <View className="flex-row justify-between items-center">
+          <View className="flex-row items-center flex-1">
             <Image
-              source={{ uri: item.worker_profile_image }}
-              style={{ width: 50, height: 50 }}
-              className="rounded-full"
+              source={
+                item.worker_profile_image
+                  ? { uri: item.worker_profile_image }
+                  : defaultProfileImage
+              }
+              className="w-12 h-12 rounded-full mr-3"
             />
-          </View>
-          <View className="flex-1">
-            <Text className="text-lg font-medium">
-              {item.worker_username || "Worker"}
-            </Text>
-            <View className="flex-row items-center mt-1">
-              {getStatusIcon(item.status)}
-              <Text className="ml-1 text-gray-600 capitalize">
-                {item.status}
+            <View className="flex-1">
+              <Text className="font-medium">
+                {item.worker_username || "Worker"}
+              </Text>
+              <Text numberOfLines={1} className="text-gray-500">
+                {truncateText(item.description, 40)}
               </Text>
             </View>
           </View>
-          <AntDesign name="up" size={24} color="gray" />
+          <View className="flex-row items-center">
+            {getStatusIcon(item.status)}
+            <Text className="ml-1 text-gray-600 text-sm capitalize">
+              {item.status}
+            </Text>
+            <MaterialIcons
+              name={
+                expandedRequestId === item.id ? "expand-less" : "expand-more"
+              }
+              size={24}
+              color="#888"
+              style={{ marginLeft: 5 }}
+            />
+          </View>
+          <Text numberOfLines={1} className="text-gray-600 mt-1">
+            {item.description || "No description available"}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  // Render worker collapsed view
+  const renderWorkerCollapsedView = (item: WorkerPrivateRequest) => {
+    return (
+      <TouchableOpacity
+        onPress={() => toggleExpandRequest(item.id)}
+        className="bg-white mt-2 p-4 mb-4 rounded-lg shadow"
+      >
+        <View className="flex-row justify-between items-center">
+          <View className="flex-row items-center flex-1">
+            <Image
+              source={
+                item.client_profile_image
+                  ? { uri: item.client_profile_image }
+                  : defaultProfileImage
+              }
+              className="w-12 h-12 rounded-full mr-3"
+            />
+            <View className="flex-1">
+              <Text className="font-medium">
+                {item.client_username || "Client"}
+              </Text>
+              <Text numberOfLines={1} className="text-gray-500">
+                {truncateText(item.description, 40)}
+              </Text>
+            </View>
+          </View>
+          <View className="flex-row items-center">
+            {getStatusIcon(item.status)}
+            <Text className="ml-1 text-gray-600 text-sm capitalize">
+              {item.status}
+            </Text>
+            <MaterialIcons
+              name={
+                expandedRequestId === item.id ? "expand-less" : "expand-more"
+              }
+              size={24}
+              color="#888"
+              style={{ marginLeft: 5 }}
+            />
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  // Render client expanded view - using ClientPrivateRequest interface
+  const renderClientExpandedView = (item: ClientPrivateRequest) => {
+    return (
+      <View className="bg-white mt-2 p-4 mb-4 rounded-lg shadow">
+        <TouchableOpacity
+          onPress={() => toggleExpandRequest(item.id)}
+          className="mb-3"
+        >
+          <View className="flex-row justify-between items-center">
+            <View className="flex-row items-center">
+              <Image
+                source={
+                  item.worker_profile_image
+                    ? { uri: item.worker_profile_image }
+                    : defaultProfileImage
+                }
+                className="w-12 h-12 rounded-full mr-3"
+              />
+              <View>
+                <Text className="font-medium">
+                  {item.worker_username || "Worker"}
+                </Text>
+                <Text numberOfLines={1} className="text-gray-500">
+                  {truncateText(item.description, 40)}
+                </Text>
+              </View>
+            </View>
+            <View className="flex-row items-center">
+              {getStatusIcon(item.status)}
+              <Text className="ml-1 text-gray-600 text-sm capitalize">
+                {item.status}
+              </Text>
+              <MaterialIcons
+                name="expand-less"
+                size={24}
+                color="#888"
+                style={{ marginLeft: 5 }}
+              />
+            </View>
+          </View>
         </TouchableOpacity>
 
         <View className="flex-row justify-end mb-3">
@@ -514,6 +600,12 @@ const PrivateRequests = () => {
               <Text className="text-green-500">{item.category}</Text>
             </Text>
             <Text className="text-base mb-1">
+              <Text className="font-bold">About Service: </Text>
+              <Text className="text-green-500">
+                {item.description || "No description available"}
+              </Text>
+            </Text>
+            <Text className="text-base mb-1">
               <Text className="font-bold">Payment Method: </Text>
               <Text className="text-green-500">{item.payment_method}</Text>
             </Text>
@@ -521,54 +613,65 @@ const PrivateRequests = () => {
         </View>
 
         <View className="mt-4">
-          <Text className="text-lg font-medium mb-2">Request Images:</Text>
+          <Text className="text-lg font-medium mb-2">Request Media:</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             className="mb-3"
           >
             {item.media && item.media.length > 0 ? (
-              item.media.map((img, idx) => (
-                <TouchableOpacity
-                  key={idx}
-                  onPress={() => {
-                    handleOpenImageModal(
-                      item.media.map((m) => m.url),
-                      idx
-                    );
-                  }}
-                  className="mr-2"
-                >
-                  <Image
-                    source={{ uri: img.url }}
-                    className="w-24 h-24 rounded"
-                  />
-                </TouchableOpacity>
-              ))
+              item.media.map((media, idx) => {
+                const isVideo =
+                  media.url.toLowerCase().includes(".mp4") ||
+                  media.url.toLowerCase().includes(".mov") ||
+                  media.url.toLowerCase().includes(".avi") ||
+                  (media.type && media.type.includes("video"));
+
+                return (
+                  <TouchableOpacity
+                    key={idx}
+                    onPress={() => {
+                      handleOpenMediaModal(item.media, idx);
+                    }}
+                    className="mr-2 relative"
+                  >
+                    {isVideo ? (
+                      <View className="w-24 h-24 rounded bg-black justify-center items-center">
+                        <Ionicons name="play-circle" size={40} color="white" />
+                      </View>
+                    ) : (
+                      <Image
+                        source={{ uri: media.url }}
+                        className="w-24 h-24 rounded"
+                      />
+                    )}
+                  </TouchableOpacity>
+                );
+              })
             ) : (
-              <Text className="italic text-gray-500">No images available</Text>
+              <Text className="italic text-gray-500">No media available</Text>
             )}
           </ScrollView>
         </View>
 
-        <View className="flex-row py-2 mt-2">
+        {/* Action buttons based on status */}
+        {item.status === RequestStatus.ON_HOLD && (
           <TouchableOpacity
-            onPress={() => handleSelectRequest(item.id)}
-            className="bg-green-500 w-1/2 justify-center items-center py-2 rounded-l"
+            className="bg-red-500 w-full items-center justify-center py-3 mt-3 rounded"
+            onPress={() => handleDeleteRequest(item.id)}
           >
-            <Text className="text-base text-white">Comments</Text>
+            <Text className="text-base text-white">Delete Request</Text>
           </TouchableOpacity>
+        )}
 
-          {item.status === RequestStatus.PENDING ||
-          item.status === RequestStatus.ON_HOLD ? (
-            <TouchableOpacity
-              className="bg-red-500 w-1/2 justify-center items-center py-2 rounded-r"
-              onPress={() => handleCancelRequest(item.id)}
-            >
-              <Text className="text-base text-white">Cancel</Text>
-            </TouchableOpacity>
-          ) : null}
-        </View>
+        {item.status === RequestStatus.ACCEPTED && (
+          <TouchableOpacity
+            className="bg-green-500 w-full items-center justify-center py-3 mt-3 rounded"
+            onPress={() => handleConfirmCompletion(item.id)}
+          >
+            <Text className="text-base text-white">Declare Completed</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Client verification section - when job is marked as completed by worker */}
         {item.status === RequestStatus.PENDING_CLIENT_VERIFICATION && (
@@ -596,41 +699,46 @@ const PrivateRequests = () => {
     );
   };
 
-  // Render expanded worker view - using WorkerPrivateRequest interface
-  const renderExpandedWorkerRequest = (item: WorkerPrivateRequest) => {
+  // Render worker expanded view - using WorkerPrivateRequest interface
+  const renderWorkerExpandedView = (item: WorkerPrivateRequest) => {
     return (
       <View className="bg-white mt-2 p-4 mb-4 rounded-lg shadow">
         <TouchableOpacity
-          onPress={() => toggleRequestExpansion(item.id)}
-          className="flex-row items-center mb-3"
+          onPress={() => toggleExpandRequest(item.id)}
+          className="mb-3"
         >
-          <View className="items-center justify-center mr-4">
-            <Image
-              source={{ uri: item.client_profile_image }}
-              style={{ width: 50, height: 50 }}
-              className="rounded-full"
-            />
-          </View>
-          <View className="flex-1">
-            <Text className="text-lg font-medium">
-              {item.client_username || "Client"}
-            </Text>
-            <View className="flex-row items-center mt-1">
+          <View className="flex-row justify-between items-center">
+            <View className="flex-row items-center">
+              <Image
+                source={
+                  item.client_profile_image
+                    ? { uri: item.client_profile_image }
+                    : defaultProfileImage
+                }
+                className="w-12 h-12 rounded-full mr-3"
+              />
+              <View>
+                <Text className="font-medium">
+                  {item.client_username || "Client"}
+                </Text>
+                <Text numberOfLines={1} className="text-gray-500">
+                  {truncateText(item.description, 40)}
+                </Text>
+              </View>
+            </View>
+            <View className="flex-row items-center">
               {getStatusIcon(item.status)}
-              <Text className="ml-1 text-gray-600 capitalize">
-                {item.status === RequestStatus.ON_HOLD
-                  ? "On Hold"
-                  : item.status === RequestStatus.PENDING_CLIENT_VERIFICATION
-                    ? "Pending Verification"
-                    : item.status === RequestStatus.COMPLETED
-                      ? "Completed"
-                      : item.status === RequestStatus.ACCEPTED
-                        ? "Accepted"
-                        : item.status || "On Hold"}
+              <Text className="ml-1 text-gray-600 text-sm capitalize">
+                {item.status}
               </Text>
+              <MaterialIcons
+                name="expand-less"
+                size={24}
+                color="#888"
+                style={{ marginLeft: 5 }}
+              />
             </View>
           </View>
-          <AntDesign name="up" size={24} color="gray" />
         </TouchableOpacity>
 
         <View className="flex-row justify-end mb-3">
@@ -673,32 +781,43 @@ const PrivateRequests = () => {
         </View>
 
         <View className="mt-4">
-          <Text className="text-lg font-medium mb-2">Request Images:</Text>
+          <Text className="text-lg font-medium mb-2">Request Media:</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             className="mb-3"
           >
             {item.media && item.media.length > 0 ? (
-              item.media.map((img, idx) => (
-                <TouchableOpacity
-                  key={idx}
-                  onPress={() => {
-                    handleOpenImageModal(
-                      item.media.map((m) => m.url),
-                      idx
-                    );
-                  }}
-                  className="mr-2"
-                >
-                  <Image
-                    source={{ uri: img.url }}
-                    className="w-24 h-24 rounded"
-                  />
-                </TouchableOpacity>
-              ))
+              item.media.map((media, idx) => {
+                const isVideo =
+                  media.url.toLowerCase().includes(".mp4") ||
+                  media.url.toLowerCase().includes(".mov") ||
+                  media.url.toLowerCase().includes(".avi") ||
+                  (media.type && media.type.includes("video"));
+
+                return (
+                  <TouchableOpacity
+                    key={idx}
+                    onPress={() => {
+                      handleOpenMediaModal(item.media, idx);
+                    }}
+                    className="mr-2 relative"
+                  >
+                    {isVideo ? (
+                      <View className="w-24 h-24 rounded bg-black justify-center items-center">
+                        <Ionicons name="play-circle" size={40} color="white" />
+                      </View>
+                    ) : (
+                      <Image
+                        source={{ uri: media.url }}
+                        className="w-24 h-24 rounded"
+                      />
+                    )}
+                  </TouchableOpacity>
+                );
+              })
             ) : (
-              <Text className="italic text-gray-500">No images available</Text>
+              <Text className="italic text-gray-500">No media available</Text>
             )}
           </ScrollView>
         </View>
@@ -721,15 +840,6 @@ const PrivateRequests = () => {
           </View>
         )}
 
-        {item.status === RequestStatus.ACCEPTED && (
-          <TouchableOpacity
-            className="bg-blue-500 items-center justify-center py-3 mt-3 rounded"
-            onPress={() => handleMarkCompleted(item.id)}
-          >
-            <Text className="text-base text-white">Mark as Completed</Text>
-          </TouchableOpacity>
-        )}
-
         {/* For PENDING_CLIENT_VERIFICATION requests - Worker sees waiting status */}
         {item.status === RequestStatus.PENDING_CLIENT_VERIFICATION && (
           <View className="bg-yellow-100 border border-yellow-400 items-center justify-center py-3 mt-3 rounded">
@@ -747,30 +857,22 @@ const PrivateRequests = () => {
             </Text>
           </View>
         )}
-
-        {/* Comments button */}
-        <TouchableOpacity
-          className="bg-green-600 items-center justify-center py-3 mt-3 rounded"
-          onPress={() => handleSelectRequest(item.id)}
-        >
-          <Text className="text-base text-white">View Comments</Text>
-        </TouchableOpacity>
       </View>
     );
   };
 
   // Main render for item
   const renderItem = ({ item }: { item: any }) => {
-    const isExpanded = expandedRequests[item.id] || false;
+    const isExpanded = expandedRequestId === item.id;
 
     if (userRole === UserRole.CLIENT) {
       return isExpanded
-        ? renderExpandedClientRequest(item as ClientPrivateRequest)
-        : renderCollapsedClientRequest(item as ClientPrivateRequest);
+        ? renderClientExpandedView(item as ClientPrivateRequest)
+        : renderClientCollapsedView(item as ClientPrivateRequest);
     } else {
       return isExpanded
-        ? renderExpandedWorkerRequest(item as WorkerPrivateRequest)
-        : renderCollapsedWorkerRequest(item as WorkerPrivateRequest);
+        ? renderWorkerExpandedView(item as WorkerPrivateRequest)
+        : renderWorkerCollapsedView(item as WorkerPrivateRequest);
     }
   };
 
@@ -800,22 +902,22 @@ const PrivateRequests = () => {
           />
         )}
 
-        {/* Improved image modal with better centering */}
+        {/* Media modal with better centering - Updated to handle both images and videos */}
         <Modal
           animationType="slide"
           transparent={true}
-          visible={imageModalVisible}
-          onRequestClose={() => setImageModalVisible(false)}
+          visible={mediaModalVisible}
+          onRequestClose={() => setMediaModalVisible(false)}
         >
           <View className="flex-1 bg-black bg-opacity-90 justify-center items-center">
             <TouchableOpacity
               className="absolute top-10 right-5 z-10"
-              onPress={() => setImageModalVisible(false)}
+              onPress={() => setMediaModalVisible(false)}
             >
               <Ionicons name="close-circle" size={40} color="white" />
             </TouchableOpacity>
 
-            {/* Centered scrollable image view */}
+            {/* Centered scrollable media view */}
             <View
               style={{
                 height: windowHeight * 0.7,
@@ -833,44 +935,58 @@ const PrivateRequests = () => {
                   const newIndex = Math.round(
                     e.nativeEvent.contentOffset.x / windowWidth
                   );
-                  setSelectedImage(newIndex);
+                  setSelectedMedia(newIndex);
                 }}
                 contentContainerStyle={{
                   alignItems: "center",
                   justifyContent: "center",
                 }}
               >
-                {currentViewingImages?.map((imgUrl, idx) => (
+                {currentViewingMedia?.map((media, idx) => (
                   <View
-                    key={`image-container-${idx}`}
+                    key={`media-container-${idx}`}
                     style={{
                       width: windowWidth,
                       justifyContent: "center",
                       alignItems: "center",
                     }}
                   >
-                    <Image
-                      key={`image-${idx}`}
-                      source={{ uri: imgUrl }}
-                      style={{
-                        width: windowWidth * 0.85,
-                        height: windowHeight * 0.6,
-                        borderRadius: 8,
-                      }}
-                      resizeMode="contain"
-                    />
+                    {media.type === "video" ? (
+                      <Video
+                        ref={idx === selectedMedia ? videoRef : null}
+                        source={{ uri: media.url }}
+                        useNativeControls
+                        resizeMode={"contain" as ResizeMode}
+                        isLooping
+                        style={{
+                          width: windowWidth * 0.85,
+                          height: windowHeight * 0.6,
+                          borderRadius: 8,
+                        }}
+                      />
+                    ) : (
+                      <Image
+                        source={{ uri: media.url }}
+                        style={{
+                          width: windowWidth * 0.85,
+                          height: windowHeight * 0.6,
+                          borderRadius: 8,
+                        }}
+                        resizeMode="contain"
+                      />
+                    )}
                   </View>
                 ))}
               </ScrollView>
             </View>
 
-            {/* Image pagination indicators */}
+            {/* Media pagination indicators */}
             <View className="flex-row mt-4">
-              {currentViewingImages?.map((_, index) => (
+              {currentViewingMedia?.map((_, index) => (
                 <TouchableOpacity
                   key={`dot-${index}`}
                   onPress={() => {
-                    setSelectedImage(index);
+                    setSelectedMedia(index);
                     if (scrollViewRef.current) {
                       scrollViewRef.current.scrollTo({
                         x: windowWidth * index,
@@ -882,7 +998,7 @@ const PrivateRequests = () => {
                     width: 10,
                     height: 10,
                     borderRadius: 5,
-                    backgroundColor: selectedImage === index ? "white" : "gray",
+                    backgroundColor: selectedMedia === index ? "white" : "gray",
                     marginHorizontal: 4,
                   }}
                 />

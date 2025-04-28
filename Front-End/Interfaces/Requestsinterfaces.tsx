@@ -1,5 +1,5 @@
 interface WorkerPrivateRequest {
-  id: number;
+  id : number;
   client_username: string;
   category: string;
   media: {
@@ -16,15 +16,15 @@ interface WorkerPrivateRequest {
   description: string;
   payment_method: string;
   status: string;
-}
+};
 interface ClientPrivateRequest {
-  id: number;
+  id : number;
   status: string;
   worker_username: string;
   worker_profile_image: string;
   sent_date: string;
   category: string;
-  description: string;
+  description : string;
   media: {
     type: string;
     url: string;
@@ -35,9 +35,9 @@ interface ClientPrivateRequest {
     country: string;
   };
   payment_method: string;
-}
+};
 interface WorkerPublicRequest {
-  id: number;
+  id : number;
   category: string;
   client_username: string;
   client_profile_image: string;
@@ -56,9 +56,9 @@ interface WorkerPublicRequest {
   }[];
   payment_method: string;
   status: string;
-}
+};
 interface ClientPublicRequest {
-  id: number;
+  id : number;
   category: string;
   location: {
     city: string;
@@ -74,10 +74,10 @@ interface ClientPublicRequest {
   }[];
   payment_method: string;
   status: string;
-}
+};
 export {
-  WorkerPrivateRequest,
-  WorkerPublicRequest,
-  ClientPrivateRequest,
-  ClientPublicRequest,
+  WorkerPrivateRequest , 
+  WorkerPublicRequest ,
+  ClientPrivateRequest ,
+  ClientPublicRequest
 };
