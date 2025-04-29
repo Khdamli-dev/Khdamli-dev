@@ -28,6 +28,7 @@ import {
   WorkerPrivateRequest,
   ClientPrivateRequest,
 } from "../../../../Interfaces/Requestsinterfaces";
+import { formatDateTime, timeAgo } from "../SomeStandarFunctions";
 import { ResizeMode, Video } from "expo-av";
 
 // Define the UserRole enum
@@ -145,6 +146,13 @@ const PrivateRequests = () => {
       setLoading(false);
     }
   };
+
+  /*  const fetch_request_message = async (requestId: number) => {
+    try {
+      const response = apiClient.get(`/work/job-request/${requestId}/messages`);
+      const result = (await response).data.messages;
+    } catch (err: any) {}
+  }; */
 
   const fetchRequestsDetails = async (requestId: number) => {
     try {
@@ -264,11 +272,12 @@ const PrivateRequests = () => {
           await handleAcceptRequest(requestId);
         } else {
           router.push("/(auth)");
-        }} else {
-
-      console.error("Failed to accept request:", err);
-      Alert.alert("Error", "Failed to accept request");
-    }}
+        }
+      } else {
+        console.error("Failed to accept request:", err);
+        Alert.alert("Error", "Failed to accept request");
+      }
+    }
   };
 
   // Handle rejecting request
@@ -288,10 +297,12 @@ const PrivateRequests = () => {
           await handleRejectRequest(requestId);
         } else {
           router.push("/(auth)");
-        }} else {
-      console.error("Failed to reject request:", err);
-      Alert.alert("Error", "Failed to reject request");
-    }}
+        }
+      } else {
+        console.error("Failed to reject request:", err);
+        Alert.alert("Error", "Failed to reject request");
+      }
+    }
   };
 
   // Handle deleting request
@@ -435,44 +446,51 @@ const PrivateRequests = () => {
     return (
       <TouchableOpacity
         onPress={() => toggleExpandRequest(item.id)}
-        className="bg-white mt-2 p-4 mb-4 rounded-lg shadow"
+        className="bg-white mt-3 p-4 rounded-lg shadow-md border border-gray-100"
       >
-        <View className="flex-row justify-between items-center">
-          <View className="flex-row items-center flex-1">
-            <Image
-              source={
-                item.worker_profile_image
-                  ? { uri: item.worker_profile_image }
-                  : defaultProfileImage
-              }
-              className="w-12 h-12 rounded-full mr-3"
-            />
-            <View className="flex-1">
-              <Text className="font-medium">
-                {item.worker_username || "Worker"}
-              </Text>
-              <Text numberOfLines={1} className="text-gray-500">
-                {truncateText(item.description, 40)}
+        <View className="flex-row">
+          {/* Left: Profile image */}
+          <Image
+            source={
+              item.worker_profile_image
+                ? { uri: item.worker_profile_image }
+                : defaultProfileImage
+            }
+            className="w-12 h-12 rounded-full"
+          />
+
+          {/* Middle: User info and description */}
+          <View className="flex-1 ml-3 mr-2 justify-center">
+            <Text className="font-bold text-base">
+              {item.worker_username || "Worker"}
+            </Text>
+            <Text numberOfLines={1} className="text-gray-600 text-sm mt-1">
+              {truncateText(item.description, 50)}
+            </Text>
+          </View>
+
+          {/* Right: Status and time ago in column */}
+          <View className="items-end justify-center">
+            <View className="flex-row items-center mb-1">
+              {getStatusIcon(item.status)}
+              <Text className="ml-1 text-gray-700 text-xs font-medium capitalize">
+                {item.status}
               </Text>
             </View>
-          </View>
-          <View className="flex-row items-center">
-            {getStatusIcon(item.status)}
-            <Text className="ml-1 text-gray-600 text-sm capitalize">
-              {item.status}
+
+            <Text className="text-gray-500 text-xs">
+              {timeAgo(item.sent_date)}
             </Text>
+
             <MaterialIcons
               name={
                 expandedRequestId === item.id ? "expand-less" : "expand-more"
               }
-              size={24}
+              size={20}
               color="#888"
-              style={{ marginLeft: 5 }}
+              style={{ marginTop: 2 }}
             />
           </View>
-          <Text numberOfLines={1} className="text-gray-600 mt-1">
-            {item.description || "No description available"}
-          </Text>
         </View>
       </TouchableOpacity>
     );
@@ -545,9 +563,6 @@ const PrivateRequests = () => {
                 <Text className="font-medium">
                   {item.worker_username || "Worker"}
                 </Text>
-                <Text numberOfLines={1} className="text-gray-500">
-                  {truncateText(item.description, 40)}
-                </Text>
               </View>
             </View>
             <View className="flex-row items-center">
@@ -585,8 +600,10 @@ const PrivateRequests = () => {
 
           <View className="pl-2">
             <Text className="text-base mb-1">
-              <Text className="font-bold">Date Request: </Text>
-              <Text className="text-green-500">{item.sent_date}</Text>
+              <Text className="font-bold">Date Request:</Text>
+              <Text className="text-green-500">
+                {formatDateTime(item.sent_date)}
+              </Text>
             </Text>
             <Text className="text-base mb-1">
               <Text className="font-bold">Address: </Text>
@@ -604,10 +621,6 @@ const PrivateRequests = () => {
               <Text className="text-green-500">
                 {item.description || "No description available"}
               </Text>
-            </Text>
-            <Text className="text-base mb-1">
-              <Text className="font-bold">Payment Method: </Text>
-              <Text className="text-green-500">{item.payment_method}</Text>
             </Text>
           </View>
         </View>
@@ -757,7 +770,9 @@ const PrivateRequests = () => {
         <View className="pl-2">
           <Text className="text-base mb-1">
             <Text className="font-bold">Request Date: </Text>
-            <Text className="text-green-500">{item.sent_date}</Text>
+            <Text className="text-green-500">
+              {formatDateTime(item.sent_date)}
+            </Text>
           </Text>
           <Text className="text-base mb-1">
             <Text className="font-bold">Work Address: </Text>

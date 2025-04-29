@@ -25,7 +25,7 @@ request.post("/", checkRole([clientRoleId]), validateJobRequest, createRequest);
 
 request.get("/:requestId", getRequestDetails);
 
-request.delete("/:requestId", checkRole([clientRoleId]), deleteRequest);
+request.delete("/:requestId",deleteRequest);
 
 request.put("/:requestId", checkRole([clientRoleId]), modifyRequest);
 
@@ -45,8 +45,6 @@ request.get("/:requestId/messages", getRequestMessages);
 
 request.get("/", getRequests);
 
-
-request.get("/public/:id",getPublicRequests)
+request.get("/public/:id", getPublicRequests);
 
 export default request;
-
