@@ -5,11 +5,11 @@ import dotenv from 'dotenv';
 import pool from '../../database/dbConnection';
 
 dotenv.config();
-const io: Server = getIo();
 
 export const sendPrivateRequest = async (
   request: JobRequest,
 ): Promise<void> => {
+  const io: Server = getIo();
   const { type, worker } = request;
   // case of public request
   const privateRequestId: string | undefined = process.env.PRIVATE_REQUEST_ID;
@@ -22,6 +22,7 @@ export const sendPrivateRequest = async (
 };
 
 export const changeRequestStatus = async (request: JobRequest): Promise<void> => {
+  const io: Server = getIo();
   const { type } = request;
   // determine the destination
   let destination: number | null;
