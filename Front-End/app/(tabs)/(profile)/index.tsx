@@ -32,6 +32,7 @@ import { NavigationProp } from "@react-navigation/native";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
+import apiClient from "@/api/appClient";
 
 const { width } = Dimensions.get("window");
 
@@ -126,7 +127,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           role === 1 ? `/users/client/` : role === 2 ? `/users/worker/` : null;
         console.log(endpoint);
         if (endpoint) {
-          const response = await axios.get(`${CONFIG.API_URL}${endpoint}${id}`);
+          const response = await apiClient.get(`${endpoint}${id}`);
           console.log(response);
           const newUserData =
             role === 1

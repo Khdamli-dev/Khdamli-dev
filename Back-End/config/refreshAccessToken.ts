@@ -1,27 +1,28 @@
-import dotenv from 'dotenv';
-import jwt from 'jsonwebtoken';
-import { Request, Response } from 'express';
-import makeJwtToken from '../utils/authentication/makeJwtToken';
-import { JwtToken, JwtUserPayload } from '../interface/jwtToken';
+import dotenv from "dotenv";
+import jwt from "jsonwebtoken";
+import { Request, Response } from "express";
+import makeJwtToken from "../utils/authentication/makeJwtToken";
+import { JwtToken, JwtUserPayload } from "../interface/jwtToken";
 
 dotenv.config();
 
 const refreshAccessToken = (req: Request, res: Response) => {
-
-  const refreshTokenSecret: string | undefined = process.env.Refresh_Token_Secret;
+  const refreshTokenSecret: string | undefined =
+    process.env.Refresh_Token_Secret;
   if (!refreshTokenSecret) {
     res.status(500).json({
-      message: 'internal error',
+      message: "internal error",
       success: false,
     });
     return;
   }
 
-  const refreshHeader = req.headers['x-refresh-token'] as string;
-  const refreshToken: string = req.cookies?.refreshToken || refreshHeader?.split(' ')[1];
+  const refreshHeader = req.headers["x-refresh-token"] as string;
+  const refreshToken: string =
+    req.cookies?.refreshToken || refreshHeader?.split(" ")[1];
   if (!refreshToken) {
     res.status(403).json({
-      message: 'you are forbidden, dont have refresh token',
+      message: "you are forbidden, dont have refresh token",
       success: false,
     });
     return;
@@ -31,7 +32,7 @@ const refreshAccessToken = (req: Request, res: Response) => {
   jwt.verify(refreshToken, refreshTokenSecret, (err, decode) => {
     if (err) {
       res.status(403).json({
-        message: 'you are forbidden, fake refresh token',
+        message: "you are forbidden, fake refresh token",
         success: false,
       });
       return;
@@ -44,14 +45,14 @@ const refreshAccessToken = (req: Request, res: Response) => {
     let info: JwtToken = {
       userId,
       role,
-      time: '1m', // 30 minute
-      secret: process.env.Access_Token_Secret || '',
+      time: "30m", // 30 minute
+      secret: process.env.Access_Token_Secret || "",
     };
     const accessToken = makeJwtToken(info);
     res.status(200).json({
-        success: true,
-        message: "generate new access token with success",
-        accessToken,
+      success: true,
+      message: "generate new access token with success",
+      accessToken,
     });
   });
 };
