@@ -15,10 +15,11 @@ import { CodeField, Cursor, useBlurOnFulfill, useClearByFocusCell } from 'react-
 import AntDesign from "react-native-vector-icons/AntDesign";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import CONFIG from "../../../config"
+import CONFIG from "@/config";
 import { LinearGradient } from "expo-linear-gradient";
 import axios from "axios";
 import { useLocalSearchParams } from "expo-router";
+import * as SecureStore from 'expo-secure-store';
 
 export default function VerficationCode() {
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
@@ -63,6 +64,9 @@ export default function VerficationCode() {
       );
 
       if (response.status === 200) {
+        await SecureStore.setItemAsync('accessToken', response.data.accessToken);
+        await SecureStore.setItemAsync('refreshToken', response.data.refreshToken);
+        await AsyncStorage.setItem('user', JSON.stringify(response.data.user));
         router.replace("./newPassword");
         setInValidCode("")
       } else {
