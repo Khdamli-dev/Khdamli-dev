@@ -15,11 +15,6 @@ import {
   Platform,
   Alert,
 } from "react-native";
-<<<<<<< HEAD
-import AsyncStorage from '@react-native-async-storage/async-storage';
-// If you're using NativeWind or another Tailwind RN library, import the tailwind function
-// import { useTailwind } from "nativewind"; // for example
-=======
 import axios from "axios";
 import {
   FontAwesome,
@@ -32,7 +27,6 @@ import { router } from "expo-router";
 import * as FileSystem from "expo-file-system";
 import * as MediaLibrary from "expo-media-library";
 import { Video, ResizeMode } from "expo-av";
->>>>>>> main
 
 // Media item can be image, video or none
 interface MediaItem {
@@ -66,26 +60,6 @@ interface Comment {
 }
 
 const HomeScreen = () => {
-<<<<<<< HEAD
-  // const tailwind = useTailwind(); // If using the NativeWind hook
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [search, setSearch] = useState("");
-  const [hasClientRole, setHasClientRole] = useState<boolean>(false);
-
-  useEffect(() => {
-    setWorkerRole();
-    fetchCategories();
-  }, []);
-
-  const setWorkerRole = async () => {
-    const userRole = await AsyncStorage.getItem('role');
-    if (userRole)
-    setHasClientRole(userRole === process.env.CLIENT_ROLE_ID);
-  }
-
-  // Example fetch - replace with your actual API call
-  const fetchCategories = async () => {
-=======
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
   const flatListRef = useRef<FlatList>(null);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -110,7 +84,6 @@ const HomeScreen = () => {
     mediaUrl: string,
     mediaType: "image" | "video"
   ) => {
->>>>>>> main
     try {
 
       if (Platform.OS === "web") {
@@ -403,26 +376,10 @@ const HomeScreen = () => {
     });
   };
 
-<<<<<<< HEAD
-        {/* CATEGORY GRID */}
-        <FlatList
-          data={categories}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderCategoryItem}
-          numColumns={3}
-          contentContainerStyle={{ paddingHorizontal: 8 }}
-        />
-      </View>
-      {/* FLOATING ADD REQUEST BUTTON */}
-      {
-        hasClientRole &&
-        <View className="absolute bottom-4 right-4">
-=======
   // Render media item
   const renderMediaItem = ({ item }: { item: MediaItem }) => {
     if (item.type === "image" && item.url) {
       return (
->>>>>>> main
         <TouchableOpacity
           className="mr-2"
           onPress={() => setSelectedImage(item.url ?? null)}
@@ -533,10 +490,6 @@ const HomeScreen = () => {
           </View>
         </TouchableOpacity>
       </View>
-<<<<<<< HEAD
-      }
-    </SafeAreaView>
-=======
       {/* Description */}
       <Text className="text-gray-700">{item.description}</Text>
       {/* Media */}
@@ -769,7 +722,6 @@ const HomeScreen = () => {
         </View>
       </Modal>
     </View>
->>>>>>> main
   );
 };
 

@@ -48,9 +48,9 @@ const AppStartUp = () => {
       }
 
       try {
-        const response = await apiClient.post("/auth/refresh", null, {
+        const response = await apiClient.post('/auth/refresh', null, {
           headers: {
-            "x-refresh-token": `Bearer ${refreshToken}`,
+            'x-refresh-token': `Bearer ${refreshToken}`,
           },
         });
         if (response.data.success) {
@@ -69,7 +69,7 @@ const AppStartUp = () => {
           router.replace('/(tabs)/(home)');
         } else router.replace('/(auth)');
       } catch (error) {
-        router.replace("/(auth)");
+        router.replace('/(auth)');
       }
     };
 
@@ -90,7 +90,7 @@ const AppStartUp = () => {
           </Animated.Text>
           <View className=" items-end flex-col">
             <Animated.Image
-              source={require("../assets/images/startUpPhoto.jpg")}
+              source={require('../assets/images/startUpPhoto.jpg')}
               className="w-full h-32"
               style={{
                 transform: [{ translateX: imageAnim }],
