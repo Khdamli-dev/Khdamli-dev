@@ -27,7 +27,7 @@ import {
   ClientPrivateRequest,
 } from '../../../../Interfaces/Requestsinterfaces';
 import { ResizeMode, Video } from 'expo-av';
-import { realTimePrivateRequestStatus, realTimeRequests } from '@/api/realTime';
+//import { realTimePrivateRequestStatus, realTimeRequests } from '@/api/realTime';
 
 // Define the UserRole enum
 enum UserRole {
@@ -423,8 +423,8 @@ const PrivateRequests = () => {
   }, [userRole]);
   
   useEffect(() => {
-    realTimeRequests(setRequestIds);
-    realTimePrivateRequestStatus(setRequests);
+    //realTimeRequests(setRequestIds);
+    //realTimePrivateRequestStatus(setRequests);
   }, []);
 
   useEffect(() => {

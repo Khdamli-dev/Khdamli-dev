@@ -28,7 +28,7 @@ import apiClient from '@/api/appClient';
 import refreshAccessToken from '@/api/refreshAccessToken';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ResizeMode, Video } from 'expo-av'; // Import for video playback
-import { realTimePublicRequestStatus } from '@/api/realTime';
+//import { realTimePublicRequestStatus } from '@/api/realTime';
 
 // Define the UserRole enum
 enum UserRole {
@@ -305,7 +305,7 @@ const PublicRequest = () => {
   }, [userRole]);
 
   useEffect(() => {
-    realTimePublicRequestStatus(setRequests);
+    //realTimePublicRequestStatus(setRequests);
   }, []);
 
   useEffect(() => {

@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -14,23 +13,24 @@ import {
   Share,
   Platform,
   Alert,
-} from "react-native";
-import axios from "axios";
+} from 'react-native';
 import {
   FontAwesome,
   Ionicons,
   MaterialCommunityIcons,
-} from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-import { BlurView } from "expo-blur";
-import { router } from "expo-router";
-import * as FileSystem from "expo-file-system";
-import * as MediaLibrary from "expo-media-library";
-import { Video, ResizeMode } from "expo-av";
+} from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
+import * as FileSystem from 'expo-file-system';
+import * as MediaLibrary from 'expo-media-library';
+import { Video, ResizeMode } from 'expo-av';
+import apiClient from '@/api/appClient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import refreshAccessToken from '@/api/refreshAccessToken';
 
 // Media item can be image, video or none
 interface MediaItem {
-  type: "image" | "video" | "none";
+  type: 'image' | 'video' | 'none';
   url?: string;
 }
 
@@ -51,16 +51,15 @@ interface Post {
 
 // Comment shape
 interface Comment {
-  id: number;
-  workerId: number;
-  profileImage: string;
-  userName: string;
-  text: string;
+  worker_id: number;
+  profile_image: string;
+  username: string;
+  message: string;
   expanded?: boolean; // New property to track expanded state
 }
 
 const HomeScreen = () => {
-  const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
+  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
   const flatListRef = useRef<FlatList>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -75,19 +74,20 @@ const HomeScreen = () => {
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
   // COMMENTS STATE
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
-  const [commentText, setCommentText] = useState("");
+  const [commentText, setCommentText] = useState('');
   const [comments, setComments] = useState<Array<Comment>>([]);
   const [downloadingMedia, setDownloadingMedia] = useState<boolean>(false);
+  // Track if the current user has already commented
+  const [hasUserCommented, setHasUserCommented] = useState<boolean>(false);
 
   // Improved media download function that handles both images and videos
   const handleMediaDownload = async (
     mediaUrl: string,
-    mediaType: "image" | "video"
+    mediaType: 'image' | 'video',
   ) => {
     try {
-
-      if (Platform.OS === "web") {
-        window.open(mediaUrl, "_blank");
+      if (Platform.OS === 'web') {
+        window.open(mediaUrl, '_blank');
         return;
       }
 
@@ -96,8 +96,8 @@ const HomeScreen = () => {
         const permission = await requestPermission();
         if (!permission.granted) {
           Alert.alert(
-            "Permission Needed",
-            "Need permission to save media to your device"
+            'Permission Needed',
+            'Need permission to save media to your device',
           );
           return;
         }
@@ -111,17 +111,17 @@ const HomeScreen = () => {
 
       // For URLs like https://picsum.photos/800/400?random=123
       // We need to remove the dimensions from the path
-      if (mediaUrl.includes("picsum.photos")) {
+      if (mediaUrl.includes('picsum.photos')) {
         // Just use the default extension based on media type
-        filename += mediaType === "image" ? ".jpg" : ".mp4";
+        filename += mediaType === 'image' ? '.jpg' : '.mp4';
       } else {
         // For regular URLs, try to extract extension from the URL
         const match = mediaUrl.match(/\.([^.?]+)(?:\?|$)/);
         const extension = match
           ? match[1]
-          : mediaType === "image"
-            ? "jpg"
-            : "mp4";
+          : mediaType === 'image'
+            ? 'jpg'
+            : 'mp4';
         filename += `.${extension}`;
       }
 
@@ -138,8 +138,7 @@ const HomeScreen = () => {
             downloadProgress.totalBytesWritten /
             downloadProgress.totalBytesExpectedToWrite;
           // You could update a progress state here if you want to show a progress bar
-        }
-
+        },
       );
 
       const result = await downloadResumable.downloadAsync();
@@ -149,8 +148,8 @@ const HomeScreen = () => {
         const uri = result.uri;
         await MediaLibrary.saveToLibraryAsync(uri);
         Alert.alert(
-          "Download Complete",
-          `${mediaType === "image" ? "Image" : "Video"} saved successfully!`
+          'Download Complete',
+          `${mediaType === 'image' ? 'Image' : 'Video'} saved successfully!`,
         );
 
         // Clean up the cache file
@@ -159,8 +158,8 @@ const HomeScreen = () => {
     } catch (error) {
       console.error(`Error downloading ${mediaType}:`, error);
       Alert.alert(
-        "Download Failed",
-        `Failed to save ${mediaType}. Please try again.`
+        'Download Failed',
+        `Failed to save ${mediaType}. Please try again.`,
       );
     } finally {
       setDownloadingMedia(false);
@@ -169,90 +168,68 @@ const HomeScreen = () => {
 
   // Simplified wrappers for image/video downloads
   const handleImageDownload = (imageUrl: string) =>
-    handleMediaDownload(imageUrl, "image");
+    handleMediaDownload(imageUrl, 'image');
   const handleVideoDownload = (videoUrl: string) =>
-    handleMediaDownload(videoUrl, "video");
+    handleMediaDownload(videoUrl, 'video');
 
   // ====================
   // دالة جلب البوستات من الباكند (معطلة حالياً)
   // ====================
-  // const fetchPosts = useCallback(
-  //   async (pageToFetch: number) => {
-  //     if (loading) return;
-  //     setLoading(true);
-  //     try {
-  //       const response = await axios.get(`${CONFIG.API_URL}/posts`, {
-  //         params: { page: pageToFetch, limit: 20 },
-  //       });
-  //       const { posts: fetchedPosts, totalPages: backendTotalPages } = response.data;
-  //       setPosts((prev) =>
-  //         pageToFetch === 1 ? fetchedPosts : [...prev, ...fetchedPosts]
-  //       );
-  //       setTotalPages(backendTotalPages);
-  //       setPage(pageToFetch);
-  //     } catch (err) {
-  //       console.error("Failed to load posts", err);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   },
-  //   [loading]
-  // );
-
   const fetchPosts = useCallback(
     async (pageToFetch: number) => {
       if (loading) return;
       setLoading(true);
       try {
-        // Fake data for testing
-        const fakePosts: Post[] = Array.from({ length: 20 }, (_, index) => ({
-          id: (pageToFetch - 1) * 20 + index + 1,
-          clientId: index + 1,
-          userName: `Client ${(pageToFetch - 1) * 20 + index + 1}`,
-          profileImage: `https://randomuser.me/api/portraits/men/${index + 10}.jpg`,
-          region: `Region ${index + 1}`,
-          city: `City ${index + 1}`,
-          sent_time: new Date(
-            Date.now() - Math.random() * 86400000 * 7
-          ).toISOString(),
-          working_time: "9am - 5pm",
-          category: `Category ${(index % 3) + 1}`,
-          description: `This is a sample post #${(pageToFetch - 1) * 20 + index + 1}.`,
-          media:
-            Math.random() > 0.3
-              ? Array.from(
-                  { length: Math.floor(Math.random() * 4) + 1 },
-                  (_, i) => ({
-                    type: Math.random() > 0.7 ? "video" : "image",
-                    url:
-                      Math.random() > 0.7
-                        ? `https://example.com/video${index * 5 + i}.mp4`
-                        : `https://picsum.photos/800/400?random=${index * 5 + i}`,
-                  })
-                )
-              : [],
-        }));
-        // Simulate total_pages
-        const simTotalPages = 5;
-        setPosts((prev) =>
-          pageToFetch === 1 ? fakePosts : [...prev, ...fakePosts]
+        const role = await AsyncStorage.getItem('role');
+        const id = await AsyncStorage.getItem('userId');
+        if (role && id) {
+          const response = await apiClient.get(
+            `work/job-request/public/${id}`,
+            {
+              params: {
+                role: +role === 1 ? 'client' : 'worker',
+                page: pageToFetch,
+                limit: 20,
+              },
+            },
+          );
+          if (response.data && response.data.requests) {
+            const { requests: fetchedPosts, page: backendTotalPages } =
+              response.data;
+            setPosts((prev) =>
+              pageToFetch === 1 ? fetchedPosts : [...prev, ...fetchedPosts],
+            );
+            setTotalPages(backendTotalPages || 1);
+            setPage(pageToFetch);
+          } else {
+            console.error('Invalid response format', response.data);
+          }
+        }
+      } catch (err: any) {
+        console.error(
+          'Failed to load posts',
+          err.response?.data?.message,
+          err.response?.status,
         );
-        setTotalPages(simTotalPages);
-        setPage(pageToFetch);
-      } catch (err) {
-        console.error("Failed to load posts", err);
-        Alert.alert("Error", "Failed to load posts. Please try again.");
+        if (err.response?.status === 401) {
+          if (await refreshAccessToken()) {
+            await fetchPosts(pageToFetch);
+          } else {
+            // need to login
+            router.push('/(auth)');
+          }
+        }
       } finally {
         setLoading(false);
       }
     },
-    [loading]
+    [loading],
   );
 
   // Initial fetch
   useEffect(() => {
     fetchPosts(1);
-  }, [fetchPosts]);
+  }, []);
 
   // Load next page when reaching end
   const handleEndReached = () => {
@@ -271,38 +248,51 @@ const HomeScreen = () => {
   };
 
   // Open comment box and fetch comments
-  const openCommentBox = (postId: number) => {
+  const openCommentBox = async (postId: number) => {
     setSelectedPostId(postId);
     setViewingSinglePost(true);
+    setComments([]); // Initialize comments as empty array while loading
+    setHasUserCommented(false); // Reset user comment status
 
     // ====================
-    // دالة جلب الكومنتات من الباكند (معطلة حالياً)
+    // دالة جلب الكومنتات من الباكند
     // ====================
-    // const fetchComments = async (postId: number) => {
-    //   try {
-    //     const response = await axios.get(`${CONFIG.API_URL}/posts/${postId}/comments`);
-    //     setComments(response.data.comments);
-    //   } catch (err) {
-    //     console.error("Failed to load comments", err);
-    //   }
-    // };
-    // fetchComments(postId);
+    const fetchComments = async (postId: number) => {
+      try {
+        const userData = await AsyncStorage.getItem('user');
+        const user = userData ? JSON.parse(userData) : null;
 
-    const fakeComments: Comment[] = Array.from(
-      { length: Math.floor(Math.random() * 9) + 2 },
-      (_, i) => ({
-        id: i + 1,
-        workerId: i + 1,
-        profileImage: `https://randomuser.me/api/portraits/women/${i + 10}.jpg`,
-        userName: `User ${i + 1}`,
-        text:
-          i % 2 === 0
-            ? `This is a short comment #${i + 1}.`
-            : `This is a very long comment #${i + 1} that should be truncated in the UI. It contains a lot of text to demonstrate how we handle long comments in our application. When a comment is this long, we'll show just a part of it initially and provide a way for users to expand it to read the full content. This helps keep the UI clean while still allowing users to read all content.`,
-        expanded: false, // Initially all comments are collapsed
-      })
-    );
-    setComments(fakeComments);
+        const response = await apiClient.get(
+          `/work/job-request/${postId}/messages`,
+        );
+        if (response.data && response.data.messages) {
+          setComments(response.data.messages);
+
+          // Check if the current user has already commented
+          if (user) {
+            const userComment = response.data.messages.find(
+              (comment: Comment) => comment.worker_id === user.id,
+            );
+            setHasUserCommented(!!userComment);
+          }
+          console.log(response.data.messages);
+        } else {
+          setComments([]); // Set empty array if no messages found
+          console.log('No comments found or invalid response format');
+        }
+      } catch (err: any) {
+        console.error('Failed to load comments', err);
+        setComments([]); // Set empty array on error
+        if (err.response?.status === 401) {
+          if (await refreshAccessToken()) {
+            await fetchComments(postId);
+          } else {
+            router.push('/(auth)');
+          }
+        }
+      }
+    };
+    fetchComments(postId);
   };
 
   // Close comment box
@@ -310,6 +300,7 @@ const HomeScreen = () => {
     setSelectedPostId(null);
     setComments([]);
     setViewingSinglePost(false);
+    setHasUserCommented(false);
 
     // أعط وقتًا للتطبيق لإعادة عرض القائمة قبل محاولة التمرير
     setTimeout(() => {
@@ -327,58 +318,74 @@ const HomeScreen = () => {
   const toggleCommentExpand = (commentId: number) => {
     setComments(
       comments.map((comment) =>
-        comment.id === commentId
+        comment.worker_id === commentId
           ? { ...comment, expanded: !comment.expanded }
-          : comment
-      )
+          : comment,
+      ),
     );
   };
 
   // Submit comment
-  const submitComment = () => {
+  const submitComment = async (postId: number) => {
     // ====================
-    // دالة حفظ الكومنت في الباكند (معطلة حالياً)
+    // دالة حفظ الكومنت في الباكند
     // ====================
-    // const submitComment = async () => {
-    //   if (!selectedPostId || commentText.trim() === "") return;
-    //   try {
-    //     await axios.post(`${CONFIG.API_URL}/posts/${selectedPostId}/comments`, {
-    //       postId: selectedPostId,
-    //       workerId: user.id, // أو أي متغير يمثل الـworker الحالي
-    //       text: commentText,
-    //     });
-    //     // بعد الحفظ يمكنك إعادة جلب الكومنتات أو إضافته محلياً
-    //     // fetchComments(selectedPostId);
-    //     setCommentText("");
-    //   } catch (err) {
-    //     console.error("Failed to submit comment", err);
-    //   }
-    // };
+    console.log('hh');
+    if (!selectedPostId || commentText.trim() === '' || hasUserCommented)
+      return;
+    console.log('hh');
 
-    if (!selectedPostId || commentText.trim() === "") return;
-    const newComment: Comment = {
-      id: comments.length + 1,
-      workerId: comments.length + 1,
-      profileImage: `https://randomuser.me/api/portraits/women/20.jpg`,
-      userName: "You",
-      text: commentText,
-      expanded: true, // New comments are expanded by default
-    };
-    setComments((prev) => [...prev, newComment]);
-    setCommentText("");
+    try {
+      const userData = await AsyncStorage.getItem('user');
+      console.log(userData);
+      if (userData) {
+        const user: any = JSON.parse(userData);
+        const newComment = {
+          workerId: user.id, // Using timestamp as a temporary ID
+          comment: commentText,
+        };
+        const response = await apiClient.post(
+          `/work/job-request/${postId}/comment`,
+          newComment,
+        );
+        if (response.data.success) {
+          console.log(user);
+          const workerComment: Comment = {
+            worker_id: user.id,
+            profile_image: user.profile_image,
+            message: commentText,
+            username: user.username,
+          };
+          setComments((prev) => [...prev, workerComment]);
+          setCommentText('');
+          setHasUserCommented(true); // Mark that the user has comments
+        }
+      }
+    } catch (err: any) {
+      console.error('Failed to submit comment', err.response.data);
+      if (err.response?.status === 401) {
+        if (await refreshAccessToken()) {
+          await submitComment(postId);
+        } else {
+          router.push('/(auth)');
+        }
+      }
+    }
   };
 
   // Navigate to user profile
   const navigateToProfile = (workerId: number) => {
     router.push({
-      pathname: "/profileAsView",
+      pathname: '/profileAsView',
       params: { workerId: workerId },
     });
   };
 
   // Render media item
   const renderMediaItem = ({ item }: { item: MediaItem }) => {
-    if (item.type === "image" && item.url) {
+    if (!item) return null;
+
+    if (item.type === 'image' && item.url) {
       return (
         <TouchableOpacity
           className="mr-2"
@@ -392,7 +399,7 @@ const HomeScreen = () => {
         </TouchableOpacity>
       );
     }
-    if (item.type === "video" && item.url) {
+    if (item.type === 'video' && item.url) {
       return (
         <TouchableOpacity
           className="mr-2"
@@ -405,7 +412,7 @@ const HomeScreen = () => {
               resizeMode={ResizeMode.COVER}
               isLooping={false}
               style={{ width: 192, height: 128 }}
-              posterSource={{ uri: "https://picsum.photos/800/400" }}
+              posterSource={{ uri: 'https://picsum.photos/800/400' }}
             />
             <View className="absolute inset-0 flex items-center justify-center">
               <View className="bg-black/40 rounded-full p-2">
@@ -419,50 +426,133 @@ const HomeScreen = () => {
     return null;
   };
 
+  // Format working time
+  const formatWorkingTime = (working_time: string): string => {
+    if (!working_time) return 'Flexible';
+
+    // If working_time is already formatted nicely, just return it
+    if (
+      working_time.includes(' - ') ||
+      working_time.includes('hours') ||
+      working_time.includes('days') ||
+      working_time.toLowerCase().includes('flexible')
+    ) {
+      return working_time;
+    }
+
+    // Try to parse simple time formats like "2h" or "3d"
+    if (/^\d+h$/i.test(working_time)) {
+      const hours = parseInt(working_time, 10);
+      return hours === 1 ? '1 hour' : `${hours} hours`;
+    }
+
+    if (/^\d+d$/i.test(working_time)) {
+      const days = parseInt(working_time, 10);
+      return days === 1 ? '1 day' : `${days} days`;
+    }
+
+    // If we have a timestamp or date format, try to extract a readable time
+    if (
+      working_time.includes(':') ||
+      /\d{1,2}\/\d{1,2}\/\d{2,4}/.test(working_time)
+    ) {
+      try {
+        const date = new Date(working_time);
+        return date.toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+      } catch (e) {
+        // If parsing fails, return the original
+        return working_time;
+      }
+    }
+
+    return working_time;
+  };
+
   // Time ago helper
   const getTimeAgo = (dateString: string): string => {
     const now = new Date();
     const sentDate = new Date(dateString);
     const diffInSeconds = Math.floor(
-      (now.getTime() - sentDate.getTime()) / 1000
+      (now.getTime() - sentDate.getTime()) / 1000,
     );
     if (diffInSeconds < 60) return `${diffInSeconds} seconds ago`;
     if (diffInSeconds < 3600)
       return `${Math.floor(diffInSeconds / 60)} minutes ago`;
     if (diffInSeconds < 86400)
       return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-    return `${Math.floor(diffInSeconds / 86400)} days ago`;
+
+    // Calculate days more precisely
+    const days = Math.floor(diffInSeconds / 86400);
+    return days === 1 ? '1 day ago' : `${days} days ago`;
   };
 
+  // Get day name for the post date
+  const getDayName = (dateString: string): string => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { weekday: 'long' });
+    } catch (e) {
+      return '';
+    }
+  };
+  // Get formatted date string for the post date (e.g. "Sunday 05-05-2023")
+  const getFormattedDate = (dateString: string): string => {
+    try {
+      const date = new Date(dateString);
+      const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+
+      // Format the date as DD-MM-YYYY
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+
+      return `${dayName} ${day}-${month}-${year}`;
+    } catch (e) {
+      return '';
+    }
+  };
   // Render single comment with expand/collapse functionality
   const renderComment = (comment: Comment) => {
-    const isLongComment = comment.text.length > 100;
+    if (!comment) return null;
+
+    // Add null check before accessing text.length
+    const isLongComment = comment.message && comment.message.length > 100;
     const displayText =
       isLongComment && !comment.expanded
-        ? `${comment.text.substring(0, 100)}...`
-        : comment.text;
+        ? `${comment.message.substring(0, 100)}...`
+        : comment.message || '';
 
     return (
-      <View key={comment.id} className="bg-gray-100 p-4 rounded-2xl mb-2">
+      <View
+        key={comment.worker_id}
+        className="bg-gray-100 p-4 rounded-2xl mb-2"
+      >
         <View className="flex-row items-center mb-2">
-          <TouchableOpacity onPress={() => navigateToProfile(comment.workerId)}>
+          <TouchableOpacity
+            onPress={() => navigateToProfile(comment.worker_id)}
+          >
             <Image
-              source={{ uri: comment.profileImage }}
+              source={{ uri: comment.profile_image }}
               className="w-8 h-8 rounded-full mr-2"
             />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigateToProfile(comment.workerId)}>
-            <Text className="font-bold text-sm">{comment.userName}</Text>
+          <TouchableOpacity
+            onPress={() => navigateToProfile(comment.worker_id)}
+          >
+            <Text className="font-bold text-sm">{comment.username}</Text>
           </TouchableOpacity>
         </View>
         <Text className="text-gray-600">{displayText}</Text>
         {isLongComment && (
           <TouchableOpacity
-            onPress={() => toggleCommentExpand(comment.id)}
+            onPress={() => toggleCommentExpand(comment.worker_id)}
             className="mt-1"
           >
             <Text className="text-blue-500 text-sm">
-              {comment.expanded ? "Show less" : "Read more"}
+              {comment.expanded ? 'Show less' : 'Read more'}
             </Text>
           </TouchableOpacity>
         )}
@@ -471,95 +561,131 @@ const HomeScreen = () => {
   };
 
   // Render post
-  const renderPost = ({ item }: { item: Post }) => (
-    <View className="bg-white rounded-2xl shadow p-4 mb-4 mx-2">
-      {/* Header */}
-      <View className="flex-row items-center mb-2">
-        <TouchableOpacity onPress={() => navigateToProfile(item.clientId)}>
-          <Image
-            source={{ uri: item.profileImage }}
-            className="w-10 h-10 rounded-full mr-2"
-          />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigateToProfile(item.clientId)}>
-          <View>
-            <Text className="font-bold text-lg">{item.userName}</Text>
-            <Text className="text-sm text-gray-500">
-              {item.region}, {item.city}
+  // Render post
+  const renderPost = ({ item }: { item: Post }) => {
+    if (!item) return null;
+
+    const formattedWorkingTime = formatWorkingTime(item.working_time);
+    const formattedDate = getFormattedDate(item.sent_time);
+
+    return (
+      <View className="bg-white rounded-2xl shadow p-4 mb-4 mx-2">
+        {/* Header */}
+        <View className="flex-row items-center mb-2">
+          <TouchableOpacity onPress={() => navigateToProfile(item.clientId)}>
+            <Image
+              source={{ uri: item.profileImage }}
+              className="w-10 h-10 rounded-full mr-2"
+            />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigateToProfile(item.clientId)}>
+            <View>
+              <Text className="font-bold text-lg">{item.userName}</Text>
+              <Text className="text-sm text-gray-500">
+                {item.region}, {item.city}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+        {/* Description */}
+        <Text className="text-gray-700">{item.description}</Text>
+        {/* Media */}
+        {item.media && item.media.length > 0 ? (
+          <View className="mt-2">
+            <FlatList
+              horizontal
+              data={item.media}
+              keyExtractor={(_, i) => `media-${i}`}
+              renderItem={renderMediaItem}
+              showsHorizontalScrollIndicator={false}
+            />
+          </View>
+        ) : (
+          <View className="mt-2 py-2">
+            <Text className="text-gray-500 text-sm italic">Text only post</Text>
+          </View>
+        )}
+        {/* Time & category - Updated format */}
+        <View className="mt-2">
+          <View className="flex-row items-center gap-2">
+            <Ionicons name="time-outline" size={14} color="green" />
+            <Text className="text-sm text-green-700">
+              {getTimeAgo(item.sent_time)}
             </Text>
           </View>
-        </TouchableOpacity>
-      </View>
-      {/* Description */}
-      <Text className="text-gray-700">{item.description}</Text>
-      {/* Media */}
-      {item.media.length > 0 ? (
-        <View className="mt-2">
-          <FlatList
-            horizontal
-            data={item.media}
-            keyExtractor={(_, i) => `media-${i}`}
-            renderItem={renderMediaItem}
-            showsHorizontalScrollIndicator={false}
-          />
+
+          <View className="flex-row items-center gap-2 mt-1">
+            <MaterialCommunityIcons name="tools" size={14} color="green" />
+            <Text className="text-sm text-green-700">{item.category}</Text>
+          </View>
+
+          <View className="flex-row items-center gap-2 mt-1">
+            <Ionicons name="calendar-outline" size={14} color="green" />
+            <Text className="text-sm text-green-700">
+              {formattedDate} | Work time: {formattedWorkingTime}
+            </Text>
+          </View>
         </View>
-      ) : (
-        <View className="mt-2 py-2">
-          <Text className="text-gray-500 text-sm italic">Text only post</Text>
-        </View>
-      )}
-      {/* Time & category */}
-      <View className="flex-row items-center gap-2 mt-2">
-        <Ionicons name="time-outline" size={14} color="green" />
-        <Text className="text-sm text-green-700">
-          {getTimeAgo(item.sent_time)}
-        </Text>
-        <MaterialCommunityIcons name="tools" size={14} color="green" />
-        <Text className="text-sm text-green-700">
-          {item.category} | {item.working_time}
-        </Text>
-      </View>
-      {/* Comment button */}
-      <View className="flex-row justify-end mt-2">
-        <TouchableOpacity
-          onPress={() => openCommentBox(item.id)}
-          className="bg-blue-500 rounded-xl px-4 py-1"
-        >
-          <Text className="text-white">💬 Comment</Text>
-        </TouchableOpacity>
-      </View>
-      {/* Comments */}
-      {selectedPostId === item.id && (
-        <View className="mt-4">
-          {comments.map(renderComment)}
-          <TextInput
-            className="border border-gray-300 rounded-xl p-2 h-16 text-right mt-2"
-            placeholder="Write your comment..."
-            multiline
-            value={commentText}
-            onChangeText={setCommentText}
-          />
+        {/* Comment button */}
+        <View className="flex-row justify-end mt-2">
           <TouchableOpacity
-            onPress={submitComment}
-            className="bg-green-600 px-4 py-2 rounded-xl mt-2"
+            onPress={() => openCommentBox(item.id)}
+            className="bg-blue-500 rounded-xl px-4 py-1"
           >
-            <Text className="text-white text-center">Post Comment</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={closeCommentBox}
-            className="mt-4 bg-red-500 px-4 py-2 rounded-xl"
-          >
-            <Text className="text-white text-center">Close Comments</Text>
+            <Text className="text-white">💬 Comment</Text>
           </TouchableOpacity>
         </View>
-      )}
-    </View>
-  );
+        {/* Comments */}
+        {selectedPostId === item.id && (
+          <View className="mt-4">
+            {comments && comments.length > 0 ? (
+              comments.map(renderComment)
+            ) : (
+              <Text className="text-gray-500 text-center py-4">
+                No comments yet
+              </Text>
+            )}
+
+            {!hasUserCommented ? (
+              <>
+                <TextInput
+                  className="border border-gray-300 rounded-xl p-2 h-16 text-right mt-2"
+                  placeholder="Write your comment..."
+                  multiline
+                  value={commentText}
+                  onChangeText={setCommentText}
+                />
+                <TouchableOpacity
+                  onPress={() => submitComment(item.id)}
+                  className="bg-green-600 px-4 py-2 rounded-xl mt-2"
+                >
+                  <Text className="text-white text-center">Post Comment</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <View className="bg-gray-100 p-3 rounded-xl mt-2">
+                <Text className="text-center text-gray-600">
+                  You have already commented on this post
+                </Text>
+              </View>
+            )}
+
+            <TouchableOpacity
+              onPress={closeCommentBox}
+              className="mt-4 bg-red-500 px-4 py-2 rounded-xl"
+            >
+              <Text className="text-white text-center">Close Comments</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+    );
+  };
 
   return (
     <View className="flex-1 bg-gray-100 pt-4">
       <LinearGradient
-        colors={["#2B524A", "#BED2D0"]}
+        colors={['#2B524A', '#BED2D0']}
         start={{ x: 1, y: 0 }}
         end={{ x: 0, y: 1 }}
         className="shadow-2xl"
@@ -570,7 +696,7 @@ const HomeScreen = () => {
               <Text
                 className="text-4xl font-black text-foncyYellow"
                 style={{
-                  textShadowColor: "rgba(0,0,0,0.3)",
+                  textShadowColor: 'rgba(0,0,0,0.3)',
                   textShadowOffset: { width: 2, height: 2 },
                   textShadowRadius: 5,
                 }}
@@ -580,7 +706,7 @@ const HomeScreen = () => {
               <Text
                 className="text-2xl font-semibold text-white tracking-wider"
                 style={{
-                  textShadowColor: "rgba(0,0,0,0.2)",
+                  textShadowColor: 'rgba(0,0,0,0.2)',
                   textShadowOffset: { width: 1, height: 1 },
                   textShadowRadius: 3,
                 }}
@@ -599,8 +725,8 @@ const HomeScreen = () => {
                 className="w-12 h-12 bg-[#F8A100] rounded-full items-center justify-center"
                 onPress={() =>
                   router.push({
-                    pathname: "/(tabs)/(home)/requeste",
-                    params: { type: "1" },
+                    pathname: './createRequest',
+                    params: { type: '1' },
                   })
                 }
               >
@@ -610,9 +736,16 @@ const HomeScreen = () => {
           </View>
         </View>
       </LinearGradient>
-      {viewingSinglePost ? (
+
+      {viewingSinglePost && selectedPostId ? (
         <ScrollView ref={scrollViewRef}>
-          {renderPost({ item: posts.find((p) => p.id === selectedPostId)! })}
+          {posts.find((p) => p.id === selectedPostId) ? (
+            renderPost({ item: posts.find((p) => p.id === selectedPostId)! })
+          ) : (
+            <View className="p-4">
+              <Text>Post not found</Text>
+            </View>
+          )}
         </ScrollView>
       ) : (
         <FlatList
@@ -628,6 +761,15 @@ const HomeScreen = () => {
           onEndReachedThreshold={0.5}
           ListFooterComponent={
             loading ? <ActivityIndicator style={{ margin: 20 }} /> : null
+          }
+          ListEmptyComponent={
+            !loading ? (
+              <View className="p-10 items-center">
+                <Text className="text-gray-500 text-center">
+                  No posts found
+                </Text>
+              </View>
+            ) : null
           }
           // هذا الخيار يحافظ على مخزون البوستات في الذاكرة
           removeClippedSubviews={false}
@@ -715,7 +857,7 @@ const HomeScreen = () => {
                 resizeMode={ResizeMode.CONTAIN}
                 isLooping
                 shouldPlay
-                style={{ width: "100%", height: 300 }}
+                style={{ width: '100%', height: 300 }}
               />
             </View>
           )}

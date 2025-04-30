@@ -18,11 +18,13 @@ import {
   RefreshControl,
   Dimensions,
 } from "react-native";
+import apiClient from "@/api/appClient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface Worker {
-  workerId: number;
-  workerName: string;
-  profileImage: string;
+  id: number;
+  username: string;
+  profile_image: string;
   region: string | null;
   city: string | null;
 }
@@ -31,91 +33,91 @@ interface SubCategory {
   id: string;
   name: string;
   description: string;
+  logo: string;
+  parent_category: string;
 }
 
-// Mock data for testing
-const MOCK_WORKERS: Worker[] = [
-  {
-    workerId: 1,
-    workerName: "Ahmed Hassan",
-    profileImage: "https://randomuser.me/api/portraits/men/20.jpg",
-    region: "Algeria",
-    city: "Sidi Bel Abbes",
-  },
-  {
-    workerId: 2,
-    workerName: "Mohammed Ali",
-    profileImage: "https://randomuser.me/api/portraits/men/22.jpg",
-    region: "Algeria",
-    city: "Oran",
-  },
-  {
-    workerId: 3,
-    workerName: "Said Mezouar",
-    profileImage: "https://randomuser.me/api/portraits/men/23.jpg",
-    region: "Algeria",
-    city: "Algiers",
-  },
-  {
-    workerId: 4,
-    workerName: "Karim Benali",
-    profileImage: "https://randomuser.me/api/portraits/men/24.jpg",
-    region: "Algeria",
-    city: "Constantine",
-  },
-  {
-    workerId: 5,
-    workerName: "Omar Taleb",
-    profileImage: "https://randomuser.me/api/portraits/men/25.jpg",
-    region: "Algeria",
-    city: "Annaba",
-  },
-  {
-    workerId: 6,
-    workerName: "Yacine Bouhafs",
-    profileImage: "https://randomuser.me/api/portraits/men/26.jpg",
-    region: "Algeria",
-    city: "Sidi Bel Abbes",
-  },
-  {
-    workerId: 7,
-    workerName: "Hamza Belhadj",
-    profileImage: "https://randomuser.me/api/portraits/men/27.jpg",
-    region: "Algeria",
-    city: "Oran",
-  },
-];
+// // Mock data for testing
+// const MOCK_WORKERS: Worker[] = [
+//   {
+//     workerId: 1,
+//     workerName: "Ahmed Hassan",
+//     profileImage: "https://randomuser.me/api/portraits/men/20.jpg",
+//     region: "Algeria",
+//     city: "Sidi Bel Abbes",
+//   },
+//   {
+//     workerId: 2,
+//     workerName: "Mohammed Ali",
+//     profileImage: "https://randomuser.me/api/portraits/men/22.jpg",
+//     region: "Algeria",
+//     city: "Oran",
+//   },
+//   {
+//     workerId: 3,
+//     workerName: "Said Mezouar",
+//     profileImage: "https://randomuser.me/api/portraits/men/23.jpg",
+//     region: "Algeria",
+//     city: "Algiers",
+//   },
+//   {
+//     workerId: 4,
+//     workerName: "Karim Benali",
+//     profileImage: "https://randomuser.me/api/portraits/men/24.jpg",
+//     region: "Algeria",
+//     city: "Constantine",
+//   },
+//   {
+//     workerId: 5,
+//     workerName: "Omar Taleb",
+//     profileImage: "https://randomuser.me/api/portraits/men/25.jpg",
+//     region: "Algeria",
+//     city: "Annaba",
+//   },
+//   {
+//     workerId: 6,
+//     workerName: "Yacine Bouhafs",
+//     profileImage: "https://randomuser.me/api/portraits/men/26.jpg",
+//     region: "Algeria",
+//     city: "Sidi Bel Abbes",
+//   },
+//   {
+//     workerId: 7,
+//     workerName: "Hamza Belhadj",
+//     profileImage: "https://randomuser.me/api/portraits/men/27.jpg",
+//     region: "Algeria",
+//     city: "Oran",
+//   },
+// ];
 
-const MOCK_SUBCATEGORIES: Record<string, SubCategory> = {
-  "101": {
-    id: "101",
-    name: "Pipe Repair",
-    description: "Fix leaking pipes and water systems",
-  },
-  "102": {
-    id: "102",
-    name: "Drainage",
-    description: "Unblock drains and repair systems",
-  },
-  "201": {
-    id: "201",
-    name: "Wiring",
-    description: "Home electrical wiring services",
-  },
-  "301": {
-    id: "301",
-    name: "Furniture",
-    description: "Custom furniture making and repair",
-  },
-};
+// const MOCK_SUBCATEGORIES: Record<string, SubCategory> = {
+//   "101": {
+//     id: "101",
+//     name: "Pipe Repair",
+//     description: "Fix leaking pipes and water systems",
+//   },
+//   "102": {
+//     id: "102",
+//     name: "Drainage",
+//     description: "Unblock drains and repair systems",
+//   },
+//   "201": {
+//     id: "201",
+//     name: "Wiring",
+//     description: "Home electrical wiring services",
+//   },
+//   "301": {
+//     id: "301",
+//     name: "Furniture",
+//     description: "Custom furniture making and repair",
+//   },
+// };
 
 const ServiceProvidersScreen = () => {
   const screenWidth = Dimensions.get("window").width;
 
-  const { subCategoryId } = useLocalSearchParams();
-  const subcategoryId = Array.isArray(subCategoryId)
-    ? subCategoryId[0]
-    : subCategoryId || "";
+ const { subcategory } : {subcategory : string} = useLocalSearchParams();
+   const branch = JSON.parse(subcategory);
 
   const [subCategory, setSubCategory] = useState<SubCategory | null>(null);
   const [workers, setWorkers] = useState<Worker[]>([]);
@@ -128,11 +130,11 @@ const ServiceProvidersScreen = () => {
 
   useEffect(() => {
     fetchWorkers();
-  }, [subcategoryId]);
+  }, [branch.id]);
 
   // Fetch workers based on subcategory ID
   const fetchWorkers = async () => {
-    if (!subcategoryId) {
+    if (!branch.id) {
       setError("No subcategory ID provided");
       return;
     }
@@ -141,37 +143,36 @@ const ServiceProvidersScreen = () => {
       setIsLoading(true);
 
       // For testing: use mock data instead of API call
-      setTimeout(() => {
-        // Find subcategory
-        const sub = MOCK_SUBCATEGORIES[subcategoryId];
-        if (sub) {
-          setSubCategory(sub);
-        }
+      // setTimeout(() => {
+      //   // Find subcategory
+      //   const sub = MOCK_SUBCATEGORIES[subcategoryId];
+      //   if (sub) {
+      //     setSubCategory(sub);
+      //   }
 
-        // Get workers (in real app, would filter by subcategory)
-        // Since we removed parentCategory from Worker interface,
-        // we'll just pretend these are already filtered by subcategoryId
-        setWorkers(MOCK_WORKERS);
-        setFilteredWorkers(MOCK_WORKERS);
-        setError(null);
-        setIsLoading(false);
-      }, 1000);
+      //   // Get workers (in real app, would filter by subcategory)
+      //   // Since we removed parentCategory from Worker interface,
+      //   // we'll just pretend these are already filtered by subcategoryId
+      //   setWorkers(MOCK_WORKERS);
+      //   setFilteredWorkers(MOCK_WORKERS);
+      //   setError(null);
+      //   setIsLoading(false);
+      // }, 1000);
 
       // Uncomment this for real API usage
-      /*
-      // First, fetch the subcategory details
-      const subCategoryResponse = await axios.get(`${CONFIG.API_URL}/work/subcategories/${subcategoryId}/`);
-      setSubCategory(subCategoryResponse.data);
-
+      
+    
+       const userData = await AsyncStorage.getItem('user');
+       const user = JSON.parse(userData || '');
       // Then fetch workers for this subcategory
-      const workersResponse = await axios.get(`${CONFIG.API_URL}/work/workers/`, {
-        params: { subcategory: subcategoryId }
+      const workersResponse = await apiClient.get(`/work/worker/${user.id}/`, {
+        params: { category: branch.id , page : 0}
       });
       
       setWorkers(workersResponse.data.workers);
       setFilteredWorkers(workersResponse.data.workers);
       setError(null);
-      */
+     
     } catch (error) {
       console.error("Error fetching workers:", error);
       setError("Failed to load workers. Please try again.");
@@ -193,7 +194,7 @@ const ServiceProvidersScreen = () => {
 
     const filtered = workers.filter(
       (worker) =>
-        worker.workerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        worker.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
         worker.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         worker.region?.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -210,10 +211,10 @@ const ServiceProvidersScreen = () => {
 
   // Navigate directly to worker profile
   const handleWorkerPress = (worker: Worker) => {
-    console.log("Navigating to worker profile:", worker.workerName);
+    console.log("Navigating to worker profile:", worker.username);
     router.push({
       pathname: "./profileAsView",
-      params: { workerId: worker.workerId },
+      params: { workerId: worker.id },
     });
   };
 
@@ -248,7 +249,7 @@ const ServiceProvidersScreen = () => {
           <View className="flex-row">
             {/* Worker Image */}
             <Image
-              source={{ uri: item.profileImage }}
+              source={{ uri: item.profile_image }}
               className="w-20 h-20 rounded-full"
               resizeMode="cover"
             />
@@ -256,7 +257,7 @@ const ServiceProvidersScreen = () => {
             {/* Worker Details */}
             <View className="flex-1 ml-3 justify-center">
               <Text className="font-bold text-lg">
-                {truncateText(item.workerName, 20)}
+                {truncateText(item.username, 20)}
               </Text>
 
               {/* Subcategory name */}
@@ -381,7 +382,7 @@ const ServiceProvidersScreen = () => {
             {filteredWorkers.length > 0 ? (
               <FlatList
                 data={filteredWorkers}
-                keyExtractor={(item) => item.workerId.toString()}
+                keyExtractor={(item) => item.id.toString()}
                 renderItem={renderWorkerItem}
                 contentContainerStyle={{ paddingBottom: 20 }}
                 showsVerticalScrollIndicator={false}

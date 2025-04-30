@@ -16,6 +16,7 @@ import {
   StatusBar,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import apiClient from "@/api/appClient";
 
 interface SubCategory {
   id: string;
@@ -114,10 +115,9 @@ const MOCK_PARENT_CATEGORIES: Record<string, ParentCategory> = {
 };
 
 const SubCategoriesScreen = () => {
-  const { parentCategoryId } = useLocalSearchParams();
-  const categoryId = Array.isArray(parentCategoryId)
-    ? parentCategoryId[0]
-    : parentCategoryId || "";
+  const { category } : {category : string} = useLocalSearchParams();
+  const parentcategory = JSON.parse(category);
+  console.log(parentcategory)
 
   const [parentCategory, setParentCategory] = useState<ParentCategory | null>(null);
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
@@ -132,11 +132,11 @@ const SubCategoriesScreen = () => {
 
   useEffect(() => {
     fetchSubCategories();
-  }, [categoryId]);
+  }, [parentcategory.id]);
 
   // Fetch subcategories based on parent category ID
   const fetchSubCategories = async () => {
-    if (!categoryId) {
+    if (!parentcategory.id) {
       setError("No category ID provided");
       return;
     }
@@ -145,39 +145,38 @@ const SubCategoriesScreen = () => {
       setIsLoading(true);
 
       // For testing: use mock data instead of API call
-      setTimeout(() => {
-        // Find parent category
-        const parent = MOCK_PARENT_CATEGORIES[categoryId];
-        if (parent) {
-          setParentCategory(parent);
-        }
+      // setTimeout(() => {
+      //   // Find parent category
+      //   const parent = MOCK_PARENT_CATEGORIES[parentcategory.id];
+      //   if (parent) {
+      //     setParentCategory(parent);
+      //   }
 
-        // Filter subcategories by parent_category
-        const filteredCategories = MOCK_SUBCATEGORIES.filter(
-          (subCat) => subCat.parent_category === categoryId
-        );
+      //   // Filter subcategories by parent_category
+      //   const filteredCategories = MOCK_SUBCATEGORIES.filter(
+      //     (subCat) => subCat.parent_category === parentcategory.id
+      //   );
         
-        setSubCategories(filteredCategories);
-        setFilteredSubCategories(filteredCategories);
-        setError(null);
-        setIsLoading(false);
-      }, 1000);
+      //   setSubCategories(filteredCategories);
+      //   setFilteredSubCategories(filteredCategories);
+      //   setError(null);
+      //   setIsLoading(false);
+      // }, 1000);
 
       // Uncomment this for real API usage
-      /*
-      // First, fetch the parent category details
-      const parentResponse = await axios.get(`${CONFIG.API_URL}/work/categories/${categoryId}/`);
-      setParentCategory(parentResponse.data);
-
+      
+    
       // Then fetch subcategories
-      const subCatResponse = await axios.get(`${CONFIG.API_URL}/work/subcategories/`, {
-        params: { parent_category: categoryId }
+      const subCatResponse = await apiClient.get(`/work/categories/`, {
+        params: { parent_category: parentcategory.id }
       });
       
-      setSubCategories(subCatResponse.data.subcategories);
-      setFilteredSubCategories(subCatResponse.data.subcategories);
+      setSubCategories(subCatResponse.data.categories.filter(
+        (cat: SubCategory) => cat.parent_category === parentcategory.id));
+      setFilteredSubCategories(subCatResponse.data.categories.filter(
+        (cat: SubCategory) => cat.parent_category === parentcategory.id));
       setError(null);
-      */
+     
     } catch (error) {
       console.error("Error fetching subcategories:", error);
       setError("فشل في تحميل الفئات الفرعية. يرجى المحاولة مرة أخرى.");
@@ -193,7 +192,7 @@ const SubCategoriesScreen = () => {
     // Navigate to service providers screen with the subcategory ID
 router.push({
   pathname: "./showWorkers",
-  params: { subCategoryId: subCategory.id },
+  params: { subcategory: JSON.stringify(subCategory) },
 });  };
 
   // Function to truncate text with ellipsis
