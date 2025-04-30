@@ -9,8 +9,11 @@ import {
 import { MapPin, Home } from "lucide-react-native";
 import axios from "axios";
 import CONFIG from "@/config";
+import { router } from "expo-router";
+import refreshAccessToken from "@/api/refreshAccessToken";
 
 import DropdownSearch from "./DropdownSearch";
+import apiClient from "@/api/appClient";
 
 const AddressSection = ({
   onChange,
@@ -62,10 +65,17 @@ const AddressSection = ({
     const fetchRegions = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`${CONFIG.API_URL}/address/regions/1`);
+        const response = await apiClient.get(
+          `${CONFIG.API_URL}/address/regions/1`
+        );
         setWilayas(response.data.regions);
         setFilteredWilayas(response.data.regions);
-      } catch (error) {
+      } catch (error: any) {
+        if (error.response?.status === 401) {
+          if (await refreshAccessToken()) {
+            await fetchRegions();
+          }
+        }
         console.error("wrong fetching data", error);
         alert("wrong fetching data");
       } finally {
@@ -79,12 +89,17 @@ const AddressSection = ({
     if (selectedWilaya) {
       const fetchMunicipalities = async () => {
         try {
-          const response = await axios.get(
-            `${CONFIG.API_URL}/address/cities/${selectedWilaya.id}`
+          const response = await apiClient.get(
+            `/address/cities/${selectedWilaya.id}`
           );
           setDairas(response.data.cities);
           setFilteredDairas(response.data.cities);
-        } catch (error) {
+        } catch (error: any) {
+          if (error.response?.status === 401) {
+            if (await refreshAccessToken()) {
+              await fetchMunicipalities();
+            }
+          }
           console.error("wrong fecthing data", error);
         }
       };
