@@ -182,11 +182,11 @@ const HomeScreen = () => {
       if (loading) return;
       setLoading(true);
       try {
-        const userData = await AsyncStorage.getItem('user');
-        const user = userData ? JSON.parse(userData) : null;
-        if (user) {
-          const response = await apiClient.get(`work/job-request/public/${user.id}`, {
-            params: {role : user.role === 1 ? 'client' :'worker' ,  page: pageToFetch, limit: 20 },
+        const role = await AsyncStorage.getItem('role');
+        const id = await AsyncStorage.getItem('id');
+        if (role) {
+          const response = await apiClient.get(`work/job-request/public/${id}`, {
+            params: {role : +role === 1 ? 'client' :'worker' ,  page: pageToFetch, limit: 20 },
           });
           if (response.data && response.data.requests) {
             const { requests: fetchedPosts, page: backendTotalPages } = response.data;
