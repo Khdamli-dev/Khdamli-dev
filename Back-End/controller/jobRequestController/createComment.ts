@@ -6,7 +6,7 @@ const createComment = async (req: Request, res: Response) => {
   let { workerId, comment }: { workerId: number; comment: string } = req.body;
 
   // check request id id and worker id
-  if (Number.isNaN(requestId) || Number.isNaN(workerId)) {
+  if (Number.isNaN(requestId) || Number.isNaN(workerId) || !comment) {
     res.status(400).json({
       message: 'please provide request id and worker id',
       success: false,
@@ -16,7 +16,7 @@ const createComment = async (req: Request, res: Response) => {
 
   // check if comment is valid
   comment = comment.trim();
-  if (comment.length < 10 || comment.length > 100) {
+  if (comment.length > 100) {
     res.status(400).json({
       message: 'comment length should be more then 10 character and less then 100',
       success: false,
