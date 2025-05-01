@@ -108,11 +108,8 @@ const UserProfileScreen: React.FC = () => {
         if (workerId) {
           // Worker profile endpoint using the worker ID parameter
           const endpoint = `/users/worker/${workerId}`;
-          console.log(`Fetching worker profile with ID: ${workerId}`);
-          console.log(endpoint);
           
           const response = await apiClient.get(endpoint);
-          console.log(response);
           
           const newUserData = {
             fullName: response.data.worker.username,

@@ -275,7 +275,6 @@ const HomeScreen = () => {
             );
             setHasUserCommented(!!userComment);
           }
-          console.log(response.data.messages);
         } else {
           setComments([]); // Set empty array if no messages found
           console.log('No comments found or invalid response format');
@@ -330,14 +329,11 @@ const HomeScreen = () => {
     // ====================
     // دالة حفظ الكومنت في الباكند
     // ====================
-    console.log('hh');
     if (!selectedPostId || commentText.trim() === '' || hasUserCommented)
       return;
-    console.log('hh');
 
     try {
       const userData = await AsyncStorage.getItem('user');
-      console.log(userData);
       if (userData) {
         const user: any = JSON.parse(userData);
         const newComment = {
@@ -349,7 +345,6 @@ const HomeScreen = () => {
           newComment,
         );
         if (response.data.success) {
-          console.log(user);
           const workerComment: Comment = {
             worker_id: user.id,
             profile_image: user.profile_image,

@@ -147,7 +147,6 @@ const PublicRequest = () => {
 
   const deleteRequest = async (requestId: number) => {
     try {
-      console.log(requestId);
       const response = await apiClient.delete(`work/job-request/${requestId}`);
       if (response.data.success) {
         Alert.alert('request deleted successfully');
