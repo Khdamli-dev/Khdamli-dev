@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,18 +7,20 @@ import {
   SafeAreaView,
   Image,
   Platform,
-} from 'react-native';
-import Icon from 'react-native-vector-icons/Fontisto';
-import Icoon from 'react-native-vector-icons/AntDesign';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { KeyboardAvoidingView, ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Formik } from 'formik';
-import * as Yup from 'yup';
-import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import CONFIG from '../../config';
-import * as SecureStore from 'expo-secure-store';
+} from "react-native";
+import Icon from "react-native-vector-icons/Fontisto";
+import Icoon from "react-native-vector-icons/AntDesign";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { KeyboardAvoidingView, ScrollView } from "react-native";
+import { useRouter } from "expo-router";
+import { Formik } from "formik";
+import * as Yup from "yup";
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import CONFIG from "../../config";
+import * as SecureStore from "expo-secure-store";
+import refreshAccessToken from "@/api/refreshAccessToken";
+import apiClient from "@/api/appClient";
 //import { getSocket, connectSocket } from '@/api/socket';
 
 export default function Login() {
@@ -32,36 +34,37 @@ export default function Login() {
 
   // Data
   const loginSchema = Yup.object().shape({
-    email: Yup.string().email('Invalid Email').required('Email Is Required'),
+    email: Yup.string().email("Invalid Email").required("Email Is Required"),
     password: Yup.string()
       .matches(
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*#.?&_-]).{8,64}$/,
-        'Password must be 8-64 characters long and include at least one lowercase letter, one uppercase letter, one number, and one special character',
+        "Password must be 8-64 characters long and include at least one lowercase letter, one uppercase letter, one number, and one special character"
       )
-      .required('Password Is Required'),
+      .required("Password Is Required"),
   });
-  const [emailError, setEmailError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-  const [error, setError] = useState('');
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [error, setError] = useState("");
 
   const handleLogin = async (values: { email: string; password: string }) => {
-    setError('');
-    setEmailError('');
-    setPasswordError('');
+    setError("");
+    setEmailError("");
+    setPasswordError("");
     try {
-      const response = await axios.post(`${CONFIG.API_URL}/auth/login`, values);
+      console.log("Login values: ", values);
+      const response = await apiClient.post(`/auth/login`, values);
       if (response.data.success) {
         const user: any = response.data.user;
-        await AsyncStorage.setItem('user', JSON.stringify(user));
+        await AsyncStorage.setItem("user", JSON.stringify(user));
         // store tokens to expo-secure-store storage
         const {
           accessToken,
           refreshToken,
         }: { accessToken: string; refreshToken: string } = response.data;
-        await SecureStore.setItemAsync('accessToken', accessToken);
-        await SecureStore.setItemAsync('refreshToken', refreshToken);
-        await SecureStore.setItemAsync('email', values.email);
-        await SecureStore.setItemAsync('password', values.password);
+        await SecureStore.setItemAsync("accessToken", accessToken);
+        await SecureStore.setItemAsync("refreshToken", refreshToken);
+        await SecureStore.setItemAsync("email", values.email);
+        await SecureStore.setItemAsync("password", values.password);
 
         // enter user to his private room
         //connectSocket();
@@ -69,24 +72,24 @@ export default function Login() {
         //socket.emit('user-room', user.id);
 
         // go to home page
-        router.replace('/(tabs)/(home)');
+        router.replace("/(tabs)/(home)");
       }
     } catch (error: any) {
       if (error.response?.status === 403 && error.response.data) {
         setEmailError(
-          !error.response.data.validEmail ? "User don't exist" : '',
+          !error.response.data.validEmail ? "User don't exist" : ""
         );
         if (error.response.data.validEmail) {
           if (error.response.data.validPassword === false)
-            setPasswordError('Password is wrong');
+            setPasswordError("Password is wrong");
           if (error.response.data.validAccount === false)
             setError(
-              'your account is not valid, you need to confirm your email',
+              "your account is not valid, you need to confirm your email"
             );
         }
       } else {
         console.log(error);
-        setError('Server is busy, please try again later');
+        setError("Server is busy, please try again later");
       }
     }
   };
@@ -94,7 +97,7 @@ export default function Login() {
   return (
     <SafeAreaView className="flex-1 min-h-screen bg-specialGreen ">
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+        behavior={Platform.OS === "ios" ? "padding" : "padding"}
         className=""
         style={{ flex: 1 }}
       >
@@ -105,11 +108,11 @@ export default function Login() {
 
             <View className="relative w-11/12 h-72 top-12 mb-6">
               <Image
-                source={require('../../assets/images/bgLogologin.jpg')}
+                source={require("../../assets/images/bgLogologin.jpg")}
                 className="absolute w-full h-full   "
               />
               <Image
-                source={require('../../assets/images/photo_2025-02-04_10-16-04.jpg')}
+                source={require("../../assets/images/photo_2025-02-04_10-16-04.jpg")}
                 className="absolute top-6 left-4 w-11/12 h-52 rounded-full"
               />
             </View>
@@ -120,7 +123,7 @@ export default function Login() {
               </Text>
               <Text
                 style={{
-                  textShadowColor: '#fffff',
+                  textShadowColor: "#fffff",
                   textShadowOffset: { width: 8, height: 1 },
                   textShadowRadius: 10,
                 }}
@@ -131,7 +134,7 @@ export default function Login() {
             </View>
             <Text
               style={{
-                textShadowColor: '#fffff',
+                textShadowColor: "#fffff",
                 textShadowOffset: { width: 5, height: 3 },
                 textShadowRadius: 5,
               }}
@@ -143,7 +146,7 @@ export default function Login() {
           {/* Form */}
 
           <Formik
-            initialValues={{ email: '', password: '' }}
+            initialValues={{ email: "", password: "" }}
             validationSchema={loginSchema}
             onSubmit={(values) => {
               handleLogin(values);
@@ -160,7 +163,7 @@ export default function Login() {
             }) => (
               <View className="w-full items-center ">
                 <View className="relative w-10/12 h-20 my-2 self-center ">
-                  {focusedInput !== 'email' && (
+                  {focusedInput !== "email" && (
                     <Icoon
                       name="user"
                       color="#C4C4C4"
@@ -171,21 +174,21 @@ export default function Login() {
 
                   <TextInput
                     className={`${
-                      focusedInput === 'email' ? 'px-10' : 'pl-28'
-                    } w-full h-full text-white text-2xl font-medium border-2 ${emailError || (errors.email && touched.email) ? 'border-red-600' : 'border-white'} rounded-full py-2 `}
+                      focusedInput === "email" ? "px-10" : "pl-28"
+                    } w-full h-full text-white text-2xl font-medium border-2 ${emailError || (errors.email && touched.email) ? "border-red-600" : "border-white"} rounded-full py-2 `}
                     value={values.email}
-                    onChangeText={handleChange('email')}
+                    onChangeText={handleChange("email")}
                     onFocus={() => {
-                      setFocusedInput('email');
-                      setEmailError('');
-                      setFieldTouched('email', false);
-                      setError('');
+                      setFocusedInput("email");
+                      setEmailError("");
+                      setFieldTouched("email", false);
+                      setError("");
                     }}
                     onBlur={() => {
-                      if (values.email === '') {
+                      if (values.email === "") {
                         setFocusedInput(null);
                       }
-                      handleBlur('email');
+                      handleBlur("email");
                     }}
                     autoCapitalize="none"
                     keyboardType="email-address"
@@ -206,7 +209,7 @@ export default function Login() {
                 ) : null}
 
                 <View className="relative w-10/12 h-20 my-2 self-center ">
-                  {passwordFocusedInput !== 'password' && (
+                  {passwordFocusedInput !== "password" && (
                     <Icon
                       name="locked"
                       color="#C4C4C4"
@@ -217,20 +220,20 @@ export default function Login() {
 
                   <TextInput
                     className={`${
-                      passwordFocusedInput === 'password' ? 'pl-10' : 'pl-28'
-                    } w-full h-full pr-14 text-white text-2xl font-medium border-2 ${passwordError || (errors.password && touched.password) ? 'border-red-600' : 'border-white'} rounded-full py-2 `}
+                      passwordFocusedInput === "password" ? "pl-10" : "pl-28"
+                    } w-full h-full pr-14 text-white text-2xl font-medium border-2 ${passwordError || (errors.password && touched.password) ? "border-red-600" : "border-white"} rounded-full py-2 `}
                     value={values.password}
-                    onChangeText={handleChange('password')}
+                    onChangeText={handleChange("password")}
                     onFocus={() => {
-                      setPasswordFocusedInput('password');
-                      setPasswordError('');
-                      setFieldTouched('password', false);
+                      setPasswordFocusedInput("password");
+                      setPasswordError("");
+                      setFieldTouched("password", false);
                     }}
                     onBlur={() => {
-                      if (values.password === '') {
+                      if (values.password === "") {
                         setPasswordFocusedInput(null);
                       }
-                      handleBlur('password');
+                      handleBlur("password");
                     }}
                     secureTextEntry={!showPassword}
                     placeholder="Password"
@@ -242,7 +245,7 @@ export default function Login() {
                   >
                     <MaterialCommunityIcons
                       name="eye"
-                      color={showPassword ? '#fff' : '#BED2D0'}
+                      color={showPassword ? "#fff" : "#BED2D0"}
                       size={35}
                     />
                   </TouchableOpacity>
@@ -269,7 +272,7 @@ export default function Login() {
                 <View className=" bg-white p-3 w-full items-center rounded-tl-[50px] mt-10  rounded-tr-[50px] shadow-xl">
                   {/* Forgot Password */}
                   <TouchableOpacity
-                    onPress={() => router.push('/(auth)/(RestorAccount)')}
+                    onPress={() => router.push("/(auth)/(RestorAccount)")}
                   >
                     <Text className="text-specialGreen mb-6 text-lg font-bold">
                       Forgot Password ?
@@ -295,7 +298,7 @@ export default function Login() {
                   {/* Sign Up Button  */}
 
                   <TouchableOpacity
-                    onPress={() => router.push('/(auth)/(signUp)')}
+                    onPress={() => router.push("/(auth)/(signUp)")}
                     className="bg-specialGray p-6 rounded-full w-11/12 max-w-sm shadow-md shadow-black mb-8"
                   >
                     <Text className="text-foncyGreen text-center font-medium text-3xl">

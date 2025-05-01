@@ -22,6 +22,7 @@ import {
   CreditCard,
   User,
   Globe,
+  Settings,
 } from "lucide-react-native";
 import CONFIG from "../../../config";
 import { Video, ResizeMode } from "expo-av";
@@ -33,6 +34,7 @@ import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { FontAwesome } from "@expo/vector-icons";
+import apiClient from "@/api/appClient";
 
 const { width } = Dimensions.get("window");
 
@@ -126,7 +128,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         const endpoint =
           role === 1 ? `/users/client/` : role === 2 ? `/users/worker/` : null;
         if (endpoint) {
-          const response = await axios.get(`${CONFIG.API_URL}${endpoint}${id}`);
+          const response = await apiClient.get(`${endpoint}${id}`);
           const newUserData =
             role === 1
               ? {
@@ -208,9 +210,6 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         : null,
     }));
   };
-  const log = () => {
-    console.log(user.workingDays);
-  };
 
   const updateProfileImage = (newImage: string) => {
     setUser((prevUser) => ({
@@ -243,231 +242,226 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   );
 
   return (
-      <ScrollView>
-        <LinearGradient
-          colors={["#5EB4A2", "#2B524A"]}
-          start={{ x: 0, y: 1 }}
-          end={{ x: 1, y: 0 }}
-          locations={[0.22, 1]}
-          className="relative items-center p-[35px] mb-[10px]"
-          style={{ borderBottomLeftRadius: 50, borderBottomRightRadius: 50 }}
-        >
-          <>
-            <TouchableOpacity
+    <ScrollView>
+      <LinearGradient
+        colors={["#5EB4A2", "#2B524A"]}
+        start={{ x: 0, y: 1 }}
+        end={{ x: 1, y: 0 }}
+        locations={[0.22, 1]}
+        className="relative items-center p-[35px] mb-[10px]"
+        style={{ borderBottomLeftRadius: 50, borderBottomRightRadius: 50 }}
+      >
+        <>
+          <TouchableOpacity
             className="absolute top-[30px] left-[30px]"
             onPress={() => router.push("/(tabs)/(profile)/(settings)")}
           >
-            <FontAwesome name="user" size={38} color="#BD7D06" />
+            <Settings size={38} color="#BD7D06" />
           </TouchableOpacity>
+          <TouchableOpacity
+            className="absolute top-[30px] right-[30px]"
+            onPress={() => router.push("/(tabs)/(profile)/editProfile")}
+          >
+            <Edit size={38} color="#BD7D06" />
+          </TouchableOpacity>
+
+          <View
+            className="absolute rounded-[15px] w-[120px] h-[80px] top-[70px] right-[-30px]"
+            style={{
+              backgroundColor: "rgba(255, 255, 255, 0.1)",
+              transform: [{ rotate: "-30deg" }],
+              borderRadius: 15,
+              overflow: "hidden",
+            }}
+          />
+          <View
+            className="absolute rounded-[15px]  w-[110px] h-[80px] bottom-[20px] left-[-20px]"
+            style={{
+              backgroundColor: "rgba(255, 255, 255, 0.1)",
+              transform: [{ rotate: "-30deg" }],
+              borderRadius: 15,
+              overflow: "hidden",
+            }}
+          />
+
+          <View className="relative">
+            <Image
+              source={{
+                uri:
+                  user.image ??
+                  "https://cdn-icons-png.flaticon.com/512/149/149071.png",
+              }}
+              className="w-[130px] h-[130px] rounded-full border-[3px] border-white"
+            />
             <TouchableOpacity
-              className="absolute top-[30px] right-[30px]"
-              onPress={() => router.push("/(tabs)/(profile)/editProfile")}
+              className="absolute bottom-0 right-0 bg-[#BD7D06] rounded-full p-[6px] border-[1.5px] border-white"
+              onPress={() => {
+                pickProfileImage(updateProfileImage);
+              }}
             >
-              <Edit size={38} color="#BD7D06" />
+              <Pencil size={20} color="white" />
             </TouchableOpacity>
-             
-            
+          </View>
 
-            <View
-              className="absolute rounded-[15px] w-[120px] h-[80px] top-[70px] right-[-30px]"
-              style={{
-                backgroundColor: "rgba(255, 255, 255, 0.1)",
-                transform: [{ rotate: "-30deg" }],
-                borderRadius: 15,
-                overflow: "hidden",
-              }}
-            />
-            <View
-              className="absolute rounded-[15px]  w-[110px] h-[80px] bottom-[20px] left-[-20px]"
-              style={{
-                backgroundColor: "rgba(255, 255, 255, 0.1)",
-                transform: [{ rotate: "-30deg" }],
-                borderRadius: 15,
-                overflow: "hidden",
-              }}
-            />
-
-            <View className="relative">
-              <Image
-                source={{
-                  uri:
-                    user.image ??
-                    "https://cdn-icons-png.flaticon.com/512/149/149071.png",
-                }}
-                className="w-[130px] h-[130px] rounded-full border-[3px] border-white"
-              />
-              <TouchableOpacity
-                className="absolute bottom-0 right-0 bg-[#BD7D06] rounded-full p-[6px] border-[1.5px] border-white"
-                onPress={() => {
-                  pickProfileImage(updateProfileImage);
-                }}
-              >
-                <Pencil size={20} color="white" />
-              </TouchableOpacity>
-            </View>
-
+          <Text
+            className="text-white text-[27px] mb-1.5 mt-2.5 "
+            style={{ fontFamily: "Itim_400Regular" }}
+          >
+            {user.fullName}
+          </Text>
+        </>
+      </LinearGradient>
+      {user.accountType === "worker" && (
+        <>
+          <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
             <Text
-              className="text-white text-[27px] mb-1.5 mt-2.5 "
+              className="text-center text-[#BD7D06]  mb-2.5"
               style={{ fontFamily: "Itim_400Regular" }}
             >
-              {user.fullName}
+              Short Bio
             </Text>
-          </>
-        </LinearGradient>
+            <Text
+              className="text-center mt-2 text-[16px]"
+              style={{ fontFamily: "Itim_400Regular" }}
+            >
+              {user.bio}
+            </Text>
+          </View>
+          <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
+            <Text
+              className="text-center text-[#BD7D06]  mb-2.5"
+              style={{ fontFamily: "Itim_400Regular" }}
+            >
+              Working Days
+            </Text>
+            {user.workingDays?.map((item, index) => (
+              <View
+                key={index}
+                className="flex-row justify-between py-2 border-b border-gray-200"
+              >
+                <Text className="text-[16px] font-semibold">{item.day}</Text>
+                <Text
+                  className="mr-2 text-[#BD7D06]"
+                  style={{ fontFamily: "Itim_400Regular" }}
+                >
+                  From {formatTime(item.begin)}
+                </Text>
+                <Text
+                  className="mr-2 text-[#BD7D06]"
+                  style={{ fontFamily: "Itim_400Regular" }}
+                >
+                  To {formatTime(item.end)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </>
+      )}
+      <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
+        <ProfileItem
+          label="Registration Date"
+          value={
+            user.registration_date ? user.registration_date.split("T")[0] : ""
+          }
+          Icon={(props) => <Calendar {...props} />}
+        />
+        <ProfileItem
+          label="Region"
+          value={user.region}
+          Icon={(props) => <Globe {...props} />}
+        />
+        <ProfileItem
+          label="City"
+          value={user.city}
+          Icon={(props) => <MapPin {...props} />}
+        />
+      </View>
+
+      <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
+        <ProfileItem
+          label="Account Type"
+          value={user.accountType}
+          Icon={(props) => <User {...props} />}
+        />
+        <ProfileItem
+          label="Age"
+          value={`${user.age} Years`}
+          Icon={(props) => <Clock {...props} />}
+        />
+        <ProfileItem
+          label="Gender"
+          value={user.gender}
+          Icon={(props) => <User {...props} />}
+        />
         {user.accountType === "worker" && (
           <>
-            <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
-              <Text
-                className="text-center text-[#BD7D06]  mb-2.5"
-                style={{ fontFamily: "Itim_400Regular" }}
-              >
-                Short Bio
-              </Text>
-              <Text
-                className="text-center mt-2 text-[16px]"
-                style={{ fontFamily: "Itim_400Regular" }}
-              >
-                {user.bio}
-              </Text>
-            </View>
-            <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
-              <Text
-                className="text-center text-[#BD7D06]  mb-2.5"
-                style={{ fontFamily: "Itim_400Regular" }}
-              >
-                Working Days
-              </Text>
-              {user.workingDays?.map((item, index) => (
-                <View
-                  key={index}
-                  className="flex-row justify-between py-2 border-b border-gray-200"
-                >
-                  <Text className="text-[16px] font-semibold">{item.day}</Text>
-                  <Text
-                    className="mr-2 text-[#BD7D06]"
-                    style={{ fontFamily: "Itim_400Regular" }}
-                  >
-                    From {formatTime(item.begin)}
-                  </Text>
-                  <Text
-                    className="mr-2 text-[#BD7D06]"
-                    style={{ fontFamily: "Itim_400Regular" }}
-                  >
-                    To {formatTime(item.end)}
-                  </Text>
-                </View>
-              ))}
-            </View>
+            {user.category?.map((cat, index) => (
+              <ProfileItem
+                key={index}
+                label={`Profession ${index + 1}`}
+                value={`${cat.name}`}
+                Icon={(props) => <Briefcase {...props} />}
+              />
+            ))}
+
+            {user.paymentMethod && (
+              <ProfileItem
+                label="Payment Method"
+                value={user.paymentMethod.join(" / ")}
+                Icon={(props) => <CreditCard {...props} />}
+              />
+            )}
           </>
         )}
+      </View>
+      {user.accountType === "worker" && (
         <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
-          <ProfileItem
-            label="Registration Date"
-            value={
-              user.registration_date ? user.registration_date.split("T")[0] : ""
-            }
-            Icon={(props) => <Calendar {...props} />}
-          />
-          <ProfileItem
-            label="Region"
-            value={user.region}
-            Icon={(props) => <Globe {...props} />}
-          />
-          <ProfileItem
-            label="City"
-            value={user.city}
-            Icon={(props) => <MapPin {...props} />}
-          />
-        </View>
-
-        <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
-          <ProfileItem
-            label="Account Type"
-            value={user.accountType}
-            Icon={(props) => <User {...props} />}
-          />
-          <ProfileItem
-            label="Age"
-            value={`${user.age} Years`}
-            Icon={(props) => <Clock {...props} />}
-          />
-          <ProfileItem
-            label="Gender"
-            value={user.gender}
-            Icon={(props) => <User {...props} />}
-          />
-          {user.accountType === "worker" && (
-            <>
-              {user.category?.map((cat, index) => (
-                <ProfileItem
-                  key={index}
-                  label={`Profession ${index + 1}`}
-                  value={`${cat.name}`}
-                  Icon={(props) => <Briefcase {...props} />}
-                />
-              ))}
-
-              {user.paymentMethod && (
-                <ProfileItem
-                  label="Payment Method"
-                  value={user.paymentMethod.join(" / ")}
-                  Icon={(props) => <CreditCard {...props} />}
-                />
-              )}
-            </>
-          )}
-        </View>
-        {user.accountType === "worker" && (
-          <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
-            <View className="flex-row justify-between items-center mb-2.5">
-              <Text
-                className="text-center text-[#BD7D06]  mb-2.5 text-[20px]"
-                style={{ fontFamily: "Itim_400Regular" }}
-              >
-                Some Pictures
-              </Text>
-              <TouchableOpacity
-                className="items-center my-2.5 p-1.25"
-                onPress={pickGalleryMedia}
-              >
-                <Plus size={22} color="#BD7D06" strokeWidth={4} />
-              </TouchableOpacity>
-            </View>
-            <FlatList
-              data={user.gallery}
-              renderItem={({ item }) => (
-                <View className="relative mx-4">
-                  {item.type === "image" ? (
-                    <Image
-                      source={{ uri: item.uri }}
-                      className="h-[300px] rounded-[10px] my-1.5"
-                      style={{ width: width - 32 }}
-                    />
-                  ) : (
-                    <Video
-                      source={{ uri: item.uri }}
-                      className="h-[300px] rounded-[10px] my-1.5"
-                      style={{ width: width - 32 }}
-                      useNativeControls={true}
-                      resizeMode={ResizeMode.CONTAIN}
-                      shouldPlay={false}
-                    />
-                  )}
-
-                  <TouchableOpacity
-                    className="absolute top-[10px] right-[10px] bg-[rgba(255,0,0,0.7)] rounded-[15px] p-2"
-                    onPress={() => log()}
-                  >
-                    <Trash size={20} color="white" />
-                  </TouchableOpacity>
-                </View>
-              )}
-              keyExtractor={(item, index) => item.uri + index}
-              scrollEnabled={false}
-            />
+          <View className="flex-row justify-between items-center mb-2.5">
+            <Text
+              className="text-center text-[#BD7D06]  mb-2.5 text-[20px]"
+              style={{ fontFamily: "Itim_400Regular" }}
+            >
+              Some Pictures
+            </Text>
+            <TouchableOpacity
+              className="items-center my-2.5 p-1.25"
+              onPress={pickGalleryMedia}
+            >
+              <Plus size={22} color="#BD7D06" strokeWidth={4} />
+            </TouchableOpacity>
           </View>
-        )}
-      </ScrollView>
+          <FlatList
+            data={user.gallery}
+            renderItem={({ item }) => (
+              <View className="relative mx-4">
+                {item.type === "image" ? (
+                  <Image
+                    source={{ uri: item.uri }}
+                    className="h-[300px] rounded-[10px] my-1.5"
+                    style={{ width: width - 32 }}
+                  />
+                ) : (
+                  <Video
+                    source={{ uri: item.uri }}
+                    className="h-[300px] rounded-[10px] my-1.5"
+                    style={{ width: width - 32 }}
+                    useNativeControls={true}
+                    resizeMode={ResizeMode.CONTAIN}
+                    shouldPlay={false}
+                  />
+                )}
+
+                <TouchableOpacity className="absolute top-[10px] right-[10px] bg-[rgba(255,0,0,0.7)] rounded-[15px] p-2">
+                  <Trash size={20} color="white" />
+                </TouchableOpacity>
+              </View>
+            )}
+            keyExtractor={(item, index) => item.uri + index}
+            scrollEnabled={false}
+          />
+        </View>
+      )}
+    </ScrollView>
   );
 };
 

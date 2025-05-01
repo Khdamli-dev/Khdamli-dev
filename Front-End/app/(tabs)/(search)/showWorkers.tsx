@@ -112,9 +112,9 @@ interface SubCategory {
 const ServiceProvidersScreen = () => {
   const screenWidth = Dimensions.get("window").width;
 
- const { subcategory } : {subcategory : string} = useLocalSearchParams();
-   const branch = JSON.parse(subcategory);
-
+  const { subcategory }: { subcategory: string } = useLocalSearchParams();
+  const branch = JSON.parse(subcategory);
+  const[role, setRole] = useState(1);// 2 for worker, 1 for client
   const [subCategory, setSubCategory] = useState<SubCategory | null>(null);
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [filteredWorkers, setFilteredWorkers] = useState<Worker[]>([]);
@@ -124,7 +124,22 @@ const ServiceProvidersScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
 
+  //Fetch User Role 
   useEffect(() => {
+    const fetchUserRole = async () => {
+      try {
+        const userData = await AsyncStorage.getItem("user");
+        const user = JSON.parse(userData || "");
+        setRole(user.role);
+      } catch (error) {
+        console.error("Error fetching user role:", error);
+      }
+    };
+
+    fetchUserRole();
+  }, []);
+  useEffect(() => {
+
     fetchWorkers();
   }, [branch.id]);
 
@@ -134,41 +149,19 @@ const ServiceProvidersScreen = () => {
       setError("No subcategory ID provided");
       return;
     }
-
     try {
       setIsLoading(true);
-
-      // For testing: use mock data instead of API call
-      // setTimeout(() => {
-      //   // Find subcategory
-      //   const sub = MOCK_SUBCATEGORIES[subcategoryId];
-      //   if (sub) {
-      //     setSubCategory(sub);
-      //   }
-
-      //   // Get workers (in real app, would filter by subcategory)
-      //   // Since we removed parentCategory from Worker interface,
-      //   // we'll just pretend these are already filtered by subcategoryId
-      //   setWorkers(MOCK_WORKERS);
-      //   setFilteredWorkers(MOCK_WORKERS);
-      //   setError(null);
-      //   setIsLoading(false);
-      // }, 1000);
-
-      // Uncomment this for real API usage
-      
-    
-       const userData = await AsyncStorage.getItem('user');
-       const user = JSON.parse(userData || '');
+      const userData = await AsyncStorage.getItem("user");
+      const user = JSON.parse(userData || "");
+  
       // Then fetch workers for this subcategory
       const workersResponse = await apiClient.get(`/work/worker/${user.id}/`, {
-        params: { category: branch.id , page : 0}
+        params: { category: branch.id, page: 0 },
       });
-      
+
       setWorkers(workersResponse.data.workers);
       setFilteredWorkers(workersResponse.data.workers);
       setError(null);
-     
     } catch (error) {
       console.error("Error fetching workers:", error);
       setError("Failed to load workers. Please try again.");
@@ -209,7 +202,7 @@ const ServiceProvidersScreen = () => {
   const handleWorkerPress = (worker: Worker) => {
     console.log("Navigating to worker profile:", worker.username);
     router.push({
-      pathname: "./profileAsView",
+      pathname: "./workerProfile",
       params: { workerId: worker.id },
     });
   };
@@ -275,13 +268,19 @@ const ServiceProvidersScreen = () => {
           </View>
 
           {/* Send Request Button */}
-          <TouchableOpacity
-            className="bg-[#F8A100] py-2 px-4 rounded-md mt-3 flex-row items-center justify-center"
-            onPress={() => handleSendRequest(item)}
-          >
-            <EvilIcons name="envelope" size={24} color="white" />
-            <Text className="text-white font-medium ml-1">Send Request</Text>
-          </TouchableOpacity>
+          {role === 1 && (
+            <>
+              <TouchableOpacity
+                className="bg-[#F8A100] py-2 px-4 rounded-md mt-3 flex-row items-center justify-center"
+                onPress={() => handleSendRequest(item)}
+              >
+                <EvilIcons name="envelope" size={24} color="white" />
+                <Text className="text-white font-medium ml-1">
+                  Send Request
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </TouchableOpacity>
     );

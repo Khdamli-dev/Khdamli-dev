@@ -27,6 +27,7 @@ import { useFonts, Itim_400Regular } from "@expo-google-fonts/itim";
 import { router, useLocalSearchParams } from "expo-router";
 import { AntDesign } from "@expo/vector-icons";
 import apiClient from "@/api/appClient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width } = Dimensions.get("window");
 
@@ -42,6 +43,7 @@ const UserProfileScreen: React.FC = () => {
     uri: string;
   };
   const { workerId } = useLocalSearchParams();
+  const[role, setRole] = useState<1 | 2 | null>(null);
   const [user, setUser] = useState<{
     fullName: string | null;
     registration_date: string | null;
@@ -71,38 +73,7 @@ const UserProfileScreen: React.FC = () => {
     category: null,
     gallery: null,
   });
-
-  // Sample data for demonstration (fake data)
-  // const fakeData = {
-  //   fullName: "Ahmed Mohamed",
-  //   registration_date: "2023-10-15T14:30:00",
-  //   bio: "Professional plumber with 7 years of experience. I specialize in fixing leaks, installing fixtures, and maintenance work.",
-  //   image: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
-  //   region: "Cairo",
-  //   city: "Maadi",
-  //   accountType: "worker",
-  //   workingDays: [
-  //     { day: "Monday", begin: "09:00", end: "17:00" },
-  //     { day: "Tuesday", begin: "09:00", end: "17:00" },
-  //     { day: "Wednesday", begin: "09:00", end: "17:00" },
-  //     { day: "Thursday", begin: "09:00", end: "17:00" },
-  //     { day: "Friday", begin: "09:00", end: "14:00" },
-  //   ],
-  //   age: 32,
-  //   gender: "Male",
-  //   paymentMethod: ["Cash", "Credit Card"],
-  //   category: [{ name: "Plumbing", price: 150, unity: "Hour" }],
-  //   gallery: [
-  //     { type: "image" as const, uri: "https://picsum.photos/id/1/800/600" },
-  //     { type: "image" as const, uri: "https://picsum.photos/id/28/800/600" },
-  //     { type: "image" as const, uri: "https://picsum.photos/id/42/800/600" },
-  //   ],
-  // };
-
   useEffect(() => {
-    // Set fake data for demonstration
-    // setUser(fakeData);
-
     //Commented out as requested
     const fetchUser = async () => {
       try {
@@ -140,7 +111,14 @@ const UserProfileScreen: React.FC = () => {
         console.error("Failed to fetch worker data", error);
       }
     };
-
+     const fetchUserRole = async () => {
+           const userData = await AsyncStorage.getItem('user');
+           if (userData) {
+             const user = JSON.parse(userData);
+             setRole(user.role);
+           }
+         };
+        fetchUserRole();
     fetchUser();
    
   }, [workerId]); // Add workerId as a dependency to refetch when it changes
@@ -152,7 +130,7 @@ const UserProfileScreen: React.FC = () => {
 
   const handleSendPrivateRequest = () => {
     router.push({
-      pathname: "/(tabs)/(home)/createRequest",
+      pathname: "/(tabs)/(search)/requeste",
       params: { type: "2" },
     });
   };
@@ -233,14 +211,21 @@ const UserProfileScreen: React.FC = () => {
         >
           {user.fullName}
         </Text>
-
-        <TouchableOpacity
-          onPress={handleSendPrivateRequest}
-          style={styles.requestButton}
-        >
-          <MessageSquare size={20} color="white" style={{ marginRight: 8 }} />
-          <Text style={styles.requestButtonText}>Send Private Request</Text>
-        </TouchableOpacity>
+        {role === 1 && (
+          <>
+            <TouchableOpacity
+              onPress={handleSendPrivateRequest}
+              style={styles.requestButton}
+            >
+              <MessageSquare
+                size={20}
+                color="white"
+                style={{ marginRight: 8 }}
+              />
+              <Text style={styles.requestButtonText}>Send Private Request</Text>
+            </TouchableOpacity>
+          </>
+        )}
       </LinearGradient>
 
       {user.accountType === "worker" && (
