@@ -125,10 +125,8 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         const { id, role } = user;
         const endpoint =
           role === 1 ? `/users/client/` : role === 2 ? `/users/worker/` : null;
-        console.log(endpoint);
         if (endpoint) {
           const response = await axios.get(`${CONFIG.API_URL}${endpoint}${id}`);
-          console.log(response);
           const newUserData =
             role === 1
               ? {

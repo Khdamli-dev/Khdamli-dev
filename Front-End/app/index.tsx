@@ -1,11 +1,12 @@
-import { View } from "react-native";
-import React, { useEffect, useRef } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Animated, Easing } from "react-native";
-import { useRouter } from "expo-router";
-import * as SecureStore from "expo-secure-store";
-import apiClient from "@/api/appClient";
-import refreshAccessToken from "@/api/refreshAccessToken";
+import { View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Animated, Easing } from 'react-native';
+import { useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
+import apiClient from '@/api/appClient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+//import { getSocket, connectSocket } from '@/api/socket';
 
 const AppStartUp = () => {
   const router = useRouter();
@@ -40,25 +41,33 @@ const AppStartUp = () => {
     // التحقق من تسجيل الدخول بعد 3 ثوانٍ
     const checkLoginStatus = async () => {
       // refresh the access token
-      const refreshToken = await SecureStore.getItemAsync("refreshToken");
+      const refreshToken = await SecureStore.getItemAsync('refreshToken');
       if (!refreshToken) {
-        router.replace("/(auth)");
+        router.replace('/(auth)');
         return;
       }
 
       try {
-        const response = await apiClient.post("/auth/refresh", null, {
+        const response = await apiClient.post('/auth/refresh', null, {
           headers: {
-            "x-refresh-token": `Bearer ${refreshToken}`,
+            'x-refresh-token': `Bearer ${refreshToken}`,
           },
         });
         if (response.data.success) {
           const { accessToken }: { accessToken: string } = response.data;
-          await SecureStore.setItemAsync("accessToken", accessToken);
-          router.replace("/(tabs)/(home)");
-        } else router.replace("/(auth)");
+          await SecureStore.setItemAsync('accessToken', accessToken);
+          const { user } = response.data;
+          await AsyncStorage.setItem('user', JSON.stringify(user));
+
+          // enter user to his private room
+          //connectSocket();
+          //const socket = getSocket();
+          //socket.emit('user-room', userId);
+
+          router.replace('/(tabs)/(home)');
+        } else router.replace('/(auth)');
       } catch (error) {
-        router.replace("/(auth)");
+        router.replace('/(auth)');
       }
     };
 
@@ -79,7 +88,7 @@ const AppStartUp = () => {
           </Animated.Text>
           <View className=" items-end flex-col">
             <Animated.Image
-              source={require("../assets/images/startUpPhoto.jpg")}
+              source={require('../assets/images/startUpPhoto.jpg')}
               className="w-full h-32"
               style={{
                 transform: [{ translateX: imageAnim }],

@@ -9,7 +9,6 @@ import {
   Dimensions,
   StyleSheet,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Calendar,
   Clock,
@@ -20,13 +19,10 @@ import {
   Globe,
   MessageSquare,
 } from "lucide-react-native";
-import CONFIG from "../../../config";
 import { Video, ResizeMode } from "expo-av";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFonts, Itim_400Regular } from "@expo-google-fonts/itim";
 import { router, useLocalSearchParams } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
 import { AntDesign } from "@expo/vector-icons";
 import apiClient from "@/api/appClient";
 
@@ -112,11 +108,8 @@ const UserProfileScreen: React.FC = () => {
         if (workerId) {
           // Worker profile endpoint using the worker ID parameter
           const endpoint = `/users/worker/${workerId}`;
-          console.log(`Fetching worker profile with ID: ${workerId}`);
-          console.log(endpoint);
           
           const response = await apiClient.get(endpoint);
-          console.log(response);
           
           const newUserData = {
             fullName: response.data.worker.username,

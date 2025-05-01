@@ -25,8 +25,6 @@ import { Video, ResizeMode } from "expo-av";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFonts, Itim_400Regular } from "@expo-google-fonts/itim";
 import { router, useLocalSearchParams } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
 import { AntDesign } from "@expo/vector-icons";
 import apiClient from "@/api/appClient";
 

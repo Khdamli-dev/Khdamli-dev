@@ -6,12 +6,10 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   FlatList,
   Image,
   SafeAreaView,
-  ActivityIndicator,
   Dimensions,
   StatusBar,
 } from "react-native";

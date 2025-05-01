@@ -1,6 +1,4 @@
-import CONFIG from "@/config";
 import { AntDesign, EvilIcons } from "@expo/vector-icons";
-import axios from "axios";
 import { useLocalSearchParams, router } from "expo-router";
 import React, { useState, useEffect } from "react";
 import { LinearGradient } from "expo-linear-gradient";
@@ -13,8 +11,6 @@ import {
   Image,
   SafeAreaView,
   ActivityIndicator,
-  StatusBar,
-  Alert,
   RefreshControl,
   Dimensions,
 } from "react-native";
