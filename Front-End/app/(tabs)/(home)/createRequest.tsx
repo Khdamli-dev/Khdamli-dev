@@ -9,7 +9,6 @@ import {
   TextInput,
   Dimensions,
   Platform,
-  Button,
 } from "react-native";
 import { router } from "expo-router";
 import {

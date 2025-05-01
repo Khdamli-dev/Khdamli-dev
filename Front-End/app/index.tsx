@@ -56,10 +56,8 @@ const AppStartUp = () => {
         if (response.data.success) {
           const { accessToken }: { accessToken: string } = response.data;
           await SecureStore.setItemAsync('accessToken', accessToken);
-          const { userId, role }: { userId: number; role: number } =
-            response.data;
-          await AsyncStorage.setItem('userId', String(userId));
-          await AsyncStorage.setItem('role', String(role));
+          const { user } = response.data;
+          await AsyncStorage.setItem('user', JSON.stringify(user));
 
           // enter user to his private room
           //connectSocket();

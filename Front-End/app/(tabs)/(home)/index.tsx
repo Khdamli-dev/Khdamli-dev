@@ -180,14 +180,14 @@ const HomeScreen = () => {
       if (loading) return;
       setLoading(true);
       try {
-        const role = await AsyncStorage.getItem('role');
-        const id = await AsyncStorage.getItem('userId');
-        if (role && id) {
+        const userData : string | null = await AsyncStorage.getItem("user");
+        if (userData) {
+          const user = JSON.parse(userData);
           const response = await apiClient.get(
-            `work/job-request/public/${id}`,
+            `work/job-request/public/${user.id}`,
             {
               params: {
-                role: +role === 1 ? 'client' : 'worker',
+                role: user.role === 1 ? 'client' : 'worker',
                 page: pageToFetch,
                 limit: 20,
               },

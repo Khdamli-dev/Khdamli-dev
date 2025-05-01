@@ -1,7 +1,5 @@
 import apiClient from '@/api/appClient';
-import CONFIG from '@/config';
 import { EvilIcons } from '@expo/vector-icons';
-import axios from 'axios';
 import { router } from 'expo-router';
 import React, { useState, useEffect } from 'react';
 import {

@@ -53,8 +53,6 @@ export default function Login() {
       if (response.data.success) {
         const user: any = response.data.user;
         await AsyncStorage.setItem('user', JSON.stringify(user));
-        await AsyncStorage.setItem('role', String(user.role));
-        await AsyncStorage.setItem('role', String(user.id));
         // store tokens to expo-secure-store storage
         const {
           accessToken,
