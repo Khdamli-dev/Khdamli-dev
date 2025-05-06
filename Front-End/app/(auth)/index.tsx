@@ -51,7 +51,6 @@ export default function Login() {
     setEmailError("");
     setPasswordError("");
     try {
-      console.log("Login values: ", values);
       const response = await apiClient.post(`/auth/login`, values);
       if (response.data.success) {
         const user: any = response.data.user;
