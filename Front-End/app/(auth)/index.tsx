@@ -62,7 +62,7 @@ export default function Login() {
         await SecureStore.setItemAsync('email', values.email);
         await SecureStore.setItemAsync('password', values.password);
 
-        /// Connect socket and join user room
+        // Connect socket and join user room
         try {
           console.log('Connecting to socket...');
           const socket = connectSocket();

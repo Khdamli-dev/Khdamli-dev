@@ -59,10 +59,30 @@ const AppStartUp = () => {
           const { user } = response.data;
           await AsyncStorage.setItem('user', JSON.stringify(user));
 
-          // enter user to his private room
-          connectSocket();
-          const socket = getSocket();
-          socket.emit('user-room', user.id);
+          // Connect socket and join user room
+          try {
+            console.log('Connecting to socket...');
+            const socket = connectSocket();
+
+            // Wait a brief moment to ensure connection is established
+            setTimeout(() => {
+              if (socket.connected) {
+                console.log(`Joining room for user ${user.id}`);
+                socket.emit('user-room', user.id);
+              } else {
+                console.warn('Socket not connected yet, cannot join room');
+                // Retry joining room
+                socket.on('connect', () => {
+                  console.log(
+                    `Socket connected, now joining room for user ${user.id}`,
+                  );
+                  socket.emit('user-room', user.id);
+                });
+              }
+            }, 500);
+          } catch (socketError) {
+            console.error('Socket connection error:', socketError);
+          }
 
           router.replace('/(tabs)/(home)');
         } else router.replace('/(auth)');
