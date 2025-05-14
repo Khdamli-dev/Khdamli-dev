@@ -24,7 +24,7 @@ const createRequest = async (req: Request, res: Response ) => {
       RETURNING *;
     `, [worker || null, client, client_address, working_time, category, description, type]);
 
-    // send to it to workers to make it real time
+    // send to it to worker to make it real time
     await sendPrivateRequest(rows[0]);
     res.status(201).json({
       message : 'Job request created successfully',
