@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import apiClient from '@/api/appClient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-//import { getSocket, connectSocket } from '@/api/socket';
+import { getSocket, connectSocket } from '@/api/socket';
 
 const AppStartUp = () => {
   const router = useRouter();
@@ -60,9 +60,9 @@ const AppStartUp = () => {
           await AsyncStorage.setItem('user', JSON.stringify(user));
 
           // enter user to his private room
-          //connectSocket();
-          //const socket = getSocket();
-          //socket.emit('user-room', userId);
+          connectSocket();
+          const socket = getSocket();
+          socket.emit('user-room', user.id);
 
           router.replace('/(tabs)/(home)');
         } else router.replace('/(auth)');
