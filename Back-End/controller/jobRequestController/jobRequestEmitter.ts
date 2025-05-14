@@ -21,28 +21,28 @@ export const sendPrivateRequest = async (
   }
 };
 
-export const changeRequestStatus = async (request: JobRequest): Promise<void> => {
+export const changeRequestStatus = async (
+  request: JobRequest,
+): Promise<void> => {
   const io: Server = getIo();
   const { type } = request;
   // determine the destination
-  let destination: number | null;
   const privateRequestId: string | undefined = process.env.PRIVATE_REQUEST_ID;
-  if (privateRequestId) {
+  if (privateRequestId && type === +privateRequestId) {
     if (type === +privateRequestId) {
-      destination = request.worker;
-    } else {
-      destination = request.client;
-    }
-
-    const status = await pool.query(`
+      // worker change private request status, so destination => client
+      const status = await pool.query(
+        `
       SELECT name FROM request_status
       WHERE id = $1
-      `, [request.id]);
+      `,
+        [request.id],
+      );
 
-    if (destination) {
-      io.to(destination.toString()).emit('change-request-status', {
-        requestId : request.id,
-        status
+      const client : number = request.client;
+      io.to(client.toString()).emit('change-request-status', {
+        requestId: request.id,
+        status,
       });
     }
   }
