@@ -90,7 +90,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const user = JSON.parse(userString);
 
-      const response = await apiClient.get(`/work/worker/unread-count/${user.id}`);
+      const response = await apiClient.get(`/work/worker/${user.id}/unread-count`);
       if (response.data.success) {
         const count = response.data.count;
         setUnreadRequests(count);
