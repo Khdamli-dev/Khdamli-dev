@@ -24,7 +24,11 @@ export const useNotifications = () => {
   }
   return context;
 };
-
+interface NotificationContextType {
+  unreadRequests: number;
+  hasUnreadRequests: boolean;
+  markRequestAsRead: () => void;
+}
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -62,7 +66,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
         const socket = getSocket();
 
         // Listen for new requests
-        socket.on('new-request', (data) => {
+        socket.on('private-request', (data) => {
           console.log('New request received:', data);
           setUnreadRequests((prev) => {
             const newCount = prev + 1;
@@ -92,7 +96,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const response = await apiClient.get(`/work/worker/${user.id}/unread-count`);
       if (response.data.success) {
-        const count = response.data.count;
+        const count : number = response.data.count;
         setUnreadRequests(count);
         AsyncStorage.setItem('unreadRequestsCount', count.toString());
       }

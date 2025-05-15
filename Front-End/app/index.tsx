@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import apiClient from '@/api/appClient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getSocket, connectSocket } from '@/api/socket';
+import { connectSocket } from '@/api/socket';
 
 const AppStartUp = () => {
   const router = useRouter();
@@ -106,7 +106,7 @@ const AppStartUp = () => {
           >
             KH
           </Animated.Text>
-          <View className=" items-end flex-col">
+          <View className="items-end flex-col">
             <Animated.Image
               source={require('../assets/images/startUpPhoto.jpg')}
               className="w-full h-32"
