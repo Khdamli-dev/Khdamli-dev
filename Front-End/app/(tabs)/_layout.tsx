@@ -33,9 +33,8 @@ const CustomTabBarIcon = ({
 };
 
 export default function TabLayout() {
-  const workerRoleId : string | undefined = process.env.WORKER_ROLE_ID;
+  const workerRoleId : number = 2;
   const [role, setRole] = useState<number | null>(null);
-
 
   // Load role from AsyncStorage
   useEffect(() => {
@@ -54,7 +53,6 @@ export default function TabLayout() {
   }, []);
 
   // Only use NotificationProvider if the role matches
-  const { unreadRequests } = useNotifications();
   const TabsContent = (
     <Tabs
       screenOptions={{
@@ -109,8 +107,8 @@ export default function TabLayout() {
                 color={color}
                 focused={focused}
               />
-              {workerRoleId && role === +workerRoleId && (
-                <NotificationBadge count={unreadRequests} /> // Sample count for testing
+              {workerRoleId && role === workerRoleId && (
+                <NotificationBadge count={useNotifications().unreadRequests} /> // Sample count for testing
               )}
             </View>
           ),
@@ -134,9 +132,8 @@ export default function TabLayout() {
       />
     </Tabs>
   );
-
   // Conditionally wrap with Provider
-  return (workerRoleId && role === +workerRoleId) ? (
+  return (workerRoleId && role === workerRoleId) ? (
     <NotificationProvider>{TabsContent}</NotificationProvider>
   ) : (
     TabsContent

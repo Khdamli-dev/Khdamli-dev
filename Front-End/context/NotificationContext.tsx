@@ -24,11 +24,7 @@ export const useNotifications = () => {
   }
   return context;
 };
-interface NotificationContextType {
-  unreadRequests: number;
-  hasUnreadRequests: boolean;
-  markRequestAsRead: () => void;
-}
+
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
