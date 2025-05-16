@@ -3,7 +3,10 @@ import React, { useEffect, useState } from 'react';
 import { View, Text } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import NotificationBadge from '@/Component/NotificationBadge';
-import { NotificationProvider, useNotifications } from '@/context/NotificationContext';
+import {
+  NotificationProvider,
+  useNotifications,
+} from '@/context/NotificationContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CustomTabBarIcon = ({
@@ -33,7 +36,7 @@ const CustomTabBarIcon = ({
 };
 
 export default function TabLayout() {
-  const workerRoleId : number = 2;
+  const workerRoleId: number = 2;
   const [role, setRole] = useState<number | null>(null);
 
   // Load role from AsyncStorage
@@ -101,14 +104,17 @@ export default function TabLayout() {
               <Text className="text-[#F8A100] font-medium my-1">Requests</Text>
             ) : null,
           tabBarIcon: ({ color, focused }) => (
-            <View className="relative">
+            <View className="relative w-12 h-12 items-center justify-center">
               <CustomTabBarIcon
                 name="clipboard"
                 color={color}
                 focused={focused}
               />
               {workerRoleId && role === workerRoleId && (
-                <NotificationBadge count={useNotifications().unreadRequests} /> // Sample count for testing
+                <NotificationBadge
+                  count={useNotifications().unreadRequests}
+                  size="large"
+                />
               )}
             </View>
           ),
@@ -133,7 +139,7 @@ export default function TabLayout() {
     </Tabs>
   );
   // Conditionally wrap with Provider
-  return (workerRoleId && role === workerRoleId) ? (
+  return workerRoleId && role === workerRoleId ? (
     <NotificationProvider>{TabsContent}</NotificationProvider>
   ) : (
     TabsContent

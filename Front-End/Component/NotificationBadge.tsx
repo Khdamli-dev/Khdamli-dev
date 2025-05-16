@@ -6,24 +6,31 @@ interface NotificationBadgeProps {
   size?: 'small' | 'medium' | 'large';
 }
 
-const NotificationBadge: React.FC<NotificationBadgeProps> = ({ 
-  count, 
-  size = 'medium' 
+const NotificationBadge: React.FC<NotificationBadgeProps> = ({
+  count,
+  size = 'large'
 }) => {
   if (count <= 0) return null;
 
   // Determine badge size
   const badgeSize = {
-    small: 'w-4 h-4 text-[10px]',
-    medium: 'w-5 h-5 text-[12px]',
-    large: 'w-6 h-6 text-[14px]'
+    small: 'w-4 h-4',
+    medium: 'w-5 h-5',
+    large: 'w-6 h-6'
+  }[size];
+
+  const textSize = {
+    small: 'text-[8px]',
+    medium: 'text-[10px]',
+    large: 'text-xs'
   }[size];
 
   return (
-    <View 
-      className={`absolute -top-2 -right-2 bg-red-500 ${badgeSize} rounded-full flex items-center justify-center z-10`}
+    <View
+      className={`absolute top-0 right-0 bg-red-500 ${badgeSize} rounded-full items-center justify-center z-10`}
+      style={{ transform: [{ translateX: 6 }, { translateY: -6 }] }}
     >
-      <Text className="text-white font-bold">
+      <Text className={`text-white font-bold ${textSize}`}>
         {count > 99 ? '99+' : count}
       </Text>
     </View>

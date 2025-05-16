@@ -27,6 +27,8 @@ import {
   ClientPrivateRequest,
 } from '../../../../Interfaces/Requestsinterfaces';
 import { ResizeMode, Video } from 'expo-av';
+import { getSocket } from '@/api/socket';
+import { useNotifications } from '@/context/NotificationContext';
 //import { realTimePrivateRequestStatus, realTimeRequests } from '@/api/realTime';
 
 // Define the UserRole enum
@@ -50,6 +52,7 @@ enum RequestStatus {
 const defaultProfileImage = require('../../../../assets/images/images (1).jpg');
 
 const PrivateRequests = () => {
+  const notifications = useNotifications();
   const [selectedMedia, setSelectedMedia] = useState(0);
   const [mediaModalVisible, setMediaModalVisible] = useState(false);
   const [userRole, setUserRole] = useState<UserRole>();
@@ -256,6 +259,9 @@ const PrivateRequests = () => {
         ),
       );
 
+      // mark request as read
+      notifications.markRequestAsRead();
+
       Alert.alert('Success', 'Request accepted successfully');
     } catch (err: any) {
       if (err.response?.status === 401) {
@@ -280,6 +286,9 @@ const PrivateRequests = () => {
 
       // Update local state
       setRequestIds((prev) => prev.filter((id) => id != requestId));
+
+      // mark request as read
+      notifications.markRequestAsRead();
 
       Alert.alert('Success', 'Request rejected successfully');
     } catch (err: any) {
@@ -422,10 +431,29 @@ const PrivateRequests = () => {
     fetchRequests();
   }, [userRole]);
   
-  useEffect(() => {
-    //realTimeRequests(setRequestIds);
-    //realTimePrivateRequestStatus(setRequests);
-  }, []);
+  // Set up socket listeners for real-time updates
+    useEffect(() => {
+      const setupSocketListeners = async () => {
+        try {
+          // Ensure socket is connected
+          const socket = getSocket();
+  
+          // Listen for new requests
+          socket.on('private-request', (data) => {
+            console.log('New request received:', data);
+            setRequestIds(prev => [...prev, data]);
+          });
+  
+          return () => {
+            socket.off('new-request');
+          };
+        } catch (error) {
+          console.error('Error setting up notification socket listeners:', error);
+        }
+      };
+  
+      setupSocketListeners();
+    }, []);
 
   useEffect(() => {
     if (requestIds.length >= 0) {
