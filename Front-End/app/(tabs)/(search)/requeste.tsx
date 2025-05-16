@@ -10,7 +10,7 @@ import {
   Dimensions,
   Platform,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import {
   AntDesign,
   FontAwesome6,
@@ -33,6 +33,7 @@ import axios from "axios";
 import CONFIG from "@/config";
 
 interface JobRequest {
+  worker: number,
   client: number | null;
   region: number | null;
   city: number | null;
@@ -77,6 +78,7 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
   const toggleCategoryDropdown = () => {
     setIsCategoryOpen(!isCategoryOpen);
   };
+  const { workerId} = useLocalSearchParams();
   const handleCategorySelect = (
     category: {
       name: string;
@@ -243,7 +245,8 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
           working_time,
           category: Number(selectedCategory.id), // Convert to number
           description: trimmedDescription,
-          type,
+          type : 2,
+          worker : +workerId,
           status: 3, // "On Hold"
         };
         const response = await axios.post(

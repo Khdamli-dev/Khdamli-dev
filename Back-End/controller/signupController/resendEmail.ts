@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
 import { sendEmailConfirmationMail} from "../../utils/authentication/sendMail";
+import { ChildProcess } from "child_process";
 
 export const resendEmail = async (req: Request, res: Response) => {
   try {
+    console.log('here lad')
     const  userId = +req.params.userId; 
     const { email} = req.body.credentials;
     await sendEmailConfirmationMail(email , userId);
-    
     res.json({
       message: 'OTP sent successfully',
       success : true,

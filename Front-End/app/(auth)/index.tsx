@@ -21,6 +21,13 @@ import CONFIG from "../../config";
 import * as SecureStore from "expo-secure-store";
 import refreshAccessToken from "@/api/refreshAccessToken";
 import apiClient from "@/api/appClient";
+const setUserVerificationStatus = async (isVerified : boolean) => {
+  try {
+    await AsyncStorage.setItem('userVerified', isVerified ? 'true' : 'false');
+  } catch (error) {
+    console.error('Error saving verification status:', error);
+  }
+};
 //import { getSocket, connectSocket } from '@/api/socket';
 
 export default function Login() {
@@ -64,7 +71,12 @@ export default function Login() {
         await SecureStore.setItemAsync("refreshToken", refreshToken);
         await SecureStore.setItemAsync("email", values.email);
         await SecureStore.setItemAsync("password", values.password);
-
+        console.log(response.data)
+        const isVerified = response.data.verified;
+        await setUserVerificationStatus(isVerified);
+        if (!isVerified) {
+         router.push('/(auth)/verifyAccount?sendEmail=true') 
+        } else
         // enter user to his private room
         //connectSocket();
         //const socket = getSocket();
@@ -81,10 +93,6 @@ export default function Login() {
         if (error.response.data.validEmail) {
           if (error.response.data.validPassword === false)
             setPasswordError("Password is wrong");
-          if (error.response.data.validAccount === false)
-            setError(
-              "your account is not valid, you need to confirm your email"
-            );
         }
       } else {
         console.log(error);

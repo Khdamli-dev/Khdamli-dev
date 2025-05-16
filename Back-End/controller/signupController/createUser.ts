@@ -8,6 +8,7 @@ const createUser = async (req: Request, res: Response) => {
   try {
     const { phoneNumber, email, password, username }: Credentials =
       req.body.credentials;
+      console.log('first')
     const role = 1; // default role is client
     const hash: string = await encryptPassword(password);
     const { rows: result } = await pool.query(

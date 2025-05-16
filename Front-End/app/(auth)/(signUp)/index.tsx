@@ -25,6 +25,7 @@ import { useRouter } from "expo-router";
 import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Linking from "expo-linking";
+import apiClient from "@/api/appClient";
 
 export default function SignUp() {
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
@@ -101,8 +102,8 @@ export default function SignUp() {
       password,
     };
     try {
-      const response = await axios.post(
-        `${CONFIG.API_URL}/auth/signup`,
+      const response = await apiClient.post(
+        `/auth/signup/`,
         {
           credentials
         }
@@ -110,9 +111,6 @@ export default function SignUp() {
       if (response?.status === 201) {
         const user = response.data.user;
         await AsyncStorage.setItem("user", JSON.stringify(user));
-        alert(
-          "Check Your Email, We have sent you a verification link. Click on it to confirm your account."
-        );
         router.replace("/OtherInformation");
       }
     } catch (error: any) {
@@ -132,6 +130,7 @@ export default function SignUp() {
         setUsernameError("");
         setEmailError("");
         setPhoneNumberError("");
+        console.log(error)
         alert("Server is busy, please try again later");
       }
     }
@@ -147,8 +146,8 @@ export default function SignUp() {
       if (path === "confirm-email" && queryParams?.token) {
         try {
           const token = queryParams.token;
-          const response = await axios.post(
-            `${CONFIG.API_URL}/signup/confirm-email/${token}`
+          const response = await apiClient.post(
+            `/signup/confirm-email/${token}`
           );
           if (response.data.success) {
             alert("Success , Email verified successfully!");

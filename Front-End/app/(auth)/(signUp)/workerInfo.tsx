@@ -22,6 +22,13 @@ import axios from "axios";
 import CONFIG from "@/config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, CommonActions } from "@react-navigation/native";
+const setUserVerificationStatus = async (isVerified : boolean) => {
+  try {
+    await AsyncStorage.setItem('userVerified', isVerified ? 'true' : 'false');
+  } catch (error) {
+    console.error('Error saving verification status:', error);
+  }
+};
 
 export default function Work_Information() {
   const navigation = useNavigation();
@@ -118,7 +125,8 @@ const handleSubmit = async () => {
 
       // Navigate to the home page
       router.dismissAll();
-      router.replace("/(tabs)/(home)");
+      await setUserVerificationStatus(false);
+      router.push('/(auth)/verifyAccount?sendEmail=true') 
     } else {
       console.log("No user data found in AsyncStorage");
     }

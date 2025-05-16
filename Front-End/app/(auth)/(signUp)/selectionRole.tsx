@@ -15,6 +15,14 @@ import axios, { all } from "axios";
 import CONFIG from "../../../config"
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, CommonActions } from "@react-navigation/native";
+import apiClient from "@/api/appClient";
+const setUserVerificationStatus = async (isVerified : boolean) => {
+  try {
+    await AsyncStorage.setItem('userVerified', isVerified ? 'true' : 'false');
+  } catch (error) {
+    console.error('Error saving verification status:', error);
+  }
+};
 
 export default function SelectRole() {
   const { width: screenWidth } = Dimensions.get("window");
@@ -30,8 +38,8 @@ export default function SelectRole() {
      if (userData) {
        const user: any = JSON.parse(userData); // Parse the user data
        // Make the API request to update the role
-       const response = await axios.put(
-         `${CONFIG.API_URL}/users/${user.id}/role/worker`
+       const response = await apiClient.put(
+         `/users/${user.id}/role/worker`
        );
 
        if (response.data.success) {
@@ -48,9 +56,8 @@ export default function SelectRole() {
   //HandleClient --------------------------------------
   const handleClientRole = async () => {
     router.dismissAll();
-    router.replace("/(tabs)/(home)");
-    router.replace("/(tabs)/(home)"); // Navigate to home  
-
+    await setUserVerificationStatus(false);
+    router.push('/(auth)/verifyAccount?sendEmail=true') 
   };
 
   return (

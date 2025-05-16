@@ -131,7 +131,7 @@ const UserProfileScreen: React.FC = () => {
   const handleSendPrivateRequest = () => {
     router.push({
       pathname: "/(tabs)/(search)/requeste",
-      params: { type: "2" },
+      params: { workerId},
     });
   };
 

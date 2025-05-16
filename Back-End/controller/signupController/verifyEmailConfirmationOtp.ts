@@ -10,19 +10,21 @@ const verifyEmailConfirmationOTP = async (req: Request, res: Response) => {
   try {
     const id = +req.params.userId;
     const { otp } = req.body;
+    console.log(id , +otp);
     if (!id || isNaN(id) || !otp) {
       res.status(400).json({
         message: 'User ID and OTP are required',
         success: false,
         resend: null,
       });
+      console.log(id , otp)
       return;
     }
 
     // Verify OTP from otp_codes table
     const { rows } = await pool.query(
       `SELECT expires_at FROM otp_codes WHERE user_id = $1 AND otp = $2 AND purpose = $3`,
-      [id, otp , "account_verification"],
+      [id, +otp , "account_verification"],
     );
     if (!rows.length) {
       res.status(400).json({

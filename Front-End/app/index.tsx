@@ -7,6 +7,15 @@ import * as SecureStore from 'expo-secure-store';
 import apiClient from '@/api/appClient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 //import { getSocket, connectSocket } from '@/api/socket';
+const getUserVerificationStatus = async () => {
+  try {
+    const status = await AsyncStorage.getItem('userVerified');
+    return status === 'true';
+  } catch (error) {
+    console.error('Error retrieving verification status:', error);
+    return false;
+  }
+};
 
 const AppStartUp = () => {
   const router = useRouter();
@@ -40,29 +49,38 @@ const AppStartUp = () => {
 
     // التحقق من تسجيل الدخول بعد 3 ثوانٍ
     const checkLoginStatus = async () => {
-      // refresh the access token
-      const refreshToken = await SecureStore.getItemAsync('refreshToken');
-      if (!refreshToken) {
-        router.replace('/(auth)');
-        return;
-      }
-
       try {
+        // Check if refresh token exists
+        const refreshToken = await SecureStore.getItemAsync('refreshToken');
+        if (!refreshToken) {
+          router.replace('/(auth)');
+          return;
+        }
+
+        // Try to refresh the access token
         const response = await apiClient.post('/auth/refresh', null, {
           headers: {
             'x-refresh-token': `Bearer ${refreshToken}`,
           },
         });
+        
         if (response.data.success) {
-          const { accessToken }: { accessToken: string } = response.data;
+          const { accessToken, user } = response.data;
+          
+          // Store the new access token
           await SecureStore.setItemAsync('accessToken', accessToken);
-          const { user } = response.data;
+          
+          // Update user data in AsyncStorage
           await AsyncStorage.setItem('user', JSON.stringify(user));
-
-          // enter user to his private room
-          //connectSocket();
-          //const socket = getSocket();
-          //socket.emit('user-room', userId);
+          
+          // Check verification status directly from AsyncStorage
+          const isVerified = await getUserVerificationStatus();
+          
+          if (!isVerified) {
+            // Redirect to verification page
+            router.push('/(auth)/verifyAccount?sendEmail=true');
+            return;
+          }
 
           router.replace('/(tabs)/(home)');
         } else router.replace('/(auth)');
