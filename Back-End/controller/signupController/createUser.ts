@@ -8,7 +8,6 @@ const createUser = async (req: Request, res: Response) => {
   try {
     const { phoneNumber, email, password, username }: Credentials =
       req.body.credentials;
-      console.log('first')
     const role = 1; // default role is client
     const hash: string = await encryptPassword(password);
     const { rows: result } = await pool.query(
@@ -28,7 +27,6 @@ const createUser = async (req: Request, res: Response) => {
       success : true
     });
   } catch (error) {
-    console.log(error);
     res.status(500).json({ message: "internal error" , success : false});
   }
 };

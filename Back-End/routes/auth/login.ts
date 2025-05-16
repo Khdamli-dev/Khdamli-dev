@@ -70,7 +70,6 @@ const login = async (req: Request, res: Response) => {
     );
 
     const {password : _, ...returnedUser} = user[0];
-    console.log(returnedUser)
     // success login
     res.status(200).json({
       verified : returnedUser[0]?.registration_date == null ? false:true,
@@ -81,7 +80,6 @@ const login = async (req: Request, res: Response) => {
       user : returnedUser,
     });
   } catch (error) {
-    console.log(error);
     res.status(500).json({ message: "internal error" });
   }
 };

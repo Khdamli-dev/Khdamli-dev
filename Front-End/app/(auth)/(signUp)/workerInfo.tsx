@@ -132,7 +132,6 @@ const handleSubmit = async () => {
     }
   } catch (error) {
     setErrorSubmit("Error Failed to submit data");
-    console.log(error)
     setTimeout(() => setErrorSubmit(""), 30000);
   }
 };

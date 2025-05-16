@@ -31,9 +31,7 @@ const ChangePassword = ({ navigation }: ChangePasswordprops) => {
   const [same, setsame] = useState(false);
   const router = useRouter();
   const handlePasswordChange = () => {
-    {
-      console.log(newpassword, repeatnewpassword, password, same);
-    }
+    
     if (!newpassword.trim() || !repeatnewpassword.trim()) {
       return Alert.alert("⚠️ Warning", "Please fill in all fields!");
     }

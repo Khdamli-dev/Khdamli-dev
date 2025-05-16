@@ -10,14 +10,12 @@ const verifyEmailConfirmationOTP = async (req: Request, res: Response) => {
   try {
     const id = +req.params.userId;
     const { otp } = req.body;
-    console.log(id , +otp);
     if (!id || isNaN(id) || !otp) {
       res.status(400).json({
         message: 'User ID and OTP are required',
         success: false,
         resend: null,
       });
-      console.log(id , otp)
       return;
     }
 

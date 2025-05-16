@@ -49,7 +49,6 @@ export default function SelectRole() {
        console.log("No user data found in AsyncStorage");
      }
    } catch (error: any) {
-    console.log(error)
      alert("Server is busy, please try again later");
    }
  };

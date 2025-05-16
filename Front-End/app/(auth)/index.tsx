@@ -71,7 +71,6 @@ export default function Login() {
         await SecureStore.setItemAsync("refreshToken", refreshToken);
         await SecureStore.setItemAsync("email", values.email);
         await SecureStore.setItemAsync("password", values.password);
-        console.log(response.data)
         const isVerified = response.data.verified;
         await setUserVerificationStatus(isVerified);
         if (!isVerified) {
@@ -95,7 +94,6 @@ export default function Login() {
             setPasswordError("Password is wrong");
         }
       } else {
-        console.log(error);
         setError("Server is busy, please try again later");
       }
     }

@@ -45,7 +45,6 @@ const updateCredentials = async (req: Request, res: Response) => {
         }
         res.status(200).json({ message: "Credentials updated successfully" , success : true});
         } catch (error) {
-        console.log(error);
         res.status(500).json({ message: "internal server error" });
     }
 };

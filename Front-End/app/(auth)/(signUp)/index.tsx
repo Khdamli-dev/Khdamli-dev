@@ -114,7 +114,6 @@ export default function SignUp() {
         router.replace("/OtherInformation");
       }
     } catch (error: any) {
-      console.log(error);
 
       if (error.response?.status === 400 && error.response.data) {
         setUsernameError(
@@ -130,7 +129,6 @@ export default function SignUp() {
         setUsernameError("");
         setEmailError("");
         setPhoneNumberError("");
-        console.log(error)
         alert("Server is busy, please try again later");
       }
     }

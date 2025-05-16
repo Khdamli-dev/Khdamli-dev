@@ -200,7 +200,6 @@ const ServiceProvidersScreen = () => {
 
   // Navigate directly to worker profile
   const handleWorkerPress = (worker: Worker) => {
-    console.log("Navigating to worker profile:", worker.username);
     router.push({
       pathname: "./workerProfile",
       params: { workerId: worker.id },

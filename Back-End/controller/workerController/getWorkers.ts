@@ -3,7 +3,6 @@ import pool from '../../database/dbConnection';
 
 export const getWorkers = async (req: Request, res: Response) => {
   try {
-    console.log('nothing');
     const { category, page } = req.query;
     const userId = req.params.userId;
     if (!userId || isNaN(+userId) || !category || isNaN(+category)) {
@@ -34,7 +33,6 @@ LIMIT 20 OFFSET $3;
              `,
       [+category, +userId, parsedPage],
     );
-    console.log(workers);
 
     if (!workers.length) {
       res.status(404).json({
@@ -49,7 +47,6 @@ LIMIT 20 OFFSET $3;
       workers,
     });
   } catch (err) {
-    console.log(err);
     res.status(500).json({
       message: 'internal error',
       success: false,
