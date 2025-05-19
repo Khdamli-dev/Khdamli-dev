@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import apiClient from '@/api/appClient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-//import { getSocket, connectSocket } from '@/api/socket';
+import { connectSocket } from '@/api/socket';
 
 const AppStartUp = () => {
   const router = useRouter();
@@ -59,10 +59,30 @@ const AppStartUp = () => {
           const { user } = response.data;
           await AsyncStorage.setItem('user', JSON.stringify(user));
 
-          // enter user to his private room
-          //connectSocket();
-          //const socket = getSocket();
-          //socket.emit('user-room', userId);
+          // Connect socket and join user room
+          try {
+            console.log('Connecting to socket...');
+            const socket = connectSocket();
+
+            // Wait a brief moment to ensure connection is established
+            setTimeout(() => {
+              if (socket.connected) {
+                console.log(`Joining room for user ${user.id}`);
+                socket.emit('user-room', user.id);
+              } else {
+                console.warn('Socket not connected yet, cannot join room');
+                // Retry joining room
+                socket.on('connect', () => {
+                  console.log(
+                    `Socket connected, now joining room for user ${user.id}`,
+                  );
+                  socket.emit('user-room', user.id);
+                });
+              }
+            }, 500);
+          } catch (socketError) {
+            console.error('Socket connection error:', socketError);
+          }
 
           router.replace('/(tabs)/(home)');
         } else router.replace('/(auth)');
@@ -86,7 +106,7 @@ const AppStartUp = () => {
           >
             KH
           </Animated.Text>
-          <View className=" items-end flex-col">
+          <View className="items-end flex-col">
             <Animated.Image
               source={require('../assets/images/startUpPhoto.jpg')}
               className="w-full h-32"
