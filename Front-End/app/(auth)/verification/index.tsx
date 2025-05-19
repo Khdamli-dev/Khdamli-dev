@@ -36,7 +36,6 @@ export default function VerificationScreen() {
       if (data.success) {
         // Example: store authentication token
         // await AsyncStorage.setItem('userToken', data.userToken);
-        console.log("hhh");
         // Navigate to home screen after 2 seconds
         setTimeout(() => {
           router.replace('/');
@@ -44,7 +43,6 @@ export default function VerificationScreen() {
       }
     } catch (error : any) {
       console.error('Verification error:', error);
-      console.log(error.response);
       setVerificationResult({
         success: false,
         message: 'Network error during verification'

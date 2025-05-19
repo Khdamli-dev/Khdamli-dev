@@ -32,6 +32,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import apiClient from "@/api/appClient";
 
 interface JobRequest {
+
   worker ?: number;
   client: number | null;
   region: number | null;

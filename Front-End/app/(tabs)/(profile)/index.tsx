@@ -120,7 +120,6 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         const user: any = JSON.parse(userData as any);
 
         if (!user) {
-          console.log("User does not exist");
           return;
         }
 

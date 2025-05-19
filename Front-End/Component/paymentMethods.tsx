@@ -34,7 +34,6 @@ const PaymentMethod: React.FC<PaymentMethodProps> = ({
           router.push('/(auth)');
         }
       }
-      console.log(error);
     }
   };
 

@@ -46,7 +46,6 @@ const WilayaDropdown: React.FC<WilayaDropdownProps> = ({
           router.push('/(auth)');
         }
       }
-      console.log(error);
     }
   };
 

@@ -14,6 +14,15 @@ const AppStartUp = () => {
   const leftAnim = useRef(new Animated.Value(-200)).current;
   const rightAnim = useRef(new Animated.Value(200)).current;
   const imageAnim = useRef(new Animated.Value(200)).current;
+  const getUserVerificationStatus = async () => {
+  try {
+    const status = await AsyncStorage.getItem('userVerified');
+    return status === 'true';
+  } catch (error) {
+    console.error('Error retrieving verification status:', error);
+    return false;
+  }
+};
 
   useEffect(() => {
     // تشغيل الأنيميشن
@@ -40,24 +49,36 @@ const AppStartUp = () => {
 
     // التحقق من تسجيل الدخول بعد 3 ثوانٍ
     const checkLoginStatus = async () => {
-      // refresh the access token
-      const refreshToken = await SecureStore.getItemAsync('refreshToken');
-      if (!refreshToken) {
-        router.replace('/(auth)');
-        return;
-      }
-
       try {
+        // Check if refresh token exists
+        const refreshToken = await SecureStore.getItemAsync('refreshToken');
+        if (!refreshToken) {
+          router.replace('/(auth)');
+          return;
+        }
+
+        // Try to refresh the access token
         const response = await apiClient.post('/auth/refresh', null, {
           headers: {
             'x-refresh-token': `Bearer ${refreshToken}`,
           },
         });
+        
         if (response.data.success) {
-          const { accessToken }: { accessToken: string } = response.data;
+          const { accessToken, user } = response.data;
+          
+          // Store the new access token
           await SecureStore.setItemAsync('accessToken', accessToken);
-          const { user } = response.data;
+          
+          // Update user data in AsyncStorage
           await AsyncStorage.setItem('user', JSON.stringify(user));
+           const isVerified = await getUserVerificationStatus();
+          
+          if (!isVerified) {
+            // Redirect to verification page
+            router.push('/(auth)/verifyAccount?sendEmail=true');
+            return;
+          }
 
           // Connect socket and join user room
           try {

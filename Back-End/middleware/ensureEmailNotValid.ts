@@ -64,7 +64,6 @@ const ensureEmailNotValid = async (req : Request, res : Response, next : NextFun
         success : false
     });
     } catch (error) {
-        console.log(error);
         res.status(500).json({ message: 'internal error' });
     }
 }

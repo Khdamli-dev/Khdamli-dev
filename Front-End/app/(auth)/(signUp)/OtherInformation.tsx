@@ -23,6 +23,7 @@ import { Formik } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
+import apiClient from "@/api/appClient";
 
 export default function OtherInformation() {
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
@@ -98,7 +99,7 @@ export default function OtherInformation() {
     if (userData) {
       const user: any = JSON.parse(userData); // Parse only if userData is not null
       try {
-        const response = await axios.put(`${CONFIG.API_URL}/users/${user.id}`, {
+        const response = await apiClient.put(`/users/${user.id}`, {
           personalInfo, // Pass the user ID
         });
         if (response.data.success) {

@@ -98,7 +98,6 @@ const Setting = () => {
   const handleLogout = async () => {
     try {
       await AsyncStorage.clear();
-      console.log("AsyncStorage has been cleared.");
       // Navigate back to the auth screen and reset history
       router.replace("/(auth)");
     } catch (error) {

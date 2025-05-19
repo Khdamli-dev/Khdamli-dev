@@ -100,7 +100,6 @@ const UserProfileView = () => {
     const fetchUserData = async () => {
       try {
         if (!userId || !userRole) {
-          console.log("No user ID or role provided");
           return;
         }
 

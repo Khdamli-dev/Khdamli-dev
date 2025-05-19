@@ -70,7 +70,6 @@ WHERE oc.user_id = $1 AND oc.otp = $2 AND oc.purpose = $3;
 `,
       [id, otp , "password_reset"],
     );
-    console.log(otp)
     if (!user.length) {
       res.status(400).json({
         message: 'Invalid OTP',
