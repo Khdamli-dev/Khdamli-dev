@@ -229,8 +229,8 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     }));
     console.log(newImage);
   };
-  const [fontsLoaded] = useFonts({ Itim_400Regular });
-  if (!fontsLoaded) return <Text>Loading...</Text>;
+  // const [fontsLoaded] = useFonts({ Itim_400Regular });
+  // if (!fontsLoaded) return <Text>Loading...</Text>;
 
   const ProfileItem: React.FC<ProfileItemProps> = ({ label, value, Icon }) => (
     <TouchableOpacity className="flex-row justify-between items-center py-4 px-[10px] mb-[3px]">

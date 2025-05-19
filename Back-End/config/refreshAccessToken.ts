@@ -45,7 +45,7 @@ const refreshAccessToken = (req: Request, res: Response) => {
     let info: JwtToken = {
       userId,
       role,
-      time: "30m", // 30 minute
+      time: "30m",
       secret: process.env.Access_Token_Secret || "",
     };
     const accessToken = makeJwtToken(info);

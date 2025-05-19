@@ -2,18 +2,15 @@ import { Request, Response } from "express";
 import pool from "../../database/dbConnection";
 
 const getWorkerProfile = async (req: Request, res: Response) => {
-  console.log("nta 9ahba ");
   try {
     // Get worker ID from path param
     const workerId = parseInt(req.params.id);
     if (isNaN(workerId)) {
-      res
-        .status(400)
-        .json({
-          message: "Invalid or missing worker ID",
-          worker: null,
-          success: false,
-        });
+      res.status(400).json({
+        message: "Invalid or missing worker ID",
+        worker: null,
+        success: false,
+      });
       return;
     }
 
@@ -35,13 +32,11 @@ const getWorkerProfile = async (req: Request, res: Response) => {
     }
 
     if (userCheck.rows[0].role !== 2) {
-      res
-        .status(403)
-        .json({
-          message: "User is not a worker",
-          worker: null,
-          success: false,
-        });
+      res.status(403).json({
+        message: "User is not a worker",
+        worker: null,
+        success: false,
+      });
       return;
     }
 

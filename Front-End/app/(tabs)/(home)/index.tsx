@@ -27,6 +27,9 @@ import { router } from "expo-router";
 import * as FileSystem from "expo-file-system";
 import * as MediaLibrary from "expo-media-library";
 import { Video, ResizeMode } from "expo-av";
+import apiClient from "@/api/appClient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import refreshAccessToken from "@/api/refreshAccessToken";
 
 // Media item can be image, video or none
 interface MediaItem {
@@ -51,11 +54,10 @@ interface Post {
 
 // Comment shape
 interface Comment {
-  id: number;
-  workerId: number;
-  profileImage: string;
-  userName: string;
-  text: string;
+  worker_id: number;
+  profile_image: string;
+  username: string;
+  message: string;
   expanded?: boolean; // New property to track expanded state
 }
 
@@ -78,6 +80,8 @@ const HomeScreen = () => {
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState<Array<Comment>>([]);
   const [downloadingMedia, setDownloadingMedia] = useState<boolean>(false);
+  // Track if the current user has already commented
+  const [hasUserCommented, setHasUserCommented] = useState<boolean>(false);
 
   // Improved media download function that handles both images and videos
   const handleMediaDownload = async (
@@ -174,72 +178,38 @@ const HomeScreen = () => {
   // ====================
   // دالة جلب البوستات من الباكند (معطلة حالياً)
   // ====================
-  // const fetchPosts = useCallback(
-  //   async (pageToFetch: number) => {
-  //     if (loading) return;
-  //     setLoading(true);
-  //     try {
-  //       const response = await axios.get(`${CONFIG.API_URL}/posts`, {
-  //         params: { page: pageToFetch, limit: 20 },
-  //       });
-  //       const { posts: fetchedPosts, totalPages: backendTotalPages } = response.data;
-  //       setPosts((prev) =>
-  //         pageToFetch === 1 ? fetchedPosts : [...prev, ...fetchedPosts]
-  //       );
-  //       setTotalPages(backendTotalPages);
-  //       setPage(pageToFetch);
-  //     } catch (err) {
-  //       console.error("Failed to load posts", err);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   },
-  //   [loading]
-  // );
-
   const fetchPosts = useCallback(
     async (pageToFetch: number) => {
       if (loading) return;
       setLoading(true);
       try {
-        // Fake data for testing
-        const fakePosts: Post[] = Array.from({ length: 20 }, (_, index) => ({
-          id: (pageToFetch - 1) * 20 + index + 1,
-          clientId: index + 1,
-          userName: `Client ${(pageToFetch - 1) * 20 + index + 1}`,
-          profileImage: `https://randomuser.me/api/portraits/men/${index + 10}.jpg`,
-          region: `Region ${index + 1}`,
-          city: `City ${index + 1}`,
-          sent_time: new Date(
-            Date.now() - Math.random() * 86400000 * 7
-          ).toISOString(),
-          working_time: "9am - 5pm",
-          category: `Category ${(index % 3) + 1}`,
-          description: `This is a sample post #${(pageToFetch - 1) * 20 + index + 1}.`,
-          media:
-            Math.random() > 0.3
-              ? Array.from(
-                  { length: Math.floor(Math.random() * 4) + 1 },
-                  (_, i) => ({
-                    type: Math.random() > 0.7 ? "video" : "image",
-                    url:
-                      Math.random() > 0.7
-                        ? `https://example.com/video${index * 5 + i}.mp4`
-                        : `https://picsum.photos/800/400?random=${index * 5 + i}`,
-                  })
-                )
-              : [],
-        }));
-        // Simulate total_pages
-        const simTotalPages = 5;
-        setPosts((prev) =>
-          pageToFetch === 1 ? fakePosts : [...prev, ...fakePosts]
-        );
-        setTotalPages(simTotalPages);
-        setPage(pageToFetch);
-      } catch (err) {
-        console.error("Failed to load posts", err);
-        Alert.alert("Error", "Failed to load posts. Please try again.");
+        const userData = await AsyncStorage.getItem('user');
+        const user = userData ? JSON.parse(userData) : null;
+        if (user) {
+          const response = await apiClient.get(`work/job-request/public/${user.id}`, {
+            params: {role : user.role === 1 ? 'client' :'worker' ,  page: pageToFetch, limit: 20 },
+          });
+          if (response.data && response.data.requests) {
+            const { requests: fetchedPosts, page: backendTotalPages } = response.data;
+            setPosts((prev) =>
+              pageToFetch === 1 ? fetchedPosts : [...prev, ...fetchedPosts]
+            );
+            setTotalPages(backendTotalPages || 1);
+            setPage(pageToFetch);
+          } else {
+            console.error("Invalid response format", response.data);
+          }
+        }
+      } catch (err : any) {
+        console.error("Failed to load posts", err.response?.data?.message, err.response?.status);
+        if (err.response?.status === 401) {
+          if (await refreshAccessToken()) {
+            await fetchPosts(pageToFetch);
+          } else {
+            // need to login
+            router.push('/(auth)');
+          }
+        }
       } finally {
         setLoading(false);
       }
@@ -250,7 +220,7 @@ const HomeScreen = () => {
   // Initial fetch
   useEffect(() => {
     fetchPosts(1);
-  }, [fetchPosts]);
+  }, []);
 
   // Load next page when reaching end
   const handleEndReached = () => {
@@ -269,38 +239,49 @@ const HomeScreen = () => {
   };
 
   // Open comment box and fetch comments
-  const openCommentBox = (postId: number) => {
+  const openCommentBox = async (postId: number) => {
     setSelectedPostId(postId);
     setViewingSinglePost(true);
+    setComments([]); // Initialize comments as empty array while loading
+    setHasUserCommented(false); // Reset user comment status
 
     // ====================
-    // دالة جلب الكومنتات من الباكند (معطلة حالياً)
+    // دالة جلب الكومنتات من الباكند
     // ====================
-    // const fetchComments = async (postId: number) => {
-    //   try {
-    //     const response = await axios.get(`${CONFIG.API_URL}/posts/${postId}/comments`);
-    //     setComments(response.data.comments);
-    //   } catch (err) {
-    //     console.error("Failed to load comments", err);
-    //   }
-    // };
-    // fetchComments(postId);
-
-    const fakeComments: Comment[] = Array.from(
-      { length: Math.floor(Math.random() * 9) + 2 },
-      (_, i) => ({
-        id: i + 1,
-        workerId: i + 1,
-        profileImage: `https://randomuser.me/api/portraits/women/${i + 10}.jpg`,
-        userName: `User ${i + 1}`,
-        text:
-          i % 2 === 0
-            ? `This is a short comment #${i + 1}.`
-            : `This is a very long comment #${i + 1} that should be truncated in the UI. It contains a lot of text to demonstrate how we handle long comments in our application. When a comment is this long, we'll show just a part of it initially and provide a way for users to expand it to read the full content. This helps keep the UI clean while still allowing users to read all content.`,
-        expanded: false, // Initially all comments are collapsed
-      })
-    );
-    setComments(fakeComments);
+    const fetchComments = async (postId: number) => {
+      try {
+        const userData = await AsyncStorage.getItem('user');
+        const user = userData ? JSON.parse(userData) : null;
+        
+        const response = await apiClient.get(`/work/job-request/${postId}/messages`);
+        if (response.data && response.data.messages) {
+          setComments(response.data.messages);
+          
+          // Check if the current user has already commented
+          if (user) {
+            const userComment = response.data.messages.find(
+              (comment: Comment) => comment.worker_id === user.id
+            );
+            setHasUserCommented(!!userComment);
+          }
+          console.log(response.data.messages);
+        } else {
+          setComments([]); // Set empty array if no messages found
+          console.log("No comments found or invalid response format");
+        }
+      } catch (err : any) {
+        console.error("Failed to load comments", err);
+        setComments([]); // Set empty array on error
+        if (err.response?.status === 401) {
+          if (await refreshAccessToken()) {
+            await fetchComments(postId);
+          } else {
+            router.push('/(auth)');
+          }
+        }
+      }
+    };
+    fetchComments(postId);
   };
 
   // Close comment box
@@ -308,6 +289,7 @@ const HomeScreen = () => {
     setSelectedPostId(null);
     setComments([]);
     setViewingSinglePost(false);
+    setHasUserCommented(false);
 
     // أعط وقتًا للتطبيق لإعادة عرض القائمة قبل محاولة التمرير
     setTimeout(() => {
@@ -325,7 +307,7 @@ const HomeScreen = () => {
   const toggleCommentExpand = (commentId: number) => {
     setComments(
       comments.map((comment) =>
-        comment.id === commentId
+        comment.worker_id === commentId
           ? { ...comment, expanded: !comment.expanded }
           : comment
       )
@@ -333,37 +315,52 @@ const HomeScreen = () => {
   };
 
   // Submit comment
-  const submitComment = () => {
+  const submitComment = async (postId: number) => {
     // ====================
-    // دالة حفظ الكومنت في الباكند (معطلة حالياً)
+    // دالة حفظ الكومنت في الباكند
     // ====================
-    // const submitComment = async () => {
-    //   if (!selectedPostId || commentText.trim() === "") return;
-    //   try {
-    //     await axios.post(`${CONFIG.API_URL}/posts/${selectedPostId}/comments`, {
-    //       postId: selectedPostId,
-    //       workerId: user.id, // أو أي متغير يمثل الـworker الحالي
-    //       text: commentText,
-    //     });
-    //     // بعد الحفظ يمكنك إعادة جلب الكومنتات أو إضافته محلياً
-    //     // fetchComments(selectedPostId);
-    //     setCommentText("");
-    //   } catch (err) {
-    //     console.error("Failed to submit comment", err);
-    //   }
-    // };
-
-    if (!selectedPostId || commentText.trim() === "") return;
-    const newComment: Comment = {
-      id: comments.length + 1,
-      workerId: comments.length + 1,
-      profileImage: `https://randomuser.me/api/portraits/women/20.jpg`,
-      userName: "You",
-      text: commentText,
-      expanded: true, // New comments are expanded by default
-    };
-    setComments((prev) => [...prev, newComment]);
-    setCommentText("");
+    if (!selectedPostId || commentText.trim() === "" || hasUserCommented) return;
+    
+    try {
+      // UNCOMMENT THIS WHEN BACKEND IS READY
+      // await apiClient.post(`/work/job-request/${selectedPostId}/messages`, {
+      //   text: commentText,
+      // });
+      
+      // For now, just add it to the UI
+      const userData = await AsyncStorage.getItem("user");
+      if (userData){
+        const user: any = JSON.parse(userData);
+        const newComment = {
+          workerId: user.id, // Using timestamp as a temporary ID
+          comment : commentText,
+        };
+      const response = await apiClient.post(`/work/job-request/${postId}/comment`,
+        newComment
+      );
+      if (response.data.success){
+      console.log(user);
+      const workerComment : Comment = {
+        worker_id : user.id,
+        profile_image : user.profile_image,
+        message : commentText,
+        username : user.username,
+      }
+setComments((prev) => [...prev, workerComment]);
+setCommentText("");
+setHasUserCommented(true); // Mark that the user has comments
+      }
+      }
+    } catch (err : any) {
+      console.error("Failed to submit comment", err.response.data);
+      if (err.response?.status === 401) {
+        if (await refreshAccessToken()) {
+          await submitComment(postId);
+        } else {
+          router.push('/(auth)');
+        }
+      }
+    }
   };
 
   // Navigate to user profile
@@ -376,6 +373,8 @@ const HomeScreen = () => {
 
   // Render media item
   const renderMediaItem = ({ item }: { item: MediaItem }) => {
+    if (!item) return null;
+    
     if (item.type === "image" && item.url) {
       return (
         <TouchableOpacity
@@ -417,6 +416,41 @@ const HomeScreen = () => {
     return null;
   };
 
+  // Format working time
+  const formatWorkingTime = (working_time: string): string => {
+    if (!working_time) return "Flexible";
+    
+    // If working_time is already formatted nicely, just return it
+    if (working_time.includes(" - ") || working_time.includes("hours") || 
+        working_time.includes("days") || working_time.toLowerCase().includes("flexible")) {
+      return working_time;
+    }
+    
+    // Try to parse simple time formats like "2h" or "3d"
+    if (/^\d+h$/i.test(working_time)) {
+      const hours = parseInt(working_time, 10);
+      return hours === 1 ? "1 hour" : `${hours} hours`;
+    }
+    
+    if (/^\d+d$/i.test(working_time)) {
+      const days = parseInt(working_time, 10);
+      return days === 1 ? "1 day" : `${days} days`;
+    }
+    
+    // If we have a timestamp or date format, try to extract a readable time
+    if (working_time.includes(":") || /\d{1,2}\/\d{1,2}\/\d{2,4}/.test(working_time)) {
+      try {
+        const date = new Date(working_time);
+        return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      } catch (e) {
+        // If parsing fails, return the original
+        return working_time;
+      }
+    }
+    
+    return working_time;
+  };
+
   // Time ago helper
   const getTimeAgo = (dateString: string): string => {
     const now = new Date();
@@ -429,34 +463,65 @@ const HomeScreen = () => {
       return `${Math.floor(diffInSeconds / 60)} minutes ago`;
     if (diffInSeconds < 86400)
       return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-    return `${Math.floor(diffInSeconds / 86400)} days ago`;
+    
+    // Calculate days more precisely
+    const days = Math.floor(diffInSeconds / 86400);
+    return days === 1 ? "1 day ago" : `${days} days ago`;
   };
 
+  // Get day name for the post date
+  const getDayName = (dateString: string): string => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { weekday: 'long' });
+    } catch (e) {
+      return "";
+    }
+  };
+// Get formatted date string for the post date (e.g. "Sunday 05-05-2023")
+const getFormattedDate = (dateString: string): string => {
+  try {
+    const date = new Date(dateString);
+    const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+    
+    // Format the date as DD-MM-YYYY
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    
+    return `${dayName} ${day}-${month}-${year}`;
+  } catch (e) {
+    return "";
+  }
+};
   // Render single comment with expand/collapse functionality
   const renderComment = (comment: Comment) => {
-    const isLongComment = comment.text.length > 100;
+    if (!comment) return null;
+    
+    // Add null check before accessing text.length
+    const isLongComment = comment.message && comment.message.length > 100;
     const displayText =
       isLongComment && !comment.expanded
-        ? `${comment.text.substring(0, 100)}...`
-        : comment.text;
+        ? `${comment.message.substring(0, 100)}...`
+        : comment.message || '';
 
     return (
-      <View key={comment.id} className="bg-gray-100 p-4 rounded-2xl mb-2">
+      <View key={comment.worker_id} className="bg-gray-100 p-4 rounded-2xl mb-2">
         <View className="flex-row items-center mb-2">
-          <TouchableOpacity onPress={() => navigateToProfile(comment.workerId)}>
+          <TouchableOpacity onPress={() => navigateToProfile(comment.worker_id)}>
             <Image
-              source={{ uri: comment.profileImage }}
+              source={{ uri: comment.profile_image }}
               className="w-8 h-8 rounded-full mr-2"
             />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigateToProfile(comment.workerId)}>
-            <Text className="font-bold text-sm">{comment.userName}</Text>
+          <TouchableOpacity onPress={() => navigateToProfile(comment.worker_id)}>
+            <Text className="font-bold text-sm">{comment.username}</Text>
           </TouchableOpacity>
         </View>
         <Text className="text-gray-600">{displayText}</Text>
         {isLongComment && (
           <TouchableOpacity
-            onPress={() => toggleCommentExpand(comment.id)}
+            onPress={() => toggleCommentExpand(comment.worker_id)}
             className="mt-1"
           >
             <Text className="text-blue-500 text-sm">
@@ -469,7 +534,14 @@ const HomeScreen = () => {
   };
 
   // Render post
-  const renderPost = ({ item }: { item: Post }) => (
+ // Render post
+const renderPost = ({ item }: { item: Post }) => {
+  if (!item) return null;
+  
+  const formattedWorkingTime = formatWorkingTime(item.working_time);
+  const formattedDate = getFormattedDate(item.sent_time);
+  
+  return (
     <View className="bg-white rounded-2xl shadow p-4 mb-4 mx-2">
       {/* Header */}
       <View className="flex-row items-center mb-2">
@@ -491,7 +563,7 @@ const HomeScreen = () => {
       {/* Description */}
       <Text className="text-gray-700">{item.description}</Text>
       {/* Media */}
-      {item.media.length > 0 ? (
+      {item.media && item.media.length > 0 ? (
         <View className="mt-2">
           <FlatList
             horizontal
@@ -506,16 +578,28 @@ const HomeScreen = () => {
           <Text className="text-gray-500 text-sm italic">Text only post</Text>
         </View>
       )}
-      {/* Time & category */}
-      <View className="flex-row items-center gap-2 mt-2">
-        <Ionicons name="time-outline" size={14} color="green" />
-        <Text className="text-sm text-green-700">
-          {getTimeAgo(item.sent_time)}
-        </Text>
-        <MaterialCommunityIcons name="tools" size={14} color="green" />
-        <Text className="text-sm text-green-700">
-          {item.category} | {item.working_time}
-        </Text>
+      {/* Time & category - Updated format */}
+      <View className="mt-2">
+        <View className="flex-row items-center gap-2">
+          <Ionicons name="time-outline" size={14} color="green" />
+          <Text className="text-sm text-green-700">
+            {getTimeAgo(item.sent_time)}
+          </Text>
+        </View>
+        
+        <View className="flex-row items-center gap-2 mt-1">
+          <MaterialCommunityIcons name="tools" size={14} color="green" />
+          <Text className="text-sm text-green-700">
+            {item.category}
+          </Text>
+        </View>
+        
+        <View className="flex-row items-center gap-2 mt-1">
+          <Ionicons name="calendar-outline" size={14} color="green" />
+          <Text className="text-sm text-green-700">
+            {formattedDate} | Work time: {formattedWorkingTime}
+          </Text>
+        </View>
       </View>
       {/* Comment button */}
       <View className="flex-row justify-end mt-2">
@@ -529,20 +613,34 @@ const HomeScreen = () => {
       {/* Comments */}
       {selectedPostId === item.id && (
         <View className="mt-4">
-          {comments.map(renderComment)}
-          <TextInput
-            className="border border-gray-300 rounded-xl p-2 h-16 text-right mt-2"
-            placeholder="Write your comment..."
-            multiline
-            value={commentText}
-            onChangeText={setCommentText}
-          />
-          <TouchableOpacity
-            onPress={submitComment}
-            className="bg-green-600 px-4 py-2 rounded-xl mt-2"
-          >
-            <Text className="text-white text-center">Post Comment</Text>
-          </TouchableOpacity>
+          {comments && comments.length > 0 
+            ? comments.map(renderComment) 
+            : <Text className="text-gray-500 text-center py-4">No comments yet</Text>}
+          
+          {!hasUserCommented ? (
+            <>
+              <TextInput
+                className="border border-gray-300 rounded-xl p-2 h-16 text-right mt-2"
+                placeholder="Write your comment..."
+                multiline
+                value={commentText}
+                onChangeText={setCommentText}
+              />
+              <TouchableOpacity
+                onPress={()=>submitComment(item.id)}
+                className="bg-green-600 px-4 py-2 rounded-xl mt-2"
+              >
+                <Text className="text-white text-center">Post Comment</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <View className="bg-gray-100 p-3 rounded-xl mt-2">
+              <Text className="text-center text-gray-600">
+                You have already commented on this post
+              </Text>
+            </View>
+          )}
+          
           <TouchableOpacity
             onPress={closeCommentBox}
             className="mt-4 bg-red-500 px-4 py-2 rounded-xl"
@@ -553,6 +651,7 @@ const HomeScreen = () => {
       )}
     </View>
   );
+};
 
   return (
     <View className="flex-1 bg-gray-100 pt-4">
@@ -597,7 +696,7 @@ const HomeScreen = () => {
                 className="w-12 h-12 bg-[#F8A100] rounded-full items-center justify-center"
                 onPress={() =>
                   router.push({
-                    pathname: "/(tabs)/(home)/requeste",
+                    pathname: "/(tabs)/(home)/createRequest",
                     params: { type: "1" },
                   })
                 }
@@ -608,9 +707,13 @@ const HomeScreen = () => {
           </View>
         </View>
       </LinearGradient>
-      {viewingSinglePost ? (
+      
+      {viewingSinglePost && selectedPostId ? (
         <ScrollView ref={scrollViewRef}>
-          {renderPost({ item: posts.find((p) => p.id === selectedPostId)! })}
+          {posts.find((p) => p.id === selectedPostId) ? 
+            renderPost({ item: posts.find((p) => p.id === selectedPostId)! }) :
+            <View className="p-4"><Text>Post not found</Text></View>
+          }
         </ScrollView>
       ) : (
         <FlatList
@@ -626,6 +729,13 @@ const HomeScreen = () => {
           onEndReachedThreshold={0.5}
           ListFooterComponent={
             loading ? <ActivityIndicator style={{ margin: 20 }} /> : null
+          }
+          ListEmptyComponent={
+            !loading ? (
+              <View className="p-10 items-center">
+                <Text className="text-gray-500 text-center">No posts found</Text>
+              </View>
+            ) : null
           }
           // هذا الخيار يحافظ على مخزون البوستات في الذاكرة
           removeClippedSubviews={false}

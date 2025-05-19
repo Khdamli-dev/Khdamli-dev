@@ -28,6 +28,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { AntDesign } from "@expo/vector-icons";
+import apiClient from "@/api/appClient";
 
 const { width } = Dimensions.get("window");
 
@@ -74,37 +75,37 @@ const UserProfileScreen: React.FC = () => {
   });
 
   // Sample data for demonstration (fake data)
-  const fakeData = {
-    fullName: "Ahmed Mohamed",
-    registration_date: "2023-10-15T14:30:00",
-    bio: "Professional plumber with 7 years of experience. I specialize in fixing leaks, installing fixtures, and maintenance work.",
-    image: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
-    region: "Cairo",
-    city: "Maadi",
-    accountType: "worker",
-    workingDays: [
-      { day: "Monday", begin: "09:00", end: "17:00" },
-      { day: "Tuesday", begin: "09:00", end: "17:00" },
-      { day: "Wednesday", begin: "09:00", end: "17:00" },
-      { day: "Thursday", begin: "09:00", end: "17:00" },
-      { day: "Friday", begin: "09:00", end: "14:00" },
-    ],
-    age: 32,
-    gender: "Male",
-    paymentMethod: ["Cash", "Credit Card"],
-    category: [{ name: "Plumbing", price: 150, unity: "Hour" }],
-    gallery: [
-      { type: "image" as const, uri: "https://picsum.photos/id/1/800/600" },
-      { type: "image" as const, uri: "https://picsum.photos/id/28/800/600" },
-      { type: "image" as const, uri: "https://picsum.photos/id/42/800/600" },
-    ],
-  };
+  // const fakeData = {
+  //   fullName: "Ahmed Mohamed",
+  //   registration_date: "2023-10-15T14:30:00",
+  //   bio: "Professional plumber with 7 years of experience. I specialize in fixing leaks, installing fixtures, and maintenance work.",
+  //   image: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
+  //   region: "Cairo",
+  //   city: "Maadi",
+  //   accountType: "worker",
+  //   workingDays: [
+  //     { day: "Monday", begin: "09:00", end: "17:00" },
+  //     { day: "Tuesday", begin: "09:00", end: "17:00" },
+  //     { day: "Wednesday", begin: "09:00", end: "17:00" },
+  //     { day: "Thursday", begin: "09:00", end: "17:00" },
+  //     { day: "Friday", begin: "09:00", end: "14:00" },
+  //   ],
+  //   age: 32,
+  //   gender: "Male",
+  //   paymentMethod: ["Cash", "Credit Card"],
+  //   category: [{ name: "Plumbing", price: 150, unity: "Hour" }],
+  //   gallery: [
+  //     { type: "image" as const, uri: "https://picsum.photos/id/1/800/600" },
+  //     { type: "image" as const, uri: "https://picsum.photos/id/28/800/600" },
+  //     { type: "image" as const, uri: "https://picsum.photos/id/42/800/600" },
+  //   ],
+  // };
 
   useEffect(() => {
     // Set fake data for demonstration
-    setUser(fakeData);
+    // setUser(fakeData);
 
-    /* Commented out as requested
+    //Commented out as requested
     const fetchUser = async () => {
       try {
         // Use the workerId prop passed to the component instead of getting from AsyncStorage
@@ -114,7 +115,7 @@ const UserProfileScreen: React.FC = () => {
           console.log(`Fetching worker profile with ID: ${workerId}`);
           console.log(endpoint);
           
-          const response = await axios.get(`${CONFIG.API_URL}${endpoint}`);
+          const response = await apiClient.get(endpoint);
           console.log(response);
           
           const newUserData = {
@@ -143,7 +144,7 @@ const UserProfileScreen: React.FC = () => {
     };
 
     fetchUser();
-    */
+   
   }, [workerId]); // Add workerId as a dependency to refetch when it changes
 
   const formatTime = (timeString: any) => {
@@ -153,7 +154,7 @@ const UserProfileScreen: React.FC = () => {
 
   const handleSendPrivateRequest = () => {
     router.push({
-      pathname: "/(tabs)/(home)/requeste",
+      pathname: "/(tabs)/(home)/createRequest",
       params: { type: "2" },
     });
   };
