@@ -1,7 +1,13 @@
-import { Tabs } from "expo-router";
-import React, { useEffect } from "react";
-import { View, Text } from "react-native";
-import { FontAwesome } from "@expo/vector-icons";
+import { Tabs } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { View, Text } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
+import NotificationBadge from '@/Component/NotificationBadge';
+import {
+  NotificationProvider,
+  useNotifications,
+} from '@/context/NotificationContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CustomTabBarIcon = ({
   name,
@@ -11,11 +17,13 @@ const CustomTabBarIcon = ({
   name: any;
   color: string;
   focused: boolean;
-  }) => {
+}) => {
   return (
-    <View className={`${focused ? "bg-white rounded-b-full" :null}  items-center justify-center`}>
+    <View
+      className={`${focused ? 'bg-white rounded-b-full' : null} items-center justify-center`}
+    >
       {focused ? (
-        <View  className="relative  w-24 h-16 justify-center rounded-b-full -top-3 items-center">
+        <View className="relative w-24 h-16 justify-center rounded-b-full -top-3 items-center">
           <View className="bg-[#D9D9D9] h-12 w-12 rounded-full items-center justify-center shadow-2xl">
             <FontAwesome name={name} size={28} color="#F8A100" />
           </View>
@@ -28,19 +36,39 @@ const CustomTabBarIcon = ({
 };
 
 export default function TabLayout() {
-  return (
+  const workerRoleId: number = 2;
+  const [role, setRole] = useState<number | null>(null);
+
+  // Load role from AsyncStorage
+  useEffect(() => {
+    const fetchRole = async () => {
+      try {
+        const userString = await AsyncStorage.getItem('user');
+        if (userString) {
+          const user = JSON.parse(userString);
+          setRole(user.role); // Assuming your user object has a role
+        }
+      } catch (err) {
+        console.error('Error fetching role:', err);
+      }
+    };
+    fetchRole();
+  }, []);
+
+  // Only use NotificationProvider if the role matches
+  const TabsContent = (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: "#396F65",
-          height: 60, // Increased height to accommodate the design
+          backgroundColor: '#396F65',
+          height: 60,
           borderTopWidth: 0,
           paddingBottom: 0,
         },
         tabBarLabelStyle: {
           fontSize: 12,
-          marginTop: -10, // Adjust label position
+          marginTop: -10,
         },
       }}
     >
@@ -49,13 +77,7 @@ export default function TabLayout() {
         options={{
           tabBarLabel: ({ focused }) =>
             focused ? (
-              <Text
-                className={`${
-                  focused ? "text-[#F8A100]" : "text-specialGreen"
-                } font-medium my-1`}
-              >
-                Home
-              </Text>
+              <Text className="text-[#F8A100] font-medium my-1">Home</Text>
             ) : null,
           tabBarIcon: ({ color, focused }) => (
             <CustomTabBarIcon name="home" color={color} focused={focused} />
@@ -67,13 +89,7 @@ export default function TabLayout() {
         options={{
           tabBarLabel: ({ focused }) =>
             focused ? (
-              <Text
-                className={`${
-                  focused ? "text-[#F8A100]" : "text-specialGreen"
-                } font-medium my-1`}
-              >
-                Search
-              </Text>
+              <Text className="text-[#F8A100] font-medium my-1">Search</Text>
             ) : null,
           tabBarIcon: ({ color, focused }) => (
             <CustomTabBarIcon name="search" color={color} focused={focused} />
@@ -85,20 +101,22 @@ export default function TabLayout() {
         options={{
           tabBarLabel: ({ focused }) =>
             focused ? (
-              <Text
-                className={`${
-                  focused ? "text-[#F8A100]" : "text-specialGreen"
-                } font-medium my-1`}
-              >
-                Requests
-              </Text>
+              <Text className="text-[#F8A100] font-medium my-1">Requests</Text>
             ) : null,
           tabBarIcon: ({ color, focused }) => (
-            <CustomTabBarIcon
-              name="clipboard"
-              color={color}
-              focused={focused}
-            />
+            <View className="relative w-12 h-12 items-center justify-center">
+              <CustomTabBarIcon
+                name="clipboard"
+                color={color}
+                focused={focused}
+              />
+              {workerRoleId && role === workerRoleId && (
+                <NotificationBadge
+                  count={useNotifications().unreadRequests}
+                  size="large"
+                />
+              )}
+            </View>
           ),
         }}
       />
@@ -107,13 +125,7 @@ export default function TabLayout() {
         options={{
           tabBarLabel: ({ focused }) =>
             focused ? (
-              <Text
-                className={`${
-                  focused ? "text-[#F8A100]" : "text-specialGreen"
-                } font-medium my-1`}
-              >
-                Profile
-              </Text>
+              <Text className="text-[#F8A100] font-medium my-1">Profile</Text>
             ) : null,
           tabBarIcon: ({ color, focused }) => (
             <CustomTabBarIcon
@@ -125,5 +137,11 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+  );
+  // Conditionally wrap with Provider
+  return workerRoleId && role === workerRoleId ? (
+    <NotificationProvider>{TabsContent}</NotificationProvider>
+  ) : (
+    TabsContent
   );
 }

@@ -20,34 +20,26 @@ export const updateRequestStatus = async (req: Request, res: Response) => {
       return;
     }
 
-    const privateRequestId : string | undefined = process.env.PRIVATE_REQUEST_ID;
-    if (!privateRequestId)
-      throw new Error("could not find private request id");
-
     const { rows } = await pool.query(
-      status === 1 ? `UPDATE request 
-              SET status = $2
-              , type = $3 
-              WHERE id = $1 
-              RETURNING *;`:  `UPDATE request 
-              SET status = $2 
-              WHERE id = $1 
-              RETURNING *;`,
-       [requestId, status, privateRequestId],
-     );
- 
-     if (rows.length === 0) {
-       res.status(404).json({
-         message: 'Request not found or unauthorized.',
-         success: false,
-       });
-       return;
-     }
-     res.status(201).json({
-       message: 'status updated successfully',
-       status,
-       success: true,
-     });
+      `UPDATE request 
+      SET status = $2 
+      WHERE id = $1 
+      RETURNING *;`,
+      [requestId, status],
+    );
+
+    if (rows.length === 0) {
+      res.status(404).json({
+        message: 'Request not found or unauthorized.',
+        success: false,
+      });
+      return;
+    }
+    res.status(201).json({
+      message: 'status updated successfully',
+      status,
+      success: true,
+    });
   } catch (error) {
     res.status(500).json({
       message: 'internal error',

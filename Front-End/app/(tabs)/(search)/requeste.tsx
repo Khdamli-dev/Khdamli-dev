@@ -29,11 +29,14 @@ import TheTime from "@/Component/time";
 import DatePicker from "@/Component/date";
 import MediaUploader, { MediaItem } from "@/Component/mediaUploader";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
-import CONFIG from "@/config";
+import apiClient from "@/api/appClient";
 
 interface JobRequest {
+<<<<<<< HEAD
   worker: number,
+=======
+  worker ?: number;
+>>>>>>> main
   client: number | null;
   region: number | null;
   city: number | null;
@@ -48,6 +51,7 @@ interface Props {
 }
 
 const CreateRequestScreen: React.FC<Props> = ({ type }) => {
+  const { workerId } = useLocalSearchParams();
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
   const getTodayDateString = () => {
     const today = new Date();
@@ -185,8 +189,8 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
     console.log("📤 FormData being sent:", formData);
 
     try {
-      const response = await axios.put(
-        `${CONFIG.API_URL}/work/job-request/media/${requestId}`,
+      const response = await apiClient.put(
+        `work/job-request/media/${requestId}`,
         formData,
         {
           headers: {
@@ -224,7 +228,6 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
       setError("Description must be at least 5 characters.");
       return;
     }
-
     // Clear any previous errors
     setError("");
 
@@ -233,7 +236,6 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
     try {
       // Retrieve user object from AsyncStorage
       const userData = await AsyncStorage.getItem("user");
-
       if (userData) {
         const user: any = JSON.parse(userData); // Parse the user data
 
@@ -249,8 +251,9 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
           worker : +workerId,
           status: 3, // "On Hold"
         };
-        const response = await axios.post(
-          `${CONFIG.API_URL}/work/job-request/`,
+        console.log("hhh");
+        const response = await apiClient.post(
+          `/work/job-request/`,
           jobRequest
         );
 
@@ -263,8 +266,8 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
         console.log("No user data found in AsyncStorage");
         setError("User data not found. Please log in again.");
       }
-    } catch (error) {
-      console.error("Error submitting job request:", error);
+    } catch (error : any) {
+      console.error("Error submitting job request:", error.response.data.message);
       setError("There was an error submitting your request. Please try again.");
     }
   };
