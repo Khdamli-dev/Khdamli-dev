@@ -32,11 +32,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import apiClient from "@/api/appClient";
 
 interface JobRequest {
-<<<<<<< HEAD
-  worker: number,
-=======
+
   worker ?: number;
->>>>>>> main
   client: number | null;
   region: number | null;
   city: number | null;
@@ -82,7 +79,6 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
   const toggleCategoryDropdown = () => {
     setIsCategoryOpen(!isCategoryOpen);
   };
-  const { workerId} = useLocalSearchParams();
   const handleCategorySelect = (
     category: {
       name: string;

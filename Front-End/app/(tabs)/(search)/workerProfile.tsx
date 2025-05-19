@@ -81,15 +81,9 @@ const UserProfileScreen: React.FC = () => {
         if (workerId) {
           // Worker profile endpoint using the worker ID parameter
           const endpoint = `/users/worker/${workerId}`;
-<<<<<<< HEAD
 
           
           const response = await apiClient.get(endpoint);
-
-=======
-          
-          const response = await apiClient.get(endpoint);
->>>>>>> main
           
           const newUserData = {
             fullName: response.data.worker.username,
@@ -135,11 +129,8 @@ const UserProfileScreen: React.FC = () => {
   const handleSendPrivateRequest = () => {
     router.push({
       pathname: "/(tabs)/(search)/requeste",
-<<<<<<< HEAD
       params: { workerId},
-=======
-      params: { workerId },
->>>>>>> main
+
     });
   };
 
