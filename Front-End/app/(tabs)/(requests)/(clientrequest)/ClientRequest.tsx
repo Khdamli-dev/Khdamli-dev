@@ -11,45 +11,49 @@ import {
   FlatList,
   Platform,
   Alert,
-} from 'react-native';
-import React, { useState, useRef, useEffect } from 'react';
+  TextInput,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from "react-native";
+import React, { useState, useRef, useEffect } from "react";
 import {
   MaterialCommunityIcons,
   Ionicons,
   MaterialIcons,
-} from '@expo/vector-icons';
-import { router } from 'expo-router';
+} from "@expo/vector-icons";
+import { router } from "expo-router";
 // Import the interfaces from your interfaces file
 import {
   WorkerPublicRequest,
   ClientPublicRequest,
-} from '../../../../Interfaces/Requestsinterfaces';
-import apiClient from '@/api/appClient';
-import refreshAccessToken from '@/api/refreshAccessToken';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ResizeMode, Video } from 'expo-av'; // Import for video playback
+} from "../../../../Interfaces/Requestsinterfaces";
+import apiClient from "@/api/appClient";
+import refreshAccessToken from "@/api/refreshAccessToken";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ResizeMode, Video } from "expo-av"; // Import for video playback
+import { formatDateTime } from "../SomeStandarFunctions";
 //import { realTimePublicRequestStatus } from '@/api/realTime';
 
 // Define the UserRole enum
 enum UserRole {
-  CLIENT = 'client',
-  WORKER = 'worker',
+  CLIENT = "client",
+  WORKER = "worker",
 }
 
 // Define the RequestStatus enum
 enum RequestStatus {
-  PENDING = 'Pending',
-  ACCEPTED = 'Accepted',
-  ON_HOLD = 'On Hold',
-  PENDING_CLIENT_VERIFICATION = 'pending_client_verification',
-  COMPLETED = 'Completed',
-  CANCELLED = 'Cancelled',
+  PENDING = "Pending",
+  ACCEPTED = "Accepted",
+  ON_HOLD = "On Hold",
+  PENDING_CLIENT_VERIFICATION = "pending_client_verification",
+  COMPLETED = "Completed",
+  CANCELLED = "Cancelled",
 }
 
 // Define media types
 enum MediaType {
-  IMAGE = 'image',
-  VIDEO = 'video',
+  IMAGE = "image",
+  VIDEO = "video",
 }
 
 // Interface for media item with type
@@ -59,7 +63,7 @@ interface MediaItem {
 }
 
 // Default placeholder image for missing profile images
-const defaultProfileImage = require('../../../../assets/images/images (1).jpg');
+const defaultProfileImage = require("../../../../assets/images/images (1).jpg");
 
 const PublicRequest = () => {
   const [selectedMedia, setSelectedMedia] = useState(0);
@@ -71,23 +75,23 @@ const PublicRequest = () => {
   >([]);
   const [loading, setLoading] = useState(true);
   const [expandedRequestId, setExpandedRequestId] = useState<number | null>(
-    null,
+    null
   );
   const [userData, setUserData] = useState<{
     username: string;
     profile_image: string;
   }>({
-    username: '',
-    profile_image: '',
+    username: "",
+    profile_image: "",
   });
 
   // Store current viewing media for modal access
   const [currentViewingMedia, setCurrentViewingMedia] = useState<MediaItem[]>(
-    [],
+    []
   );
   const videoRef = useRef<Video>(null);
 
-  const { width: windowWidth, height: windowHeight } = Dimensions.get('window');
+  const { width: windowWidth, height: windowHeight } = Dimensions.get("window");
   const scrollViewRef = useRef<ScrollView>(null);
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [commentText, setCommentText] = useState("");
@@ -112,17 +116,17 @@ const PublicRequest = () => {
   useEffect(() => {
     const getUserInfo = async () => {
       try {
-        const userDataStr = await AsyncStorage.getItem('user');
+        const userDataStr = await AsyncStorage.getItem("user");
         if (userDataStr) {
           const user = JSON.parse(userDataStr);
           setUserRole(user.role == 1 ? UserRole.CLIENT : UserRole.WORKER);
           setUserData({
-            username: user.username || '',
-            profile_image: user.profile_image || '',
+            username: user.username || "",
+            profile_image: user.profile_image || "",
           });
         }
       } catch (error) {
-        console.error('Error getting user info:', error);
+        console.error("Error getting user info:", error);
       }
     };
 
@@ -143,18 +147,18 @@ const PublicRequest = () => {
   // Helper function to detect media type from URL or MIME type
   const detectMediaType = (url: string, mimeType?: string): MediaType => {
     if (mimeType) {
-      return mimeType.startsWith('video/') ? MediaType.VIDEO : MediaType.IMAGE;
+      return mimeType.startsWith("video/") ? MediaType.VIDEO : MediaType.IMAGE;
     }
 
     // Check file extension if MIME type is not available
     const videoExtensions = [
-      '.mp4',
-      '.mov',
-      '.avi',
-      '.wmv',
-      '.flv',
-      '.mkv',
-      '.webm',
+      ".mp4",
+      ".mov",
+      ".avi",
+      ".wmv",
+      ".flv",
+      ".mkv",
+      ".webm",
     ];
     const lowerCaseUrl = url.toLowerCase();
 
@@ -167,7 +171,7 @@ const PublicRequest = () => {
     try {
       const response = await apiClient.delete(`work/job-request/${requestId}`);
       if (response.data.success) {
-        Alert.alert('request deleted successfully');
+        Alert.alert("request deleted successfully");
         setRequestIds((prevIds) => prevIds.filter((id) => id !== requestId));
       }
     } catch (err: any) {
@@ -181,26 +185,21 @@ const PublicRequest = () => {
           await deleteRequest(requestId);
         } else {
           // need to login
-          router.push('/(auth)');
+          router.push("/(auth)");
         }
       } else {
         console.error(
-          'Error deleting request:',
-          err.response?.data?.message || err.message,
+          "Error deleting request:",
+          err.response?.data?.message || err.message
         );
       }
     }
   };
 
-  const handleEditComment = (requestId: number) => {
-    // Navigate to comment editing page or show modal
-    console.log('Edit comment for request:', requestId);
-  };
-
   const fetchRequests = async () => {
     setLoading(true);
     try {
-      const userData = await AsyncStorage.getItem('user');
+      const userData = await AsyncStorage.getItem("user");
       if (userData) {
         const user = JSON.parse(userData);
         const response = await apiClient.get(`/work/job-request/`, {
@@ -218,14 +217,14 @@ const PublicRequest = () => {
           await fetchRequests();
         } else {
           // need to login
-          router.push('/(auth)');
+          router.push("/(auth)");
         }
       } else {
         console.error(
-          'Error fetching requests:',
-          err.response?.data?.message || err.message,
+          "Error fetching requests:",
+          err.response?.data?.message || err.message
         );
-        Alert.alert('Error', 'Failed to fetch requests');
+        Alert.alert("Error", "Failed to fetch requests");
       }
     } finally {
       setLoading(false);
@@ -234,17 +233,17 @@ const PublicRequest = () => {
 
   const fetchRequestsDetails = async (
     requestId: number,
-    worker_id?: number,
+    worker_id?: number
   ) => {
     try {
-      const userData = await AsyncStorage.getItem('user');
-      const user = JSON.parse(userData || '');
+      const userData = await AsyncStorage.getItem("user");
+      const user = JSON.parse(userData || "");
       let params: { role: string; request_type: string; worker_id?: number };
 
       if (userRole === UserRole.CLIENT) {
-        params = { role: 'client', request_type: 'public' };
+        params = { role: "client", request_type: "public" };
       } else {
-        params = { role: 'worker', request_type: 'public', worker_id: user.id };
+        params = { role: "worker", request_type: "public", worker_id: user.id };
       }
       const response = await apiClient.get(`/work/job-request/${requestId}`, {
         params,
@@ -264,17 +263,17 @@ const PublicRequest = () => {
           await fetchRequestsDetails(requestId, worker_id);
         } else {
           // need to login
-          router.push('/(auth)');
+          router.push("/(auth)");
         }
       }
-      console.error('Error fetching request details:', err.response?.data);
-      alert('Error fetching request details');
+      console.error("Error fetching request details:", err.response?.data);
+      alert("Error fetching request details");
     }
   };
 
   const handleSelectRequest = (id: number) => {
     router.push({
-      pathname: '/WorkerComments',
+      pathname: "/WorkerComments",
       params: { id },
     });
   };
@@ -317,9 +316,9 @@ const PublicRequest = () => {
 
   // Truncate text to specified length
   const truncateText = (text: string | undefined, maxLength: number) => {
-    if (!text) return '';
+    if (!text) return "";
     return text.length > maxLength
-      ? text.substring(0, maxLength) + '...'
+      ? text.substring(0, maxLength) + "..."
       : text;
   };
 
@@ -352,7 +351,7 @@ const PublicRequest = () => {
           <View className="flex-row items-center flex-1">
             <View className="flex-1">
               <Text className="font-medium">
-                {userData.username || 'Your Request'}
+                {userData.username || "Your Request"}
               </Text>
               <Text numberOfLines={1} className="text-gray-500">
                 {truncateText(item.description, 20)}
@@ -366,7 +365,7 @@ const PublicRequest = () => {
             </Text>
             <MaterialIcons
               name={
-                expandedRequestId === item.id ? 'expand-less' : 'expand-more'
+                expandedRequestId === item.id ? "expand-less" : "expand-more"
               }
               size={24}
               color="#888"
@@ -397,7 +396,7 @@ const PublicRequest = () => {
             />
             <View className="flex-1">
               <Text className="font-medium">
-                {item.client_username || 'Client'}
+                {item.client_username || "Client"}
               </Text>
               <Text
                 numberOfLines={1}
@@ -415,7 +414,7 @@ const PublicRequest = () => {
             </Text>
             <MaterialIcons
               name={
-                expandedRequestId === item.id ? 'expand-less' : 'expand-more'
+                expandedRequestId === item.id ? "expand-less" : "expand-more"
               }
               size={24}
               color="#888"
@@ -453,7 +452,7 @@ const PublicRequest = () => {
               />
               <View>
                 <Text className="font-medium">
-                  {userData.username || 'Your Request'}
+                  {userData.username || "Your Request"}
                 </Text>
                 <Text numberOfLines={1} className="text-gray-500">
                   {truncateText(item.description, 40)}
@@ -494,7 +493,7 @@ const PublicRequest = () => {
             <Text className="text-base mb-1">
               <Text className="font-bold">Address: </Text>
               <Text className="text-green-500">
-                {item.location?.city}, {item.location?.region},{' '}
+                {item.location?.city}, {item.location?.region},{" "}
                 {item.location?.country}
               </Text>
             </Text>
@@ -532,7 +531,7 @@ const PublicRequest = () => {
                         <Video
                           source={{ uri: media.url }}
                           style={{ width: 96, height: 96, borderRadius: 4 }}
-                          resizeMode={'cover' as ResizeMode}
+                          resizeMode={"cover" as ResizeMode}
                           shouldPlay={false}
                           isLooping={false}
                           useNativeControls={false}
@@ -584,13 +583,13 @@ const PublicRequest = () => {
             <View className="flex-row">
               <TouchableOpacity
                 className="bg-green-500 w-1/2 justify-center items-center py-2 mr-1 rounded-l"
-                onPress={() => console.log('Confirm completion')}
+                onPress={() => console.log("Confirm completion")}
               >
                 <Text className="text-base text-white">Confirm Completion</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 className="bg-red-500 w-1/2 justify-center items-center py-2 ml-1 rounded-r"
-                onPress={() => console.log('Reject completion')}
+                onPress={() => console.log("Reject completion")}
               >
                 <Text className="text-base text-white">Reject Completion</Text>
               </TouchableOpacity>
@@ -736,6 +735,18 @@ const PublicRequest = () => {
   };
 
   const CommentEditModal = () => {
+    // Add this to ensure the input maintains focus
+    useEffect(() => {
+      if (commentModalVisible && commentInputRef.current) {
+        // Short delay to ensure modal is fully visible before focusing
+        setTimeout(() => {
+          if (commentInputRef.current) {
+            commentInputRef.current.focus();
+          }
+        }, 10);
+      }
+    }, [commentModalVisible]);
+  
     return (
       <Modal
         animationType="slide"
@@ -743,47 +754,53 @@ const PublicRequest = () => {
         visible={commentModalVisible}
         onRequestClose={() => setCommentModalVisible(false)}
       >
-        <View className="flex-1 justify-end bg-black/70">
-          <View className="bg-white rounded-t-2xl p-6">
-            <View className="flex-row justify-between items-center mb-5">
-              <Text className="text-xl font-bold text-gray-800">
-                Edit Your Comment
-              </Text>
-              <TouchableOpacity
-                onPress={() => setCommentModalVisible(false)}
-                className="p-2 rounded-full bg-gray-100"
-              >
-                <Ionicons name="close" size={22} color="#333" />
-              </TouchableOpacity>
-            </View>
-
-            <TextInput
-              ref={commentInputRef}
-              className="bg-gray-100 p-4 rounded-xl text-base h-40 mb-5 border border-gray-200"
-              multiline={true}
-              value={commentText}
-              onChangeText={setCommentText}
-              placeholder="Enter your comment here..."
-              textAlignVertical="top"
-            />
-
-            <View className="flex-row justify-end space-x-3 mt-2">
-              <TouchableOpacity
-                className="py-3 px-6 rounded-lg items-center border border-gray-300"
-                onPress={() => setCommentModalVisible(false)}
-              >
-                <Text className="text-gray-700 font-medium">Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                className="bg-blue-500 py-3 px-6 rounded-lg items-center shadow-sm"
-                onPress={saveComment}
-              >
-                <Text className="text-white font-medium">Save</Text>
-              </TouchableOpacity>
-            </View>
+        <TouchableWithoutFeedback >
+          <View className="flex-1 justify-end bg-black/70">
+            
+              <View className="bg-white rounded-t-2xl p-6">
+                <View className="flex-row justify-between items-center mb-5">
+                  <Text className="text-xl font-bold text-gray-800">
+                    Edit Your Comment
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => setCommentModalVisible(false)}
+                    className="p-2 rounded-full bg-gray-100"
+                  >
+                    <Ionicons name="close" size={22} color="#333" />
+                  </TouchableOpacity>
+                </View>
+                
+                <TextInput
+                  ref={commentInputRef}
+                  className="bg-gray-100 p-4 rounded-xl text-base h-40 mb-5 border border-gray-200"
+                  multiline={true}
+                  value={commentText}
+                  onChangeText={setCommentText}
+                  placeholder="Enter your comment here..."
+                  textAlignVertical="top"
+                  autoFocus={false}
+                  blurOnSubmit={false}
+                />
+                
+                <View className="flex-row justify-end space-x-3 mt-2">
+                  <TouchableOpacity
+                    className="py-3 px-6 rounded-lg items-center border border-gray-300"
+                    onPress={() => setCommentModalVisible(false)}
+                  >
+                    <Text className="text-gray-700 font-medium">Cancel</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    className="bg-blue-500 py-3 px-6 rounded-lg items-center shadow-sm"
+                    onPress={saveComment}
+                  >
+                    <Text className="text-white font-medium">Save</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            
           </View>
-        </View>
+        </TouchableWithoutFeedback>
       </Modal>
     );
   };
@@ -813,7 +830,7 @@ const PublicRequest = () => {
               />
               <View>
                 <Text className="font-medium">
-                  {item.client_username || 'Client'}
+                  {item.client_username || "Client"}
                 </Text>
               </View>
             </View>
@@ -832,27 +849,8 @@ const PublicRequest = () => {
           </View>
         </TouchableOpacity>
 
-        <View className="flex-row mb-3">
-          <View className="flex-1">
-            <Text className="text-lg font-medium">
-              {item.client_username || 'Client'}
-            </Text>
-            <View className="flex-row items-center mt-1">
-              {getStatusIcon(item.status)}
-              <Text className="ml-1 text-gray-600 capitalize">
-                {item.status === RequestStatus.ON_HOLD
-                  ? 'On Hold'
-                  : item.status === RequestStatus.PENDING_CLIENT_VERIFICATION
-                    ? 'Pending Verification'
-                    : item.status === RequestStatus.COMPLETED
-                      ? 'Completed'
-                      : item.status === RequestStatus.ACCEPTED
-                        ? 'Accepted'
-                        : item.status || 'On Hold'}
-              </Text>
-            </View>
-          </View>
-          <View className="flex-row items-center">
+        <View className="flex-row mb-3 justify-end">
+          <View className="flex-row items-center ">
             <TouchableOpacity className="mr-4">
               <Ionicons name="call" size={32} color="#000" />
             </TouchableOpacity>
@@ -868,18 +866,18 @@ const PublicRequest = () => {
 
         <View className="pl-2">
           <Text className="text-base mb-1">
-            <Text className="font-bold">Request Date: </Text>
+            <Text className="font-bold">Request Date:</Text>
             <Text className="text-green-500">{item.post_date}</Text>
           </Text>
           <Text className="text-base mb-1">
             <Text className="font-bold">Work Address: </Text>
             <Text className="text-green-500">
-              {item.location?.city}, {item.location?.region},{' '}
+              {item.location?.city}, {item.location?.region},{" "}
               {item.location?.country}
             </Text>
           </Text>
           <Text className="text-base mb-2">
-            <Text className="font-bold text-black">Category: </Text>
+            <Text className="font-bold text-black">Category:</Text>
             <Text className="text-green-500">{item.category}</Text>
           </Text>
           <Text className="text-base mb-2">
@@ -925,7 +923,7 @@ const PublicRequest = () => {
                         <Video
                           source={{ uri: media.url }}
                           style={{ width: 96, height: 96, borderRadius: 4 }}
-                          resizeMode={'cover' as ResizeMode}
+                          resizeMode={"cover" as ResizeMode}
                           shouldPlay={false}
                           isLooping={false}
                           useNativeControls={false}
@@ -957,7 +955,7 @@ const PublicRequest = () => {
         {item.status === RequestStatus.ACCEPTED && (
           <TouchableOpacity
             className="bg-blue-500 items-center justify-center py-3 mt-3 rounded"
-            onPress={() => console.log('Mark as completed')}
+            onPress={() => console.log("Mark as completed")}
           >
             <Text className="text-base text-white">Mark as Completed</Text>
           </TouchableOpacity>
@@ -995,7 +993,7 @@ const PublicRequest = () => {
   return (
     <SafeAreaView className="flex-1 bg-gray-100">
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         className="flex-1"
       >
         {loading ? (
@@ -1045,14 +1043,14 @@ const PublicRequest = () => {
                 showsHorizontalScrollIndicator={false}
                 onMomentumScrollEnd={(e) => {
                   const newIndex = Math.round(
-                    e.nativeEvent.contentOffset.x / windowWidth,
+                    e.nativeEvent.contentOffset.x / windowWidth
                   );
                   setSelectedMedia(newIndex);
                 }}
                 className="flex-grow"
                 contentContainerStyle={{
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
                 {currentViewingMedia?.map((media, idx) => (
@@ -1061,8 +1059,8 @@ const PublicRequest = () => {
                     style={{
                       width: windowWidth,
                       height: windowHeight * 0.6,
-                      justifyContent: 'center',
-                      alignItems: 'center',
+                      justifyContent: "center",
+                      alignItems: "center",
                     }}
                   >
                     {media.type === MediaType.VIDEO ? (
@@ -1107,7 +1105,7 @@ const PublicRequest = () => {
                     }
                   }}
                   className={`w-3 h-3 rounded-full mx-1 ${
-                    selectedMedia === index ? 'bg-white' : 'bg-gray-500'
+                    selectedMedia === index ? "bg-white" : "bg-gray-500"
                   }`}
                 />
               ))}
@@ -1120,7 +1118,7 @@ const PublicRequest = () => {
             </View>
           </View>
         </Modal>
-        <CommentEditModal />
+        <CommentEditModal/>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

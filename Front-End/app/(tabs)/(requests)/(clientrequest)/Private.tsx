@@ -29,6 +29,7 @@ import {
 import { ResizeMode, Video } from 'expo-av';
 import { getSocket } from '@/api/socket';
 import { useNotifications } from '@/context/NotificationContext';
+import { formatDateTime } from '../SomeStandarFunctions';
 //import { realTimePrivateRequestStatus, realTimeRequests } from '@/api/realTime';
 
 // Define the UserRole enum
@@ -758,9 +759,7 @@ const PrivateRequests = () => {
                 <Text className="font-medium">
                   {item.client_username || 'Client'}
                 </Text>
-                <Text numberOfLines={1} className="text-gray-500">
-                  {truncateText(item.description, 40)}
-                </Text>
+                
               </View>
             </View>
             <View className="flex-row items-center">
@@ -814,7 +813,6 @@ const PrivateRequests = () => {
             <Text className="text-green-500">{item.description}</Text>
           </Text>
           <Text className="text-base mb-1">
-            <Text className="font-bold">Payment Method: </Text>
             <Text className="text-green-500">{item.payment_method}</Text>
           </Text>
         </View>

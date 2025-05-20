@@ -116,7 +116,7 @@ const AppStartUp = () => {
       }
     };
 
-      checkLoginStatus();  */
+      checkLoginStatus();  
   }, []);
 
   return (
