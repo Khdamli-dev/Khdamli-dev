@@ -35,6 +35,25 @@ const CustomTabBarIcon = ({
   );
 };
 
+const RequestNotification = ({
+  badgcount,
+  focused,
+}: {
+  badgcount: number;
+  focused: Boolean;
+}) => {
+  if (badgcount <= 0) return null; // Hide when there's no badge count
+
+  return (
+    <View
+      className={`bg-red-700 rounded-full h-5 w-5 items-center justify-center absolute ${
+        focused ? "top-[-32] right-4" : "top-[-9] right-[-8]"
+      }`}
+    >
+      <Text className="text-white text-xs font-bold">{badgcount}</Text>
+    </View>
+  );
+};
 export default function TabLayout() {
   const workerRoleId: number = 2;
   const [role, setRole] = useState<number | null>(null);

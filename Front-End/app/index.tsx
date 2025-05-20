@@ -47,6 +47,10 @@ const AppStartUp = () => {
       }),
     ]).start();
 
+    setTimeout(() => {
+      router.replace("/(tabs)/(home)");
+    }, 1500);
+
     // التحقق من تسجيل الدخول بعد 3 ثوانٍ
     const checkLoginStatus = async () => {
       try {
@@ -112,7 +116,7 @@ const AppStartUp = () => {
       }
     };
 
-    checkLoginStatus();
+      checkLoginStatus();  
   }, []);
 
   return (
