@@ -31,7 +31,7 @@ import { ResizeMode, Video } from "expo-av";
 import { getSocket } from "@/api/socket";
 import { useNotifications } from "@/context/NotificationContext";
 import { Rating } from "react-native-ratings";
-
+import { formatDateTime } from "../SomeStandarFunctions";
 
 //import { realTimePrivateRequestStatus, realTimeRequests } from '@/api/realTime';
 
@@ -55,16 +55,7 @@ enum RequestStatus {
 // Default placeholder image for missing profile images
 const defaultProfileImage = require("../../../../assets/images/images (1).jpg");
 
-const formatDateTime = (dateString: string | undefined) => {
-  if (!dateString) return 'N/A';
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-};
+
 
 const PrivateRequests = () => {
   const notifications = useNotifications();
