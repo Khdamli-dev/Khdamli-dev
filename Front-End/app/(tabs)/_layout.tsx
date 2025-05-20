@@ -131,7 +131,7 @@ export default function TabLayout() {
               />
               {workerRoleId && role === workerRoleId && (
                 <NotificationBadge
-                  count={useNotifications().unreadRequests}
+                  count={useNotifications()?.unreadRequests || 0}
                   size="large"
                 />
               )}

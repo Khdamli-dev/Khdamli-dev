@@ -268,7 +268,7 @@ const PrivateRequests = () => {
       );
 
       // mark request as read
-      notifications.markRequestAsRead();
+      if (notifications) notifications.markRequestAsRead();
 
       Alert.alert('Success', 'Request accepted successfully');
     } catch (err: any) {
@@ -296,7 +296,7 @@ const PrivateRequests = () => {
       setRequestIds((prev) => prev.filter((id) => id != requestId));
 
       // mark request as read
-      notifications.markRequestAsRead();
+      if (notifications) notifications.markRequestAsRead();
 
       Alert.alert('Success', 'Request rejected successfully');
     } catch (err: any) {
@@ -438,30 +438,30 @@ const PrivateRequests = () => {
   useEffect(() => {
     fetchRequests();
   }, [userRole]);
-  
+
   // Set up socket listeners for real-time updates
-    useEffect(() => {
-      const setupSocketListeners = async () => {
-        try {
-          // Ensure socket is connected
-          const socket = getSocket();
-  
-          // Listen for new requests
-          socket.on('private-request', (data) => {
-            console.log('New request received:', data);
-            setRequestIds(prev => [...prev, data]);
-          });
-  
-          return () => {
-            socket.off('new-request');
-          };
-        } catch (error) {
-          console.error('Error setting up notification socket listeners:', error);
-        }
-      };
-  
-      setupSocketListeners();
-    }, []);
+  useEffect(() => {
+    const setupSocketListeners = async () => {
+      try {
+        // Ensure socket is connected
+        const socket = getSocket();
+
+        // Listen for new requests
+        socket.on('private-request', (data) => {
+          console.log('New request received:', data);
+          setRequestIds((prev) => [...prev, data]);
+        });
+
+        return () => {
+          socket.off('new-request');
+        };
+      } catch (error) {
+        console.error('Error setting up notification socket listeners:', error);
+      }
+    };
+
+    setupSocketListeners();
+  }, []);
 
   useEffect(() => {
     if (requestIds.length >= 0) {
