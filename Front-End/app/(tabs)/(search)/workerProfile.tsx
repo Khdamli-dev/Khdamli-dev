@@ -9,7 +9,6 @@ import {
   Dimensions,
   StyleSheet,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Calendar,
   Clock,
@@ -20,7 +19,6 @@ import {
   Globe,
   MessageSquare,
 } from "lucide-react-native";
-import CONFIG from "../../../config";
 import { Video, ResizeMode } from "expo-av";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFonts, Itim_400Regular } from "@expo-google-fonts/itim";
@@ -130,7 +128,6 @@ const UserProfileScreen: React.FC = () => {
     router.push({
       pathname: "/(tabs)/(search)/requeste",
       params: { workerId},
-
     });
   };
 
