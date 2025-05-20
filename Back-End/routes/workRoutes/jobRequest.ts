@@ -13,6 +13,8 @@ import getRequestDetails from "../../controller/jobRequestController/getRequestD
 import checkRole from "../../middleware/checkRole";
 import getRequests from "../../controller/jobRequestController/getRequests";
 import getPublicRequests from "../../controller/jobRequestController/getPublicRequests";
+import modifyComment from "../../controller/jobRequestController/modifyComment";
+import deleteComment from "../../controller/jobRequestController/deleteComment";
 import markCompleted from "../../controller/jobRequestController/markCompleted";
 
 const request: Router = express.Router();
@@ -41,6 +43,10 @@ request.put(
 );
 // this route is used to make a comment on public request
 request.post("/:requestId/comment", checkRole([workerRoleId]), createComment);
+
+request.put("/:requestId/comment",checkRole([workerRoleId]) , modifyComment);
+
+request.delete("/:requestId/comment",checkRole([workerRoleId]) , deleteComment);
 
 request.get("/:requestId/messages", getRequestMessages);
 
