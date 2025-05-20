@@ -33,11 +33,7 @@ request.put("/media/:requestId", checkRole([clientRoleId]), uploadMedia);
 
 request.put("/status/:requestId", updateRequestStatus);
 // this route is used to select worker in public request
-request.put(
-  "/:requestId/select-worker/:workerId",
-  checkRole([clientRoleId]),
-  selectWorker
-);
+request.put("/:requestId/select-worker/:workerId", checkRole([clientRoleId]), selectWorker);
 // this route is used to make a comment on public request
 request.post("/:requestId/comment", checkRole([workerRoleId]), createComment);
 

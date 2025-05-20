@@ -20,18 +20,19 @@ const selectWorker = async (req: Request, res: Response) => {
   try {
     const publicRequest: string | undefined = process.env.PUBLIC_REQUEST_ID;
     const privateRequest: string | undefined = process.env.PRIVATE_REQUEST_ID;
-    if (!publicRequest || !privateRequest) {
+    const acceptedRequest : string | undefined = process.env.ACCEPTED_REQUEST_ID;
+    if (!publicRequest || !privateRequest || !acceptedRequest) {
       throw new Error("envirement variable don't exist");
     }
 
     const { rows } = await pool.query(
       `
         UPDATE request
-        SET worker = $1, type = $4
+        SET worker = $1, type = $4, status = $5
         WHERE (id = $2 AND type = $3)
         RETURNING *;
         `,
-      [workerId, requestId, +publicRequest, +privateRequest],
+      [workerId, requestId, +publicRequest, +privateRequest, +acceptedRequest],
     );
 
     // request don't exist
