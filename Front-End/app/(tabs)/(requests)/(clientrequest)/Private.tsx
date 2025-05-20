@@ -29,6 +29,7 @@ import {
 import { ResizeMode, Video } from 'expo-av';
 import { getSocket } from '@/api/socket';
 import { useNotifications } from '@/context/NotificationContext';
+import { formatDateTime } from '../SomeStandarFunctions';
 //import { realTimePrivateRequestStatus, realTimeRequests } from '@/api/realTime';
 
 // Define the UserRole enum
@@ -147,6 +148,13 @@ const PrivateRequests = () => {
       setLoading(false);
     }
   };
+
+  /*  const fetch_request_message = async (requestId: number) => {
+    try {
+      const response = apiClient.get(`/work/job-request/${requestId}/messages`);
+      const result = (await response).data.messages;
+    } catch (err: any) {}
+  }; */
 
   const fetchRequestsDetails = async (requestId: number) => {
     try {
@@ -470,7 +478,7 @@ const PrivateRequests = () => {
     return (
       <TouchableOpacity
         onPress={() => toggleExpandRequest(item.id)}
-        className="bg-white mt-2 p-4 mb-4 rounded-lg shadow"
+        className="bg-white mt-3 p-4 rounded-lg shadow-md border border-gray-100"
       >
         <View className="flex-row justify-between items-center">
           <View className="flex-row items-center flex-1">
@@ -500,9 +508,9 @@ const PrivateRequests = () => {
               name={
                 expandedRequestId === item.id ? 'expand-less' : 'expand-more'
               }
-              size={24}
+              size={20}
               color="#888"
-              style={{ marginLeft: 5 }}
+              style={{ marginTop: 2 }}
             />
           </View>
         </View>
@@ -617,8 +625,10 @@ const PrivateRequests = () => {
 
           <View className="pl-2">
             <Text className="text-base mb-1">
-              <Text className="font-bold">Date Request: </Text>
-              <Text className="text-green-500">{item.sent_date}</Text>
+              <Text className="font-bold">Date Request:</Text>
+              <Text className="text-green-500">
+                {formatDateTime(item.sent_date)}
+              </Text>
             </Text>
             <Text className="text-base mb-1">
               <Text className="font-bold">Address: </Text>
@@ -636,10 +646,6 @@ const PrivateRequests = () => {
               <Text className="text-green-500">
                 {item.description || 'No description available'}
               </Text>
-            </Text>
-            <Text className="text-base mb-1">
-              <Text className="font-bold">Payment Method: </Text>
-              <Text className="text-green-500">{item.payment_method}</Text>
             </Text>
           </View>
         </View>
@@ -753,9 +759,7 @@ const PrivateRequests = () => {
                 <Text className="font-medium">
                   {item.client_username || 'Client'}
                 </Text>
-                <Text numberOfLines={1} className="text-gray-500">
-                  {truncateText(item.description, 40)}
-                </Text>
+                
               </View>
             </View>
             <View className="flex-row items-center">
@@ -789,7 +793,9 @@ const PrivateRequests = () => {
         <View className="pl-2">
           <Text className="text-base mb-1">
             <Text className="font-bold">Request Date: </Text>
-            <Text className="text-green-500">{item.sent_date}</Text>
+            <Text className="text-green-500">
+              {formatDateTime(item.sent_date)}
+            </Text>
           </Text>
           <Text className="text-base mb-1">
             <Text className="font-bold">Work Address: </Text>
@@ -807,7 +813,6 @@ const PrivateRequests = () => {
             <Text className="text-green-500">{item.description}</Text>
           </Text>
           <Text className="text-base mb-1">
-            <Text className="font-bold">Payment Method: </Text>
             <Text className="text-green-500">{item.payment_method}</Text>
           </Text>
         </View>

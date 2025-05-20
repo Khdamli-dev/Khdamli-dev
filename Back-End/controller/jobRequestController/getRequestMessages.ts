@@ -6,7 +6,11 @@ const getRequestMessages = async (req: Request, res: Response) => {
     // Get request ID from path param
     const requestId = parseInt(req.params.requestId);
     if (isNaN(requestId)) {
-      res.status(400).json({ message: "Invalid or missing request ID", messages: null, success: false });
+      res.status(400).json({
+        message: "Invalid or missing request ID",
+        messages: null,
+        success: false,
+      });
       return;
     }
 
@@ -18,7 +22,11 @@ const getRequestMessages = async (req: Request, res: Response) => {
     // Sort from query param (default newest)
     const sort = (req.query.sort as string)?.toLowerCase();
     if (sort && !["closest", "newest"].includes(sort)) {
-      res.status(400).json({ message: "Invalid sort parameter", messages: null, success: false });
+      res.status(400).json({
+        message: "Invalid sort parameter",
+        messages: null,
+        success: false,
+      });
       return;
     }
 
@@ -43,7 +51,9 @@ const getRequestMessages = async (req: Request, res: Response) => {
     );
 
     if (!requestData.rows.length) {
-      res.status(404).json({ message: "Request not found", messages: null, success: false });
+      res
+        .status(404)
+        .json({ message: "Request not found", messages: null, success: false });
       return;
     }
 
@@ -134,18 +144,18 @@ const getRequestMessages = async (req: Request, res: Response) => {
     const messagesData = await pool.query(query, params);
 
     // Format response
-    const messages = messagesData.rows.map(row => ({
+    const messages = messagesData.rows.map((row) => ({
       worker_id: row.worker_id,
       username: row.username,
       profile_image: row.profile_image,
       location: {
         city: row.city,
         region: row.region,
-        country: row.country
+        country: row.country,
       },
       categories: row.categories?.filter(Boolean) || [],
       message: row.message,
-      created_at: row.created_at
+      created_at: row.created_at,
     }));
 
     // Send response
@@ -155,11 +165,15 @@ const getRequestMessages = async (req: Request, res: Response) => {
       page,
       limit,
       total,
-      success: true
+      success: true,
     });
   } catch (error) {
     console.error("Error fetching request messages:", error);
-    res.status(500).json({ message: "Internal server error", messages: null, success: false });
+    res.status(500).json({
+      message: "Internal server error",
+      messages: null,
+      success: false,
+    });
   }
 };
 

@@ -1,6 +1,6 @@
-import jwt from 'jsonwebtoken';
-import { NextFunction, Request, Response } from 'express';
-import dotenv from 'dotenv';
+import jwt from "jsonwebtoken";
+import { NextFunction, Request, Response } from "express";
+import dotenv from "dotenv";
 
 const checkRole = (allowedRoles : Number[]) => {
     return (req: Request, res: Response, next: NextFunction) => {
