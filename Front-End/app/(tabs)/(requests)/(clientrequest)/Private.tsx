@@ -439,7 +439,7 @@ const PrivateRequests = () => {
           const socket = getSocket();
   
           // Listen for new requests
-          socket.on('private-request', (data) => {
+          socket.on('private-request', (data: number) => {
             console.log('New request received:', data);
             setRequestIds(prev => [...prev, data]);
           });
