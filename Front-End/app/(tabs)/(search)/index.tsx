@@ -152,7 +152,7 @@ const HomeScreen = () => {
   const handleSendRequest = (worker: Worker) => {
     router.push({
       pathname: "./requeste",
-      params: { type: "2" },
+      params: { workerId : worker.id },
     });
   };
 
