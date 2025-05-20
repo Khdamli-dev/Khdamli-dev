@@ -13,6 +13,7 @@ import getRequestDetails from "../../controller/jobRequestController/getRequestD
 import checkRole from "../../middleware/checkRole";
 import getRequests from "../../controller/jobRequestController/getRequests";
 import getPublicRequests from "../../controller/jobRequestController/getPublicRequests";
+import markCompleted from "../../controller/jobRequestController/markCompleted";
 
 const request: Router = express.Router();
 
@@ -45,6 +46,8 @@ request.get("/:requestId/messages", getRequestMessages);
 
 request.get("/", getRequests);
 
-request.get("/public/:id",getPublicRequests)
+request.get("/public/:id",getPublicRequests);
+
+request.post("/:requestId/complete",checkRole([clientRoleId]),markCompleted);
 
 export default request;
