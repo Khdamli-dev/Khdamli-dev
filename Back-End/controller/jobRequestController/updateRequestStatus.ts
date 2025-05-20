@@ -12,7 +12,11 @@ export const updateRequestStatus = async (req: Request, res: Response) => {
     }
     const requestId: number = +req.params.requestId;
     const status: number = +req.body.status;
+<<<<<<< HEAD
     if (status < 1 || status > 6 || Number.isNaN(+req.body.status)) {
+=======
+    if ((status < 1 && status > 4) || Number.isNaN(+req.body.status)) {
+>>>>>>> origin/main
       res.status(401).json({
         message: "status is of wrong format",
         success: false,
@@ -20,6 +24,7 @@ export const updateRequestStatus = async (req: Request, res: Response) => {
       return;
     }
 
+<<<<<<< HEAD
     let query, values;
 
     if (status === 1 && req.body.public && req.body.workerId) {
@@ -41,6 +46,15 @@ export const updateRequestStatus = async (req: Request, res: Response) => {
     }
 
     const { rows } = await pool.query(query, values);
+=======
+    const { rows } = await pool.query(
+      `UPDATE request 
+      SET status = $2 
+      WHERE id = $1 
+      RETURNING *;`,
+      [requestId, status],
+    );
+>>>>>>> origin/main
 
     if (rows.length === 0) {
       res.status(404).json({
@@ -55,7 +69,6 @@ export const updateRequestStatus = async (req: Request, res: Response) => {
       success: true,
     });
   } catch (error) {
-    console.log(error);
     res.status(500).json({
       message: "internal error",
       success: false,

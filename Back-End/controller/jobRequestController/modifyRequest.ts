@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import pool from '../../database/dbConnection';
 import JobRequest from '../../interface/jobRequest';
 

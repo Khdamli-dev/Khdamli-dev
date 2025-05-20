@@ -3,7 +3,6 @@ import {
   Text,
   TouchableOpacity,
   Image,
-  StyleSheet,
   ScrollView,
   Modal,
   Dimensions,
@@ -12,46 +11,48 @@ import {
   FlatList,
   Platform,
   Alert,
-} from "react-native";
-import React, { useState, useRef, useEffect } from "react";
+} from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   MaterialCommunityIcons,
   Ionicons,
   MaterialIcons,
-  AntDesign,
-} from "@expo/vector-icons";
-import { router } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import apiClient from "@/api/appClient";
-import refreshAccessToken from "@/api/refreshAccessToken";
+} from '@expo/vector-icons';
+import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import apiClient from '@/api/appClient';
+import refreshAccessToken from '@/api/refreshAccessToken';
 import {
   WorkerPrivateRequest,
   ClientPrivateRequest,
-} from "../../../../Interfaces/Requestsinterfaces";
-import { formatDateTime, timeAgo } from "../SomeStandarFunctions";
-import { ResizeMode, Video } from "expo-av";
+} from '../../../../Interfaces/Requestsinterfaces';
+import { ResizeMode, Video } from 'expo-av';
+import { getSocket } from '@/api/socket';
+import { useNotifications } from '@/context/NotificationContext';
+//import { realTimePrivateRequestStatus, realTimeRequests } from '@/api/realTime';
 
 // Define the UserRole enum
 enum UserRole {
-  CLIENT = "client",
-  WORKER = "worker",
+  CLIENT = 'client',
+  WORKER = 'worker',
 }
 
 // Define the RequestStatus enum
 enum RequestStatus {
-  PENDING = "pending",
-  ACCEPTED = "Accepted",
-  ON_HOLD = "On Hold",
-  PENDING_CLIENT_VERIFICATION = "pending_client_verification",
-  COMPLETED = "Completed",
-  CANCELLED = "Cancelled",
-  REJECTED = "Rejected",
+  PENDING = 'pending',
+  ACCEPTED = 'Accepted',
+  ON_HOLD = 'On Hold',
+  PENDING_CLIENT_VERIFICATION = 'pending_client_verification',
+  COMPLETED = 'Completed',
+  CANCELLED = 'Cancelled',
+  REJECTED = 'Rejected',
 }
 
 // Default placeholder image for missing profile images
-const defaultProfileImage = require("../../../../assets/images/images (1).jpg");
+const defaultProfileImage = require('../../../../assets/images/images (1).jpg');
 
 const PrivateRequests = () => {
+  const notifications = useNotifications();
   const [selectedMedia, setSelectedMedia] = useState(0);
   const [mediaModalVisible, setMediaModalVisible] = useState(false);
   const [userRole, setUserRole] = useState<UserRole>();
@@ -61,19 +62,19 @@ const PrivateRequests = () => {
   >([]);
   const [loading, setLoading] = useState(true);
   const [expandedRequestId, setExpandedRequestId] = useState<number | null>(
-    null
+    null,
   );
   const [userData, setUserData] = useState<{
     username: string;
     profile_image: string;
-  }>({ username: "", profile_image: "" });
+  }>({ username: '', profile_image: '' });
 
   // Store current viewing media for modal access
   const [currentViewingMedia, setCurrentViewingMedia] = useState<
     { url: string; type: string }[]
   >([]);
 
-  const { width: windowWidth, height: windowHeight } = Dimensions.get("window");
+  const { width: windowWidth, height: windowHeight } = Dimensions.get('window');
   const scrollViewRef = useRef<ScrollView>(null);
   const videoRef = useRef<Video>(null);
 
@@ -81,17 +82,17 @@ const PrivateRequests = () => {
   useEffect(() => {
     const getUserData = async () => {
       try {
-        const userDataString = await AsyncStorage.getItem("user");
+        const userDataString = await AsyncStorage.getItem('user');
         if (userDataString) {
           const user = JSON.parse(userDataString);
           setUserRole(user.role == 1 ? UserRole.CLIENT : UserRole.WORKER);
           setUserData({
-            username: user.username || "",
-            profile_image: user.profile_image || "",
+            username: user.username || '',
+            profile_image: user.profile_image || '',
           });
         }
       } catch (error) {
-        console.error("Error getting user data:", error);
+        console.error('Error getting user data:', error);
       }
     };
 
@@ -116,7 +117,7 @@ const PrivateRequests = () => {
   const fetchRequests = async () => {
     setLoading(true);
     try {
-      const userData = await AsyncStorage.getItem("user");
+      const userData = await AsyncStorage.getItem('user');
       if (userData) {
         const user = JSON.parse(userData);
         const response = await apiClient.get(`/work/job-request/`, {
@@ -133,14 +134,14 @@ const PrivateRequests = () => {
         if (await refreshAccessToken()) {
           await fetchRequests();
         } else {
-          router.push("/(auth)");
+          router.push('/(auth)');
         }
       } else {
         console.error(
-          "Error fetching requests:",
-          err.response?.data?.message || err.message
+          'Error fetching requests:',
+          err.response?.data?.message || err.message,
         );
-        Alert.alert("Error", "Failed to fetch requests");
+        Alert.alert('Error', 'Failed to fetch requests');
       }
     } finally {
       setLoading(false);
@@ -156,16 +157,16 @@ const PrivateRequests = () => {
 
   const fetchRequestsDetails = async (requestId: number) => {
     try {
-      const userData = await AsyncStorage.getItem("user");
+      const userData = await AsyncStorage.getItem('user');
       if (!userData) {
-        router.push("/(auth)");
+        router.push('/(auth)');
         return;
       }
 
       const user = JSON.parse(userData);
       let params = {
-        role: userRole === UserRole.CLIENT ? "client" : "worker",
-        request_type: "private",
+        role: userRole === UserRole.CLIENT ? 'client' : 'worker',
+        request_type: 'private',
       };
 
       const response = await apiClient.get(`/work/job-request/${requestId}`, {
@@ -186,14 +187,14 @@ const PrivateRequests = () => {
         if (await refreshAccessToken()) {
           await fetchRequestsDetails(requestId);
         } else {
-          router.push("/(auth)");
+          router.push('/(auth)');
         }
       } else {
         console.error(
-          "Error fetching request details:",
-          err.response?.data?.message || err.message
+          'Error fetching request details:',
+          err.response?.data?.message || err.message,
         );
-        Alert.alert("Error", "Failed to fetch request details");
+        Alert.alert('Error', 'Failed to fetch request details');
       }
     }
   };
@@ -203,14 +204,14 @@ const PrivateRequests = () => {
     const mediaWithType = media.map((item) => {
       // Simple check for video files - could be improved based on actual API response
       const isVideo =
-        item.url.toLowerCase().includes(".mp4") ||
-        item.url.toLowerCase().includes(".mov") ||
-        item.url.toLowerCase().includes(".avi") ||
-        (item.type && item.type.includes("video"));
+        item.url.toLowerCase().includes('.mp4') ||
+        item.url.toLowerCase().includes('.mov') ||
+        item.url.toLowerCase().includes('.avi') ||
+        (item.type && item.type.includes('video'));
 
       return {
         url: item.url,
-        type: isVideo ? "video" : "image",
+        type: isVideo ? 'video' : 'image',
       };
     });
 
@@ -243,9 +244,9 @@ const PrivateRequests = () => {
 
   // Truncate text to specified length
   const truncateText = (text: string | undefined, maxLength: number) => {
-    if (!text) return "";
+    if (!text) return '';
     return text.length > maxLength
-      ? text.substring(0, maxLength) + "..."
+      ? text.substring(0, maxLength) + '...'
       : text;
   };
 
@@ -261,21 +262,24 @@ const PrivateRequests = () => {
         requests.map((request) =>
           request.id === requestId
             ? { ...request, status: RequestStatus.ACCEPTED }
-            : request
-        )
+            : request,
+        ),
       );
 
-      Alert.alert("Success", "Request accepted successfully");
+      // mark request as read
+      notifications.markRequestAsRead();
+
+      Alert.alert('Success', 'Request accepted successfully');
     } catch (err: any) {
       if (err.response?.status === 401) {
         if (await refreshAccessToken()) {
           await handleAcceptRequest(requestId);
         } else {
-          router.push("/(auth)");
+          router.push('/(auth)');
         }
       } else {
-        console.error("Failed to accept request:", err);
-        Alert.alert("Error", "Failed to accept request");
+        console.error('Failed to accept request:', err);
+        Alert.alert('Error', 'Failed to accept request');
       }
     }
   };
@@ -290,17 +294,20 @@ const PrivateRequests = () => {
       // Update local state
       setRequestIds((prev) => prev.filter((id) => id != requestId));
 
-      Alert.alert("Success", "Request rejected successfully");
+      // mark request as read
+      notifications.markRequestAsRead();
+
+      Alert.alert('Success', 'Request rejected successfully');
     } catch (err: any) {
       if (err.response?.status === 401) {
         if (await refreshAccessToken()) {
           await handleRejectRequest(requestId);
         } else {
-          router.push("/(auth)");
+          router.push('/(auth)');
         }
       } else {
-        console.error("Failed to reject request:", err);
-        Alert.alert("Error", "Failed to reject request");
+        console.error('Failed to reject request:', err);
+        Alert.alert('Error', 'Failed to reject request');
       }
     }
   };
@@ -310,7 +317,7 @@ const PrivateRequests = () => {
     try {
       const response = await apiClient.delete(`/work/job-request/${id}`);
       if (response.data.success) {
-        Alert.alert("Success", "Request deleted successfully");
+        Alert.alert('Success', 'Request deleted successfully');
         setRequestIds((prevIds) => prevIds.filter((reqId) => reqId !== id));
       }
     } catch (err: any) {
@@ -318,11 +325,11 @@ const PrivateRequests = () => {
         if (await refreshAccessToken()) {
           await handleDeleteRequest(id);
         } else {
-          router.push("/(auth)");
+          router.push('/(auth)');
         }
       } else {
-        console.error("Failed to delete request:", err);
-        Alert.alert("Error", "Failed to delete request");
+        console.error('Failed to delete request:', err);
+        Alert.alert('Error', 'Failed to delete request');
       }
     }
   };
@@ -340,17 +347,17 @@ const PrivateRequests = () => {
         requests.map((request) =>
           request.id === id
             ? { ...request, status: RequestStatus.PENDING_CLIENT_VERIFICATION }
-            : request
-        )
+            : request,
+        ),
       );
 
       Alert.alert(
-        "Success",
-        "Request marked as completed. Waiting for client verification."
+        'Success',
+        'Request marked as completed. Waiting for client verification.',
       );
     } catch (err: any) {
-      console.error("Failed to mark request as completed:", err);
-      Alert.alert("Error", "Failed to mark request as completed");
+      console.error('Failed to mark request as completed:', err);
+      Alert.alert('Error', 'Failed to mark request as completed');
     }
   };
 
@@ -364,17 +371,17 @@ const PrivateRequests = () => {
       // Update local state
       setRequestIds((prevIds) => prevIds.filter((id) => id !== requestId));
 
-      Alert.alert("Success", "Request confirmed as completed");
+      Alert.alert('Success', 'Request confirmed as completed');
     } catch (err: any) {
       if (err.response?.status === 401) {
         if (await refreshAccessToken()) {
           await handleConfirmCompletion(requestId);
         } else {
-          router.push("/(auth)");
+          router.push('/(auth)');
         }
       }
-      console.error("Failed to confirm completion:", err);
-      Alert.alert("Error", "Failed to confirm completion");
+      console.error('Failed to confirm completion:', err);
+      Alert.alert('Error', 'Failed to confirm completion');
     }
   };
 
@@ -390,17 +397,17 @@ const PrivateRequests = () => {
         requests.map((request) =>
           request.id === id
             ? { ...request, status: RequestStatus.ACCEPTED }
-            : request
-        )
+            : request,
+        ),
       );
 
       Alert.alert(
-        "Success",
-        "Completion rejected. Request status set back to accepted."
+        'Success',
+        'Completion rejected. Request status set back to accepted.',
       );
     } catch (err: any) {
-      console.error("Failed to reject completion:", err);
-      Alert.alert("Error", "Failed to reject completion");
+      console.error('Failed to reject completion:', err);
+      Alert.alert('Error', 'Failed to reject completion');
     }
   };
 
@@ -416,20 +423,44 @@ const PrivateRequests = () => {
         requests.map((request) =>
           request.id === id
             ? { ...request, status: RequestStatus.CANCELLED }
-            : request
-        )
+            : request,
+        ),
       );
 
-      Alert.alert("Success", "Request cancelled successfully");
+      Alert.alert('Success', 'Request cancelled successfully');
     } catch (err: any) {
-      console.error("Failed to cancel request:", err);
-      Alert.alert("Error", "Failed to cancel request");
+      console.error('Failed to cancel request:', err);
+      Alert.alert('Error', 'Failed to cancel request');
     }
   };
 
   useEffect(() => {
     fetchRequests();
   }, [userRole]);
+  
+  // Set up socket listeners for real-time updates
+    useEffect(() => {
+      const setupSocketListeners = async () => {
+        try {
+          // Ensure socket is connected
+          const socket = getSocket();
+  
+          // Listen for new requests
+          socket.on('private-request', (data) => {
+            console.log('New request received:', data);
+            setRequestIds(prev => [...prev, data]);
+          });
+  
+          return () => {
+            socket.off('new-request');
+          };
+        } catch (error) {
+          console.error('Error setting up notification socket listeners:', error);
+        }
+      };
+  
+      setupSocketListeners();
+    }, []);
 
   useEffect(() => {
     if (requestIds.length >= 0) {
@@ -448,43 +479,33 @@ const PrivateRequests = () => {
         onPress={() => toggleExpandRequest(item.id)}
         className="bg-white mt-3 p-4 rounded-lg shadow-md border border-gray-100"
       >
-        <View className="flex-row">
-          {/* Left: Profile image */}
-          <Image
-            source={
-              item.worker_profile_image
-                ? { uri: item.worker_profile_image }
-                : defaultProfileImage
-            }
-            className="w-12 h-12 rounded-full"
-          />
-
-          {/* Middle: User info and description */}
-          <View className="flex-1 ml-3 mr-2 justify-center">
-            <Text className="font-bold text-base">
-              {item.worker_username || "Worker"}
-            </Text>
-            <Text numberOfLines={1} className="text-gray-600 text-sm mt-1">
-              {truncateText(item.description, 50)}
-            </Text>
-          </View>
-
-          {/* Right: Status and time ago in column */}
-          <View className="items-end justify-center">
-            <View className="flex-row items-center mb-1">
-              {getStatusIcon(item.status)}
-              <Text className="ml-1 text-gray-700 text-xs font-medium capitalize">
-                {item.status}
+        <View className="flex-row justify-between items-center">
+          <View className="flex-row items-center flex-1">
+            <Image
+              source={
+                item.worker_profile_image
+                  ? { uri: item.worker_profile_image }
+                  : defaultProfileImage
+              }
+              className="w-12 h-12 rounded-full mr-3"
+            />
+            <View className="flex-1">
+              <Text className="font-medium">
+                {item.worker_username || 'Worker'}
+              </Text>
+              <Text numberOfLines={1} className="text-gray-500">
+                {truncateText(item.description, 40)}
               </Text>
             </View>
-
-            <Text className="text-gray-500 text-xs">
-              {timeAgo(item.sent_date)}
+          </View>
+          <View className="flex-row items-center">
+            {getStatusIcon(item.status)}
+            <Text className="ml-1 text-gray-600 text-sm capitalize">
+              {item.status}
             </Text>
-
             <MaterialIcons
               name={
-                expandedRequestId === item.id ? "expand-less" : "expand-more"
+                expandedRequestId === item.id ? 'expand-less' : 'expand-more'
               }
               size={20}
               color="#888"
@@ -515,7 +536,7 @@ const PrivateRequests = () => {
             />
             <View className="flex-1">
               <Text className="font-medium">
-                {item.client_username || "Client"}
+                {item.client_username || 'Client'}
               </Text>
               <Text numberOfLines={1} className="text-gray-500">
                 {truncateText(item.description, 40)}
@@ -529,7 +550,7 @@ const PrivateRequests = () => {
             </Text>
             <MaterialIcons
               name={
-                expandedRequestId === item.id ? "expand-less" : "expand-more"
+                expandedRequestId === item.id ? 'expand-less' : 'expand-more'
               }
               size={24}
               color="#888"
@@ -561,7 +582,10 @@ const PrivateRequests = () => {
               />
               <View>
                 <Text className="font-medium">
-                  {item.worker_username || "Worker"}
+                  {item.worker_username || 'Worker'}
+                </Text>
+                <Text numberOfLines={1} className="text-gray-500">
+                  {truncateText(item.description, 40)}
                 </Text>
               </View>
             </View>
@@ -608,7 +632,7 @@ const PrivateRequests = () => {
             <Text className="text-base mb-1">
               <Text className="font-bold">Address: </Text>
               <Text className="text-green-500">
-                {item.location?.city}, {item.location?.region},{" "}
+                {item.location?.city}, {item.location?.region},{' '}
                 {item.location?.country}
               </Text>
             </Text>
@@ -619,7 +643,7 @@ const PrivateRequests = () => {
             <Text className="text-base mb-1">
               <Text className="font-bold">About Service: </Text>
               <Text className="text-green-500">
-                {item.description || "No description available"}
+                {item.description || 'No description available'}
               </Text>
             </Text>
           </View>
@@ -635,10 +659,10 @@ const PrivateRequests = () => {
             {item.media && item.media.length > 0 ? (
               item.media.map((media, idx) => {
                 const isVideo =
-                  media.url.toLowerCase().includes(".mp4") ||
-                  media.url.toLowerCase().includes(".mov") ||
-                  media.url.toLowerCase().includes(".avi") ||
-                  (media.type && media.type.includes("video"));
+                  media.url.toLowerCase().includes('.mp4') ||
+                  media.url.toLowerCase().includes('.mov') ||
+                  media.url.toLowerCase().includes('.avi') ||
+                  (media.type && media.type.includes('video'));
 
                 return (
                   <TouchableOpacity
@@ -732,7 +756,7 @@ const PrivateRequests = () => {
               />
               <View>
                 <Text className="font-medium">
-                  {item.client_username || "Client"}
+                  {item.client_username || 'Client'}
                 </Text>
                 <Text numberOfLines={1} className="text-gray-500">
                   {truncateText(item.description, 40)}
@@ -777,7 +801,7 @@ const PrivateRequests = () => {
           <Text className="text-base mb-1">
             <Text className="font-bold">Work Address: </Text>
             <Text className="text-green-500">
-              {item.client_location?.city}, {item.client_location?.region},{" "}
+              {item.client_location?.city}, {item.client_location?.region},{' '}
               {item.client_location?.country}
             </Text>
           </Text>
@@ -805,10 +829,10 @@ const PrivateRequests = () => {
             {item.media && item.media.length > 0 ? (
               item.media.map((media, idx) => {
                 const isVideo =
-                  media.url.toLowerCase().includes(".mp4") ||
-                  media.url.toLowerCase().includes(".mov") ||
-                  media.url.toLowerCase().includes(".avi") ||
-                  (media.type && media.type.includes("video"));
+                  media.url.toLowerCase().includes('.mp4') ||
+                  media.url.toLowerCase().includes('.mov') ||
+                  media.url.toLowerCase().includes('.avi') ||
+                  (media.type && media.type.includes('video'));
 
                 return (
                   <TouchableOpacity
@@ -894,7 +918,7 @@ const PrivateRequests = () => {
   return (
     <SafeAreaView className="flex-1 bg-gray-100">
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
         {loading ? (
@@ -937,8 +961,8 @@ const PrivateRequests = () => {
               style={{
                 height: windowHeight * 0.7,
                 width: windowWidth,
-                justifyContent: "center",
-                alignItems: "center",
+                justifyContent: 'center',
+                alignItems: 'center',
               }}
             >
               <ScrollView
@@ -948,13 +972,13 @@ const PrivateRequests = () => {
                 showsHorizontalScrollIndicator={false}
                 onMomentumScrollEnd={(e) => {
                   const newIndex = Math.round(
-                    e.nativeEvent.contentOffset.x / windowWidth
+                    e.nativeEvent.contentOffset.x / windowWidth,
                   );
                   setSelectedMedia(newIndex);
                 }}
                 contentContainerStyle={{
-                  alignItems: "center",
-                  justifyContent: "center",
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
                 {currentViewingMedia?.map((media, idx) => (
@@ -962,16 +986,16 @@ const PrivateRequests = () => {
                     key={`media-container-${idx}`}
                     style={{
                       width: windowWidth,
-                      justifyContent: "center",
-                      alignItems: "center",
+                      justifyContent: 'center',
+                      alignItems: 'center',
                     }}
                   >
-                    {media.type === "video" ? (
+                    {media.type === 'video' ? (
                       <Video
                         ref={idx === selectedMedia ? videoRef : null}
                         source={{ uri: media.url }}
                         useNativeControls
-                        resizeMode={"contain" as ResizeMode}
+                        resizeMode={'contain' as ResizeMode}
                         isLooping
                         style={{
                           width: windowWidth * 0.85,
@@ -1013,7 +1037,7 @@ const PrivateRequests = () => {
                     width: 10,
                     height: 10,
                     borderRadius: 5,
-                    backgroundColor: selectedMedia === index ? "white" : "gray",
+                    backgroundColor: selectedMedia === index ? 'white' : 'gray',
                     marginHorizontal: 4,
                   }}
                 />

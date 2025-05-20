@@ -15,10 +15,10 @@ import { KeyboardAvoidingView, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import CONFIG from '../../config';
 import * as SecureStore from 'expo-secure-store';
+import apiClient from '@/api/appClient';
+import { getSocket, connectSocket } from '@/api/socket';
 
 export default function Login() {
   const router = useRouter();
@@ -42,17 +42,23 @@ export default function Login() {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [error, setError] = useState('');
+  const setUserVerificationStatus = async (isVerified : boolean) => {
+  try {
+    await AsyncStorage.setItem('userVerified', isVerified ? 'true' : 'false');
+  } catch (error) {
+    console.error('Error saving verification status:', error);
+  }
+};
 
   const handleLogin = async (values: { email: string; password: string }) => {
     setError('');
     setEmailError('');
     setPasswordError('');
     try {
-      const response = await axios.post(`${CONFIG.API_URL}/auth/login`, values);
+      const response = await apiClient.post(`/auth/login`, values);
       if (response.data.success) {
         const user: any = response.data.user;
         await AsyncStorage.setItem('user', JSON.stringify(user));
-        
         // store tokens to expo-secure-store storage
         const {
           accessToken,
@@ -62,10 +68,41 @@ export default function Login() {
         await SecureStore.setItemAsync('refreshToken', refreshToken);
         await SecureStore.setItemAsync('email', values.email);
         await SecureStore.setItemAsync('password', values.password);
+        const isVerified = response.data.verified;
+        await setUserVerificationStatus(isVerified);
+        if (!isVerified) {
+         router.push('/(auth)/verifyAccount?sendEmail=true') 
+        } else {
+
+        // Connect socket and join user room
+        try {
+          console.log('Connecting to socket...');
+          const socket = connectSocket();
+
+          // Wait a brief moment to ensure connection is established
+          setTimeout(() => {
+            if (socket.connected) {
+              console.log(`Joining room for user ${user.id}`);
+              socket.emit('user-room', user.id);
+            } else {
+              console.warn('Socket not connected yet, cannot join room');
+              // Retry joining room
+              socket.on('connect', () => {
+                console.log(
+                  `Socket connected, now joining room for user ${user.id}`,
+                );
+                socket.emit('user-room', user.id);
+              });
+            }
+          }, 500);
+        } catch (socketError) {
+          console.error('Socket connection error:', socketError);
+        }
 
         // go to home page
         router.replace('/(tabs)/(home)');
       }
+    }
     } catch (error: any) {
       if (error.response?.status === 403 && error.response.data) {
         setEmailError(

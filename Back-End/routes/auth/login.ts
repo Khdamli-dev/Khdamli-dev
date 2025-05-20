@@ -53,15 +53,16 @@ const login = async (req: Request, res: Response) => {
     }
 
     // check if account is valid
-    if (!user[0].registration_date) {
-      res.status(403).json({
-        success: false,
-        message: "Email not verified. Please confirm your email to log in.",
-        validEmail: true,
-        validAccount: false,
-      });
-      return;
-    }
+    // if (!user[0].registration_date) {
+    //   res.status(403).json({
+    //     success: false,
+    //     message: "Email not verified. Please confirm your email to log in.",
+    //     id : user[0].id,
+    //     validEmail: true,
+    //     validAccount: false,
+    //   });
+    //   return;
+    // }
     // produce jwt tokens
     const { accessToken, refreshToken } = produceTokens(
       user[0].id,
@@ -71,6 +72,7 @@ const login = async (req: Request, res: Response) => {
     const {password : _, ...returnedUser} = user[0];
     // success login
     res.status(200).json({
+      verified : returnedUser[0]?.registration_date == null ? false:true,
       success: true,
       message: "login with success",
       accessToken,
@@ -78,7 +80,6 @@ const login = async (req: Request, res: Response) => {
       user : returnedUser,
     });
   } catch (error) {
-    console.log(error);
     res.status(500).json({ message: "internal error" });
   }
 };

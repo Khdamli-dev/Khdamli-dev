@@ -51,7 +51,6 @@ export default function NewPassword() {
     confirmPassword:string;
   }) => {
     try {
-      console.log('jjjj');
       const storedId = await AsyncStorage.getItem("userId");
       const id: number = Number(storedId);
       
@@ -65,7 +64,6 @@ export default function NewPassword() {
         alert("Your password has been changed successfully");
       } 
     } catch (error: any) {
-      console.log(error.response.status)
       setError("Internal server error");
       setTimeout(() => setError(""), 50000); 
     }

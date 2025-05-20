@@ -20,9 +20,7 @@ type ChangePhoneprops = {
 const changephone = ({ navigation }: ChangePhoneprops) => {
   const [phone, setPhone] = useState<string>("");
   const handlePhoneChange = () => {
-    {
-      console.log(phone);
-    }
+
     if (!phone.trim())
       return Alert.alert("⚠️ Warning", "Please fill in field!");
     navigation.navigate("Setting");
