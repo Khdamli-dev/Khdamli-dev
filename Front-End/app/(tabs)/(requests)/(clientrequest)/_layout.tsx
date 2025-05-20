@@ -31,7 +31,6 @@ const PrivateTabLabel = ({ title, count = 0 } : {title : string, count : number}
 };
 
 const TopTabs = () => {
-  const { unreadRequests } = useNotifications();
   return (
     <MaterialTopTab
       screenOptions={{
@@ -53,7 +52,7 @@ const TopTabs = () => {
         name="Private" 
         options={{ 
           tabBarLabel: ({ color }) => (
-            <PrivateTabLabel title="Private" count={unreadRequests} />
+            <PrivateTabLabel title="Private" count={useNotifications()?.unreadRequests || 0} />
           )
         }}
       />
