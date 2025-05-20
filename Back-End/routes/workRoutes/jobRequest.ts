@@ -27,7 +27,7 @@ request.post("/", checkRole([clientRoleId]), validateJobRequest, createRequest);
 
 request.get("/:requestId", getRequestDetails);
 
-request.delete("/:requestId", checkRole([clientRoleId]), deleteRequest);
+request.delete("/:requestId",deleteRequest);
 
 request.put("/:requestId", checkRole([clientRoleId]), modifyRequest);
 

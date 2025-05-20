@@ -41,7 +41,6 @@ export default function ForgotPassword() {
       );
 
       if (response.status == 200) {
-        console.log(response.data);
         const id: number = response.data.userId;
         await AsyncStorage.setItem("userId", JSON.stringify(id));
         await SecureStore.setItemAsync('email', values.email);

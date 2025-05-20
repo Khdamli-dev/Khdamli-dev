@@ -7,7 +7,7 @@ export const sendEmailConfirmationMail = async (email : string , userId : number
 const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // Expires in 10 minutes
 
 // send email
-await sendMail(email, `Password Reset OTP`, emailConfirmationMail(otp));
+await sendMail(email, `Account Verification`, emailConfirmationMail(otp));
 
 // Store OTP in DB
 await pool.query(

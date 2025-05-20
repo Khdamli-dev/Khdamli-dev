@@ -133,7 +133,6 @@ const AddressSection = ({
 
   /*fetch address*/
   const fetchAddress = async (cityId: number) => {
-    console.log("Fetching address for cityId:", cityId);
     const { data, error } = await supabase
       .from("address")
       .select("id, street, city, address_number")
@@ -145,10 +144,8 @@ const AddressSection = ({
     }
 
     if (!data || data.length === 0) {
-      console.log("No address found in database.");
       setaddress([]);
     } else {
-      console.log("Fetched Addresses:", data);
       setaddress(data);
     }
   };

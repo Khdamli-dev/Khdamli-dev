@@ -42,6 +42,13 @@ export default function Login() {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [error, setError] = useState('');
+  const setUserVerificationStatus = async (isVerified : boolean) => {
+  try {
+    await AsyncStorage.setItem('userVerified', isVerified ? 'true' : 'false');
+  } catch (error) {
+    console.error('Error saving verification status:', error);
+  }
+};
 
   const handleLogin = async (values: { email: string; password: string }) => {
     setError('');
@@ -61,6 +68,11 @@ export default function Login() {
         await SecureStore.setItemAsync('refreshToken', refreshToken);
         await SecureStore.setItemAsync('email', values.email);
         await SecureStore.setItemAsync('password', values.password);
+        const isVerified = response.data.verified;
+        await setUserVerificationStatus(isVerified);
+        if (!isVerified) {
+         router.push('/(auth)/verifyAccount?sendEmail=true') 
+        } else {
 
         // Connect socket and join user room
         try {
@@ -90,6 +102,7 @@ export default function Login() {
         // go to home page
         router.replace('/(tabs)/(home)');
       }
+    }
     } catch (error: any) {
       if (error.response?.status === 403 && error.response.data) {
         setEmailError(

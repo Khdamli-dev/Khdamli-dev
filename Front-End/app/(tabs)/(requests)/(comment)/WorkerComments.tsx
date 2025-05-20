@@ -11,23 +11,35 @@ import {
   Alert,
 } from "react-native";
 import React, { useEffect, useState } from "react";
-import {
-  Ionicons,
-  FontAwesome6,
-  MaterialCommunityIcons,
-} from "@expo/vector-icons";
 import { Dispatch, SetStateAction } from "react";
-import axios from "axios";
 import { useLocalSearchParams } from "expo-router";
+import apiClient from "@/api/appClient";
 
+// Updated interface to match backend response from getRequestMessages
 interface WorkerComment {
-  id: number;
+  worker_id: number;
   username: string;
-  sent_time?: string;
-  comment?: string;
-  image?: string;
+  profile_image: string | null;
+  location: {
+    city: string | null;
+    region: string | null;
+    country: string | null;
+  };
+  categories: string[];
+  message: string;
+  created_at: string;
+  // Local state fields (not from backend)
   status?: string;
   isConfirmed?: boolean;
+}
+
+interface ApiResponse {
+  message: string;
+  messages: WorkerComment[];
+  page: number;
+  limit: number;
+  total: number;
+  success: boolean;
 }
 
 interface WorkerCommentsProps {
@@ -38,87 +50,66 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
   setBadgeCount = () => {},
 }) => {
   const { id } = useLocalSearchParams();
-  const parsedIdRequest = id ? parseInt(id as string, 10) : undefined;
+  const requestId = id ? parseInt(id as string, 10) : undefined;
 
   const [workerCommentsArray, setWorkerCommentsArray] = useState<
     WorkerComment[]
-  >([
-    {
-      id: 1,
-      username: "Alice Johnson",
-      sent_time: "2025-04-17 14:30",
-      comment:
-        "Fixed the kitchen sink leak. The pipe under the sink was corroded and needed replacement. I installed a new PVC pipe with proper sealing to prevent future leaks.",
-      image: undefined,
-      status: "pending",
-      isConfirmed: false,
-    },
-    {
-      id: 2,
-      username: "khalil",
-      sent_time: "2025-04-17 14:30",
-      comment:
-        "Fixed the kitchen sink leak. Used water-resistant sealant to ensure no more leaking occurs. Also checked other pipes in the vicinity for potential issues.",
-      image: undefined,
-      status: "pending",
-      isConfirmed: false,
-    },
-    {
-      id: 3,
-      username: "houda",
-      sent_time: "2025-04-17 14:30",
-      comment:
-        "Fixed the kitchen sink leak. Used water-resistant sealant to ensure no more leaking occurs. Also checked other pipes in the vicinity for potential issues.",
-      image: undefined,
-      status: "pending",
-      isConfirmed: false,
-    },
-    {
-      id: 4,
-      username: "asma",
-      sent_time: "2025-04-17 14:30",
-      comment:
-        "Fixed the kitchen sink leak. Used water-resistant sealant to ensure no more leaking occurs. Also checked other pipes in the vicinity for potential issues.",
-      image: undefined,
-      status: "pending",
-      isConfirmed: false,
-    },
-  ]);
+  >([]);
   const [page, setPage] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(false);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [expandedCommentIds, setExpandedCommentIds] = useState<Set<number>>(
     new Set()
   );
-  const pageSize: number = 20;
+  const [total, setTotal] = useState<number>(0);
 
-  const fetchWorkerComments = async (idRequest: number, pageNum: number) => {
+  const fetchWorkerComments = async (requestId: number, pageNum: number) => {
     if (loading || !hasMore) return;
 
     setLoading(true);
     try {
-      /* const response = await axios.get(
-        `https://your-backend.com/api/comments/${idRequest}?page=${pageNum}&size=${pageSize}`
-      ); */
-      const result: WorkerComment[] = workerCommentsArray; // response.data;
-      if (result.length < pageSize) setHasMore(false);
+      // API endpoint matches backend structure
+      const response = await apiClient.get<ApiResponse>(
+        `/work/job-request/${requestId}/messages?page=${pageNum}`
+      );
+     
 
-      // Don't add duplicates if we're working with mocked data
-      if (pageNum === 1) {
-        setWorkerCommentsArray(
-          result.filter((comment) => comment.status !== "rejected")
-        );
+      if (response.data.success) {
+        const result = response.data.messages;
+        setTotal(response.data.total);
+
+        // Check if we've reached the end of the data
+        if (result.length === 0 || result.length < response.data.limit) {
+          setHasMore(false);
+        }
+
+        // Add status field to each comment (for local state management)
+        const commentsWithStatus = result.map((comment) => ({
+          ...comment,
+          status: "pending",
+          isConfirmed: false,
+        }));
+
+        // For page 1, replace the data, otherwise append
+        if (pageNum === 1) {
+          setWorkerCommentsArray(commentsWithStatus);
+        } else {
+          setWorkerCommentsArray((prev) => [
+            ...prev,
+            ...commentsWithStatus.filter(
+              (comment) =>
+                !prev.some(
+                  (prevComment) => prevComment.worker_id === comment.worker_id
+                )
+            ),
+          ]);
+        }
+
+        // Increment page for next fetch
+        setPage(pageNum + 1);
       } else {
-        setWorkerCommentsArray((prev) => [
-          ...prev,
-          ...result.filter(
-            (comment) =>
-              comment.status !== "rejected" &&
-              !prev.some((prevComment) => prevComment.id === comment.id)
-          ),
-        ]);
+        console.error("Error in API response:", response.data.message);
       }
-      setPage((prev) => prev + 1);
     } catch (error) {
       console.error("Error fetching worker comments:", error);
     } finally {
@@ -126,62 +117,80 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
     }
   };
 
-  const handleAccept = async (commentId: number) => {
+  const handleAccept = async (workerId: number) => {
     try {
-      /* await axios.put(
-        `https://your-backend.com/api/comments/${commentId}/status`,
-        { state: "accepted" }
-      ); */
+      // Update the request with status 1 (accepted) and set the workerId
+      await apiClient.put(`/work/job-request/status/${requestId}`, {
+        status: 1,
+        public: true,
+        workerId: workerId, // Make sure workerId is passed correctly
+      });
 
-      // Keep only the accepted comment and remove all others
+      // Update UI to show only the accepted worker's comment
       setWorkerCommentsArray((prev) =>
         prev
-          .filter((comment) => comment.id === commentId)
+          .filter((comment) => comment.worker_id === workerId)
           .map((comment) => ({ ...comment, status: "accepted" }))
       );
 
       // Keep the accepted comment expanded to show the confirmation button
       setExpandedCommentIds((prev) => {
         const newSet = new Set<number>();
-        newSet.add(commentId);
+        newSet.add(workerId);
         return newSet;
       });
+
+      // Optional: You might want to update the UI to reflect that a worker has been accepted
+      // For example, disabling other worker's accept buttons or showing a success message
     } catch (error) {
       console.error("Error accepting request:", error);
+      Alert.alert(
+        "Error",
+        "Failed to accept the work request. Please try again."
+      );
     }
   };
 
-  const handleReject = async (commentId: number) => {
+  const handleReject = async (workerId: number) => {
     try {
-      /* await axios.put(
-        `https://your-backend.com/api/comments/${commentId}/status`,
-        { state: "rejected" }
-      ); */
+      // Update the request status to rejected (status 3)
+      await apiClient.put(`/work/job-request/status/${requestId}`, {
+        status: 2,
+      });
+
+      // Remove the rejected worker comment from the list
       setWorkerCommentsArray((prev) =>
-        prev.filter((comment) => comment.id !== commentId)
+        prev.filter((comment) => comment.worker_id !== workerId)
       );
+
       // Remove from expanded set when rejected
       setExpandedCommentIds((prev) => {
         const newSet = new Set(prev);
-        newSet.delete(commentId);
+        newSet.delete(workerId);
         return newSet;
       });
     } catch (error) {
       console.error("Error rejecting request:", error);
+      Alert.alert(
+        "Error",
+        "Failed to reject the work request. Please try again."
+      );
     }
   };
 
-  const handleConfirmCompletion = async (commentId: number) => {
+  const handleConfirmCompletion = async (workerId: number) => {
     try {
-      /* await axios.put(
-        `https://your-backend.com/api/comments/${commentId}/confirm`,
-        { confirmed: true }
-      ); */
+      // Update the request status to completed (assuming 4 means "completed")
+      await apiClient.put(`/work/job-request/status/${requestId}`, {
+        status: 4,
+      });
 
       // Update the comment to mark it as confirmed
       setWorkerCommentsArray((prev) =>
         prev.map((comment) =>
-          comment.id === commentId ? { ...comment, isConfirmed: true } : comment
+          comment.worker_id === workerId
+            ? { ...comment, isConfirmed: true }
+            : comment
         )
       );
 
@@ -193,33 +202,51 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
       );
     } catch (error) {
       console.error("Error confirming work completion:", error);
+      Alert.alert(
+        "Error",
+        "Failed to confirm work completion. Please try again."
+      );
     }
   };
 
-  const toggleCommentExpansion = (commentId: number) => {
+  const toggleCommentExpansion = (workerId: number) => {
     setExpandedCommentIds((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(commentId)) {
-        newSet.delete(commentId);
+      if (newSet.has(workerId)) {
+        newSet.delete(workerId);
       } else {
-        newSet.add(commentId);
+        newSet.add(workerId);
       }
       return newSet;
     });
   };
 
+  // Initial data fetch
   useEffect(() => {
-    if (parsedIdRequest && !isNaN(parsedIdRequest)) {
-      fetchWorkerComments(parsedIdRequest, page);
+    if (requestId && !isNaN(requestId)) {
+      fetchWorkerComments(requestId, 1);
     }
-  }, [parsedIdRequest]); // Remove page dependency to avoid infinite loop
+  }, [requestId]);
 
+  // Update badge count whenever workerCommentsArray changes
   useEffect(() => {
     const pendingComments = workerCommentsArray.filter(
       (comment) => comment.status === "pending"
     ).length;
     setBadgeCount(pendingComments);
   }, [workerCommentsArray, setBadgeCount]);
+
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString("en-US", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-gray-100">
@@ -229,39 +256,43 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
       >
         <FlatList
           data={workerCommentsArray}
-          keyExtractor={(item: WorkerComment) => item.id.toString()}
+          keyExtractor={(item: WorkerComment) => item.worker_id.toString()}
           contentContainerStyle={{ padding: 10 }}
           onEndReached={() => {
-            if (
-              parsedIdRequest &&
-              !isNaN(parsedIdRequest) &&
-              hasMore &&
-              !loading
-            ) {
-              fetchWorkerComments(parsedIdRequest, page);
+            if (requestId && !isNaN(requestId) && hasMore && !loading) {
+              fetchWorkerComments(requestId, page);
             }
           }}
           onEndReachedThreshold={0.5}
           ListFooterComponent={
             loading ? <ActivityIndicator size="large" color="#0000ff" /> : null
           }
+          ListEmptyComponent={
+            !loading ? (
+              <View className="mt-10 items-center">
+                <Text className="text-gray-500 text-lg">
+                  No worker responses yet
+                </Text>
+              </View>
+            ) : null
+          }
           renderItem={({ item }: { item: WorkerComment }) => {
-            const isExpanded = expandedCommentIds.has(item.id);
+            const isExpanded = expandedCommentIds.has(item.worker_id);
             return (
               <View className="mb-4">
                 <View className="bg-white rounded-lg shadow-sm overflow-hidden">
                   {/* Header with user info */}
                   <View className="flex-row p-4 border-b border-gray-100">
                     <View className="mr-3">
-                      {item.image ? (
+                      {item.profile_image ? (
                         <Image
-                          source={{ uri: item.image }}
+                          source={{ uri: item.profile_image }}
                           className="w-12 h-12 rounded-full"
                         />
                       ) : (
                         <View className="w-12 h-12 rounded-full bg-green-700 items-center justify-center">
                           <Text className="text-white text-lg font-bold">
-                            {item.username.charAt(0)}
+                            {item.username.charAt(0).toUpperCase()}
                           </Text>
                         </View>
                       )}
@@ -270,10 +301,19 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
                       <Text className="text-lg font-semibold">
                         {item.username}
                       </Text>
+                      <Text className="text-xs text-gray-500">
+                        {item.location.city || "Unknown"},{" "}
+                        {item.location.region || "Unknown"}
+                      </Text>
+                      {item.categories.length > 0 && (
+                        <Text className="text-xs text-gray-600 mt-1">
+                          {item.categories.join(", ")}
+                        </Text>
+                      )}
                     </View>
                     <View className="justify-center">
                       <Text className="text-xs text-gray-500">
-                        {item.sent_time}
+                        {formatDate(item.created_at)}
                       </Text>
                     </View>
                   </View>
@@ -281,18 +321,18 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
                   {/* Comment section - clickable */}
                   <TouchableOpacity
                     className="p-4 bg-gray-50"
-                    onPress={() => toggleCommentExpansion(item.id)}
+                    onPress={() => toggleCommentExpansion(item.worker_id)}
                   >
                     <Text className="text-gray-800">
                       {isExpanded
-                        ? item.comment
-                        : item.comment && item.comment.length > 60
-                          ? `${item.comment.substring(0, 60)}...`
-                          : item.comment}
+                        ? item.message
+                        : item.message && item.message.length > 60
+                          ? `${item.message.substring(0, 60)}...`
+                          : item.message}
                     </Text>
                     {!isExpanded &&
-                      item.comment &&
-                      item.comment.length > 60 && (
+                      item.message &&
+                      item.message.length > 60 && (
                         <Text className="text-blue-600 mt-1">Read more</Text>
                       )}
                   </TouchableOpacity>
@@ -302,7 +342,7 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
                     <View className="flex-col w-full">
                       <TouchableOpacity
                         className="bg-green-600 py-3 items-center"
-                        onPress={() => handleAccept(item.id)}
+                        onPress={() => handleAccept(item.worker_id)}
                       >
                         <Text className="text-white font-bold">
                           Accept Work
@@ -310,7 +350,7 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
                       </TouchableOpacity>
                       <TouchableOpacity
                         className="bg-red-500 py-3 items-center"
-                        onPress={() => handleReject(item.id)}
+                        onPress={() => handleReject(item.worker_id)}
                       >
                         <Text className="text-white font-bold">Reject</Text>
                       </TouchableOpacity>
@@ -329,7 +369,9 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
                         </View>
                         <TouchableOpacity
                           className="bg-blue-600 py-3 items-center mt-2"
-                          onPress={() => handleConfirmCompletion(item.id)}
+                          onPress={() =>
+                            handleConfirmCompletion(item.worker_id)
+                          }
                         >
                           <Text className="text-white font-bold">
                             Confirm Work Completion

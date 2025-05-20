@@ -47,7 +47,6 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
             router.push('/(auth)');
           }
         }
-        console.log(error);
       }
     };
     fetchCategories();

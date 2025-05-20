@@ -128,7 +128,6 @@ const HomeScreen = () => {
   // Handle category selection
   const handleCategoryPress = (category: Category) => {
     // Navigate or show details for the selected category
-    console.log("Category pressed:", category.name);
     router.push({
       pathname: "./subCategory",
       params: { category: JSON.stringify(category) },
@@ -138,7 +137,6 @@ const HomeScreen = () => {
   // Handle worker selection
   const handleWorkerPress = (worker: Worker) => {
     // Navigate or show details for the selected worker
-    console.log("Worker pressed:", worker.username);
     router.push({
       pathname: "./workerProfile",
       params: { workerId: worker.id },
@@ -154,7 +152,7 @@ const HomeScreen = () => {
   const handleSendRequest = (worker: Worker) => {
     router.push({
       pathname: "./requeste",
-      params: { type: "2" },
+      params: { workerId : worker.id },
     });
   };
 

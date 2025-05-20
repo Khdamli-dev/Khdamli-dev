@@ -46,7 +46,6 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
             router.push('/(auth)');
           }
         }
-        console.log(error);
       }
     };
     fetchCategories();
@@ -79,7 +78,6 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
     setBranshes(
       mainCategories.filter((bransh) => branshss.includes(bransh.id)),
     );
-    console.log(branshes);
 
     const validBranches = branshes.filter((branch) =>
       selectCategories.includes(branch.parent_category ?? ''),
