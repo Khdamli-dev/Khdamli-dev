@@ -134,7 +134,7 @@ const getRequestDetails = async (req: Request, res: Response) => {
         throw new Error("missing envirement variables");
       }
       if (requestRow.worker_id == workerId && requestRow.status_id == onholdRequestId){
-        requestRow.status = "pending_client_verification";
+        requestRow.status = "verification pending";
       }
     }
 

@@ -14,11 +14,9 @@ const modifyPublicRequestStatus = async (req: Request, res: Response) => {
   try {
     const acceptedRequestStatusId: string | undefined = process.env.ACCEPTED_REQUEST_ID;
     const rejectedRequestStatusId: string | undefined = process.env.REJECTED_REQUEST_ID;
-    const privateRequestId : string | undefined = process.env.PRIVATE_REQUEST_ID;
     if (
       !acceptedRequestStatusId ||
       !rejectedRequestStatusId ||
-      !privateRequestId ||
       (status !== +acceptedRequestStatusId && status !== +rejectedRequestStatusId)
     ) {
       throw new Error('missing envirement variables, or invalid request status');
@@ -26,13 +24,13 @@ const modifyPublicRequestStatus = async (req: Request, res: Response) => {
 
     const query: string = status === +acceptedRequestStatusId ?
      `UPDATE request
-      SET status = $2, type = $3
+      SET status = $2
       WHERE id = $1` : 
       `UPDATE request
       SET worker = NULL
       WHERE id = $1`;
     const values : Number[] = status === +acceptedRequestStatusId ?
-     [requestId, status, +privateRequestId] : [requestId];
+     [requestId, status] : [requestId];
 
     await pool.query(query, values);
     res.status(200).json({
