@@ -47,6 +47,6 @@ request.get("/", getRequests);
 request.get("/public/:id",getPublicRequests);
 
 // this route is used to allow worker accept or reject public request that he choosen on it
-request.put('/:requestId/public-request/status', modifyPublicRequestStatus);
+request.put('/:requestId/public-request/status', checkRole([workerRoleId]), modifyPublicRequestStatus);
 
 export default request;
