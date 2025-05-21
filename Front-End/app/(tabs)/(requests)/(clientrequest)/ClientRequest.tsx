@@ -15,6 +15,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import React, { useState, useRef, useEffect } from "react";
 import {
   MaterialCommunityIcons,
@@ -31,7 +32,7 @@ import apiClient from "@/api/appClient";
 import refreshAccessToken from "@/api/refreshAccessToken";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ResizeMode, Video } from "expo-av"; // Import for video playback
-import { formatDateTime } from "../SomeStandarFunctions";
+import { formatDateTime, handelcall } from "../SomeStandarFunctions";
 //import { realTimePublicRequestStatus } from '@/api/realTime';
 
 // Define the UserRole enum
@@ -94,8 +95,8 @@ const PublicRequest = () => {
   const { width: windowWidth, height: windowHeight } = Dimensions.get("window");
   const scrollViewRef = useRef<ScrollView>(null);
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
-  const [commentText, setCommentText] = useState("");
   const [commentModalVisible, setCommentModalVisible] = useState(false);
+  const [initialComment, setInitialComment] = useState<string | null>(null);
   const commentInputRef = useRef<TextInput>(null);
 
   const handleEditComment = (
@@ -103,9 +104,8 @@ const PublicRequest = () => {
     currentComment: string = ""
   ) => {
     setEditingCommentId(requestId);
-    setCommentText(currentComment);
     setCommentModalVisible(true);
-
+    setInitialComment(currentComment);
     // Focus on the text input after a short delay (to ensure modal is visible)
     setTimeout(() => {
       commentInputRef.current?.focus();
@@ -600,7 +600,7 @@ const PublicRequest = () => {
     );
   };
 
-  const saveComment = async () => {
+  const saveComment = async (commentText?: string) => {
     if (!editingCommentId) return;
 
     setLoading(true);
@@ -609,45 +609,24 @@ const PublicRequest = () => {
       const currentDate = new Date().toISOString();
 
       // Make API call to update the comment in the database
-      const response = await apiClient.patch(
-        `/work/job-request/${editingCommentId}/comment/`,
-        {
-          worker_comment: commentText,
-          comment_date: currentDate,
-        }
+      console.log(
+        "Saving comment:",
+        commentText,
+        "for request ID:",
+        editingCommentId
       );
 
-      if (response.status === 200 || response.status === 201) {
-        // Update the local state to reflect the change immediately
-        const updatedRequestIds = [...requestIds];
+      await apiClient.patch(`/work/job-request/${editingCommentId}/comment/`, {
+        worker_comment: commentText,
+      });
 
-        // If you have a separate array of request objects
-        if (typeof requests !== "undefined") {
-          const updatedRequests = requests.map((req) => {
-            if (req.id === editingCommentId) {
-              return {
-                ...req,
-                worker_comment: commentText,
-                comment_date: currentDate,
-              };
-            }
-            return req;
-          });
-          setRequests(updatedRequests);
-        }
+      setEditingCommentId(null);
 
-        // Close the modal
-        setCommentModalVisible(false);
-        setEditingCommentId(null);
+      // Show success message
+      Alert.alert("Success", "Your comment has been saved to the database");
 
-        // Show success message
-        Alert.alert("Success", "Your comment has been saved to the database");
-
-        // Refresh the requests to ensure we have the latest data from server
-        fetchRequests();
-      } else {
-        throw new Error("Server returned an unsuccessful status code");
-      }
+      // Refresh the requests to ensure we have the latest data from server
+      fetchRequests();
     } catch (err: any) {
       if (err.response?.status === 401) {
         if (await refreshAccessToken()) {
@@ -673,80 +652,58 @@ const PublicRequest = () => {
 
   const deleteComment = async () => {
     if (!editingCommentId) return;
+    setLoading(true);
+    try {
+      console.log("editingCommentId", editingCommentId);
 
-    // Show confirmation dialog
-    Alert.alert(
-      "Delete Comment",
-      "Are you sure you want to delete your comment?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            setLoading(true);
-            try {
-              // API call to delete the comment (or set it to empty)
-              const response = await apiClient.patch(
-                `/work/job-request/${editingCommentId}/comment/`,
-                {
-                  worker_comment: "",
-                  comment_date: null,
-                }
-              );
+      await apiClient.patch(`/work/job-request/${editingCommentId}/comment/`, {
+        worker_comment: "",
+      });
 
-              if (response.status === 200 || response.status === 204) {
-                // Close the modal
-                setCommentModalVisible(false);
-                setEditingCommentId(null);
+      Alert.alert("Success", "Your comment has been deleted");
 
-                // Show success message
-                Alert.alert("Success", "Your comment has been deleted");
-
-                // Refresh the requests
-                fetchRequests();
-              } else {
-                throw new Error("Server returned an unsuccessful status code");
-              }
-            } catch (err: any) {
-              if (err.response?.status === 401) {
-                if (await refreshAccessToken()) {
-                  await deleteComment();
-                } else {
-                  router.push("/(auth)");
-                }
-              } else {
-                console.error(
-                  "Error deleting comment:",
-                  err.response?.data?.message || err.message
-                );
-                Alert.alert("Error", "Failed to delete your comment");
-              }
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
-      ]
-    );
+      // Refresh the requests
+      fetchRequests();
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        if (await refreshAccessToken()) {
+          await deleteComment();
+        } else {
+          router.push("/(auth)");
+        }
+      } else {
+        console.error(
+          "Error deleting comment:",
+          err.response?.data?.message || err.message
+        );
+        Alert.alert("Error", "Failed to delete your comment");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const CommentEditModal = () => {
-    // Add this to ensure the input maintains focus
+    const [commentText, setCommentText] = useState(initialComment || "");
+    const commentInputRef = useRef(null);
+    const [keyboardVisible, setKeyboardVisible] = useState(false);
+
     useEffect(() => {
-      if (commentModalVisible && commentInputRef.current) {
-        // Short delay to ensure modal is fully visible before focusing
-        setTimeout(() => {
-          if (commentInputRef.current) {
-            commentInputRef.current.focus();
-          }
-        }, 10);
-      }
-    }, [commentModalVisible]);
-  
+      const keyboardDidShowListener = Keyboard.addListener(
+        "keyboardDidShow",
+        () => setKeyboardVisible(true)
+      );
+      const keyboardDidHideListener = Keyboard.addListener(
+        "keyboardDidHide",
+        () => setKeyboardVisible(false)
+      );
+
+      return () => {
+        keyboardDidShowListener.remove();
+        keyboardDidHideListener.remove();
+      };
+    }, []);
+
     return (
       <Modal
         animationType="slide"
@@ -754,56 +711,97 @@ const PublicRequest = () => {
         visible={commentModalVisible}
         onRequestClose={() => setCommentModalVisible(false)}
       >
-        <TouchableWithoutFeedback >
-          <View className="flex-1 justify-end bg-black/70">
-            
-              <View className="bg-white rounded-t-2xl p-6">
-                <View className="flex-row justify-between items-center mb-5">
-                  <Text className="text-xl font-bold text-gray-800">
-                    Edit Your Comment
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => setCommentModalVisible(false)}
-                    className="p-2 rounded-full bg-gray-100"
-                  >
-                    <Ionicons name="close" size={22} color="#333" />
-                  </TouchableOpacity>
-                </View>
-                
-                <TextInput
-                  ref={commentInputRef}
-                  className="bg-gray-100 p-4 rounded-xl text-base h-40 mb-5 border border-gray-200"
-                  multiline={true}
-                  value={commentText}
-                  onChangeText={setCommentText}
-                  placeholder="Enter your comment here..."
-                  textAlignVertical="top"
-                  autoFocus={false}
-                  blurOnSubmit={false}
-                />
-                
-                <View className="flex-row justify-end space-x-3 mt-2">
-                  <TouchableOpacity
-                    className="py-3 px-6 rounded-lg items-center border border-gray-300"
-                    onPress={() => setCommentModalVisible(false)}
-                  >
-                    <Text className="text-gray-700 font-medium">Cancel</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    className="bg-blue-500 py-3 px-6 rounded-lg items-center shadow-sm"
-                    onPress={saveComment}
-                  >
-                    <Text className="text-white font-medium">Save</Text>
-                  </TouchableOpacity>
-                </View>
+        <View className="flex-1  justify-center bg-black/70  ">
+          <KeyboardAwareScrollView
+            enableOnAndroid={true}
+            enableAutomaticScroll={true}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{
+              flexGrow: 1,
+              justifyContent: "center",
+              width: "100%",
+              paddingHorizontal: 16,
+            }}
+          >
+            <View className="bg-white/80 rounded-2xl p-6   mt-4">
+              <View className="flex-row justify-between items-center mb-5">
+                <Text className="text-xl font-bold text-gray-800">
+                  Edit Your Comment
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    if (keyboardVisible) {
+                      Keyboard.dismiss();
+                      setTimeout(() => setCommentModalVisible(false), 100);
+                    } else {
+                      setCommentModalVisible(false);
+                    }
+                  }}
+                  className="p-2 rounded-full bg-gray-100"
+                >
+                  <Ionicons name="close" size={22} color="#333" />
+                </TouchableOpacity>
               </View>
-            
-          </View>
-        </TouchableWithoutFeedback>
+
+              <TextInput
+                ref={commentInputRef}
+                className="bg-white/45 p-4 rounded-xl text-base h-40 mb-5 "
+                multiline={true}
+                value={commentText}
+                onChangeText={setCommentText}
+                placeholder="Enter your comment here..."
+                textAlignVertical="top"
+                autoFocus={false}
+                disableFullscreenUI={true}
+                keyboardType="default"
+                returnKeyType="default"
+                onSubmitEditing={() => {}}
+              />
+
+              <View className="flex-row justify-between space-x-3 mt-2 px-5 ">
+                <TouchableOpacity
+                  className="py-3 px-6 rounded-lg items-center border"
+                  onPress={() => {
+                    if (keyboardVisible) {
+                      Keyboard.dismiss();
+                      setTimeout(() => {
+                        setCommentModalVisible(false);
+                      }, 100);
+                    } else {
+                      setCommentModalVisible(false);
+                    }
+                    deleteComment();
+                  }}
+                >
+                  <Text className="text-gray-700 font-medium">
+                    Delete Comment
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  className="bg-specialGreen py-3 px-6 rounded-lg items-center shadow-sm"
+                  onPress={() => {
+                    if (keyboardVisible) {
+                      Keyboard.dismiss();
+                      setTimeout(() => {
+                        setCommentModalVisible(false);
+                      }, 100);
+                    } else {
+                      setCommentModalVisible(false);
+                    }
+                    saveComment(commentText);
+                  }}
+                >
+                  <Text className="text-white font-medium">Save</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </KeyboardAwareScrollView>
+        </View>
       </Modal>
     );
   };
+
   // Render worker view - using WorkerPublicRequest interface
   const renderWorkerRequest = (item: WorkerPublicRequest) => {
     const isExpanded = expandedRequestId === item.id;
@@ -850,17 +848,17 @@ const PublicRequest = () => {
         </TouchableOpacity>
 
         <View className="flex-row mb-3 justify-end">
-          <View className="flex-row items-center ">
-            <TouchableOpacity className="mr-4">
-              <Ionicons name="call" size={32} color="#000" />
-            </TouchableOpacity>
-            <TouchableOpacity>
-              <MaterialCommunityIcons
-                name="message-text-outline"
-                size={32}
-                color="#000"
-              />
-            </TouchableOpacity>
+          <View className="items-center ">
+            {item.status == "Accepted" && (
+              <TouchableOpacity
+                className="mr-4"
+                onPress={() => {
+                  handelcall("251911111111");
+                }}
+              >
+                <Ionicons name="call" size={32} color="#000" />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
@@ -982,7 +980,7 @@ const PublicRequest = () => {
         {/* ONLY show Edit Comment button for worker */}
         <TouchableOpacity
           className="bg-blue-500 items-center justify-center py-3 mt-3 rounded"
-          onPress={() => handleEditComment(item.id)}
+          onPress={() => handleEditComment(item.id, item.worker_comment)}
         >
           <Text className="text-base text-white">Edit Comment</Text>
         </TouchableOpacity>
@@ -1118,7 +1116,7 @@ const PublicRequest = () => {
             </View>
           </View>
         </Modal>
-        <CommentEditModal/>
+        <CommentEditModal />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

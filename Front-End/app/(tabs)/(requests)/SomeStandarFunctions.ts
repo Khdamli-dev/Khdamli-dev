@@ -1,3 +1,5 @@
+import { Linking } from "react-native";
+
 export const timeAgo = (dateString: string): string => {
   const now = new Date();
   const sentDate = new Date(dateString);
@@ -33,4 +35,9 @@ export const formatDateTime = (dateString: string) => {
     minute: "2-digit",
   });
   return `${formattedDate} - ${formattedTime}`;
+};
+
+export const handelcall = (phoneNumber: string) => {
+  const phoneNumberWithCountryCode = `+${phoneNumber}`;
+  Linking.openURL(`tel:${phoneNumberWithCountryCode}`);
 };
