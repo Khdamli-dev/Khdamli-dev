@@ -30,7 +30,6 @@ import { ResizeMode, Video } from 'expo-av';
 import { getSocket } from '@/api/socket';
 import { useNotifications } from '@/context/NotificationContext';
 import { formatDateTime } from '../SomeStandarFunctions';
-//import { realTimePrivateRequestStatus, realTimeRequests } from '@/api/realTime';
 
 // Define the UserRole enum
 enum UserRole {

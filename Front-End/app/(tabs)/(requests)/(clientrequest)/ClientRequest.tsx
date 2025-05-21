@@ -32,7 +32,7 @@ import refreshAccessToken from "@/api/refreshAccessToken";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ResizeMode, Video } from "expo-av"; // Import for video playback
 import { formatDateTime } from "../SomeStandarFunctions";
-//import { realTimePublicRequestStatus } from '@/api/realTime';
+import { useNotifications } from "@/context/NotificationContext";
 
 // Define the UserRole enum
 enum UserRole {
@@ -66,6 +66,7 @@ interface MediaItem {
 const defaultProfileImage = require("../../../../assets/images/images (1).jpg");
 
 const PublicRequest = () => {
+  //const notifications = useNotifications();
   const [selectedMedia, setSelectedMedia] = useState(0);
   const [mediaModalVisible, setMediaModalVisible] = useState(false);
   const [userRole, setUserRole] = useState<UserRole>();
