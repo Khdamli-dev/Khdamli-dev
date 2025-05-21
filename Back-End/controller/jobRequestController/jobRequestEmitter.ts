@@ -21,6 +21,18 @@ export const sendPrivateRequest = async (
   }
 };
 
+export const acceptWorkerOnPublicRequest = async (
+  request: JobRequest,
+): Promise<void> => {
+  const io: Server = getIo();
+  const { worker } = request;
+  if (worker)
+    io.to(worker.toString()).emit(
+      'accept-worker-on-public-request',
+      request.id,
+    );
+};
+
 export const changeRequestStatus = async (
   request: JobRequest,
 ): Promise<void> => {
@@ -39,7 +51,7 @@ export const changeRequestStatus = async (
         [request.id],
       );
 
-      const client : number = request.client;
+      const client: number = request.client;
       io.to(client.toString()).emit('change-request-status', {
         requestId: request.id,
         status,
