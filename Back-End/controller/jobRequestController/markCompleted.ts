@@ -18,7 +18,7 @@ SET status = 4
 WHERE id = $1 
 AND worker =$2
 AND client =$3 
-AND status =2`,
+AND status =1`,
     [requestId, +workerId, +clientId]
   );
   if (!rowCount){

@@ -60,10 +60,9 @@ const defaultProfileImage = require("../../../../assets/images/images (1).jpg");
 const PrivateRequests = () => {
   const notifications = useNotifications();
   const [ratingModalVisible, setRatingModalVisible] = useState(false);
-  const [tempRequestId, setTempRequestId] = useState<number | null>(null);
+  const [tempRequest, setTempRequest] = useState<ClientPrivateRequest | null>();
   const [rating, setRating] = useState(0);
   const [ratingComment, setRatingComment] = useState("");
-
   const [selectedMedia, setSelectedMedia] = useState(0);
   const [mediaModalVisible, setMediaModalVisible] = useState(false);
   const [userRole, setUserRole] = useState<UserRole>();
@@ -184,6 +183,7 @@ const PrivateRequests = () => {
         params,
       });
       const result = response.data.request;
+      console.log(result);
 
       // Update the specific request rather than appending to the array
       setRequests((prev) => {
@@ -345,56 +345,29 @@ const PrivateRequests = () => {
     }
   };
 
-  // Handle marking request as completed
-  const handleMarkCompleted = async (id: number) => {
-    try {
-      await apiClient.put(`/work/job-request/${id}/state`, {
-        state: RequestStatus.PENDING_CLIENT_VERIFICATION,
-        workCompletedClaimTime: new Date().toISOString(),
-      });
-
-      // Update local state
-      setRequests(
-        requests.map((request) =>
-          request.id === id
-            ? { ...request, status: RequestStatus.PENDING_CLIENT_VERIFICATION }
-            : request
-        )
-      );
-
-      Alert.alert(
-        "Success",
-        "Request marked as completed. Waiting for client verification."
-      );
-    } catch (err: any) {
-      console.error("Failed to mark request as completed:", err);
-      Alert.alert("Error", "Failed to mark request as completed");
-    }
-  };
+  
   // Reting
   const handleRatingSubmit = async () => {
     try {
-      if (!tempRequestId) {
+      if (!tempRequest) {
         Alert.alert("Error", "Please provide a rating");
         return;
       }
 
       // First submit the rating
-      await apiClient.post(`/work/ratings`, {
-        request_id: tempRequestId,
+      await apiClient.post(`/work/job-request/${tempRequest.id}/complete`, {
+         workerId : tempRequest.workerId,
+         clientId: tempRequest.clientId,
         rating: rating,
-        comment: ratingComment,
+        review: ratingComment,
       });
 
       // Then complete the request
-      await apiClient.put(`/work/job-request/status/${tempRequestId}`, {
-        status: 4,
-      });
 
       // Update local state
-      setRequestIds((prevIds) => prevIds.filter((id) => id !== tempRequestId));
+      setRequestIds((prevIds) => prevIds.filter((id) => id !== tempRequest.id));
       setRatingModalVisible(false);
-      setTempRequestId(null);
+      setTempRequest(null);
       setRating(0);
       setRatingComment(""); // Clear comment
 
@@ -404,7 +377,7 @@ const PrivateRequests = () => {
         if (await refreshAccessToken()) {
           await handleRatingSubmit();
         } else {
-          router.push("/(auth)");
+         console.log(err)
         }
       }
       console.error("Failed to submit rating:", err);
@@ -412,8 +385,8 @@ const PrivateRequests = () => {
     }
   };
   // Handle confirming completion
-  const handleConfirmCompletion = async (requestId: number) => {
-    setTempRequestId(requestId);
+  const handleConfirmCompletion = async (request: ClientPrivateRequest) => {
+    setTempRequest(request);
     setRatingModalVisible(true);
   };
 
@@ -737,7 +710,7 @@ const PrivateRequests = () => {
           userRole === UserRole.CLIENT && (
             <TouchableOpacity
               className="bg-green-500 w-full items-center justify-center py-3 mt-3 rounded"
-              onPress={() => handleConfirmCompletion(item.id)}
+              onPress={() => handleConfirmCompletion(item)}
             >
               <Text className="text-base text-white">Declare Completed</Text>
             </TouchableOpacity>
@@ -752,7 +725,7 @@ const PrivateRequests = () => {
             <View className="flex-row">
               <TouchableOpacity
                 className="bg-green-500 w-1/2 justify-center items-center py-2 mr-1 rounded-l"
-                onPress={() => handleConfirmCompletion(item.id)}
+                onPress={() => console.log('first')}
               >
                 <Text className="text-base text-white">Confirm Completion</Text>
               </TouchableOpacity>
@@ -1114,7 +1087,7 @@ const PrivateRequests = () => {
                 <TouchableOpacity
                   onPress={() => {
                     setRatingModalVisible(false);
-                    setTempRequestId(null);
+                    setTempRequest(null);
                     setRating(0);
                     setRatingComment(""); // Clear comment
                   }}
