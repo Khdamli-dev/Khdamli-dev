@@ -307,6 +307,7 @@ const HomeScreen = () => {
           }
         } else {
           setComments([]); // Set empty array if no messages found
+          console.log("No comments found or invalid response format");
         }
       } catch (err: any) {
         console.error("Failed to load comments", err);

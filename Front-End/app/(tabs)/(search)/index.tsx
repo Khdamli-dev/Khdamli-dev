@@ -152,7 +152,7 @@ const HomeScreen = () => {
   const handleSendRequest = (worker: Worker) => {
     router.push({
       pathname: "./requeste",
-      params: { workerId : worker.id },
+      params: { workerId: worker.id },
     });
   };
 
@@ -338,18 +338,19 @@ const HomeScreen = () => {
               <Text className="text-xl font-bold">Top Categories</Text>
               <Text className="text-sm text-[#CB8400]">Click On Service</Text>
             </View>
-
-            <FlatList
-              key="categories"
-              data={categories}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={renderCategoryItem}
-              numColumns={3}
-              contentContainerStyle={{
-                paddingBottom: 20,
-              }}
-              showsVerticalScrollIndicator={false}
-            />
+            <View className="flex justify-center items-center">
+              <FlatList
+                key="categories"
+                data={categories}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={renderCategoryItem}
+                numColumns={3}
+                contentContainerStyle={{
+                  paddingBottom: 20,
+                }}
+                showsVerticalScrollIndicator={false}
+              />{" "}
+            </View>
           </>
         )}
       </View>
