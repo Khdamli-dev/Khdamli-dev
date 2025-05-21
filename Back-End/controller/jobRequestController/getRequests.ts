@@ -25,15 +25,12 @@ const getRequests = async (req: Request, res: Response) => {
     if (worker && +type! === 1) {
       // Special case: type 1 (public), get requests where the worker commented
       query = `
-                                SELECT r.id
-FROM request r
-INNER JOIN public_request_messages prm ON r.id = prm.request
-WHERE r.type = 1 
-  AND r.status IN (1, 3) 
-  AND r.worker IS NULL 
-  AND prm.worker = $1
-
-            `;
+      SELECT r.id
+      FROM request r
+      INNER JOIN public_request_messages prm ON r.id = prm.request
+      WHERE r.type = 1 
+      AND r.status IN (1, 3) 
+      AND prm.worker = $1`;
       values = [+worker];
     } else {
       query = `SELECT id FROM request WHERE`;
