@@ -153,6 +153,8 @@ const getRequestDetails = async (req: Request, res: Response) => {
     const response: { [key: string]: any } = {};
 
     // Common fields across scenarios
+    response.workerId = requestRow.worker_id;
+    response.clientId = requestRow.client_id;
     response.id = requestId;
     response.category = requestRow.category;
     response.description = requestRow.description || null;

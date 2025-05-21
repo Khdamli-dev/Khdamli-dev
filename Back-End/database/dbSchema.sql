@@ -281,6 +281,22 @@ CREATE TABLE "request_type" (
   "id" smallserial PRIMARY KEY,
   "name" VARCHAR(30) NOT NULL
 );
+CREATE TABLE review (
+    id INTEGER PRIMARY KEY,
+    rating NUMERIC(2,1) CHECK (rating >= 1.0 AND rating <= 5.0),
+    review TEXT,
+    worker_id INTEGER NOT NULL,
+    client_id INTEGER NOT NULL,
+    FOREIGN KEY (id) REFERENCES request(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    FOREIGN KEY (worker_id) REFERENCES worker(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    FOREIGN KEY (client_id) REFERENCES "user"(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
 
 CREATE TABLE "request_status" (
   "id" smallserial PRIMARY KEY,
