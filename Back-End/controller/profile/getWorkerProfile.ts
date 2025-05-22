@@ -58,7 +58,6 @@ const getWorkerProfile = async (req: Request, res: Response) => {
         w.transport,
         w.registration_date AS worker_registration_date,
         w.sent_requests,
-        w.accepted_requests,
         w.completed_requests,
         w.nbr_media
       FROM "user" u
