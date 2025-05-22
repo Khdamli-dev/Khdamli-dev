@@ -25,7 +25,8 @@ import { router, useLocalSearchParams } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import apiClient from "@/api/appClient";
 import { AntDesign } from "@expo/vector-icons";
-
+import Dashboard from "@/Component/ProfileComponents/Dashboard";
+import Reviews from "@/Component/ProfileComponents/Reviews";
 const { width } = Dimensions.get("window");
 
 interface ProfileItemProps {
@@ -185,6 +186,17 @@ const UserProfileView = () => {
       params: { type: "2" },
     });
   };
+   const handleNavigatetoclientprofiele = (clientId: string) => {
+      console.log(`Navigate to client: ${clientId}`);
+      router.push({
+            pathname: "/profileAsView",
+            params: {
+              userId: clientId,
+              userRole: 1,
+            },
+          });
+      // Navigate to client profile
+    };
   return (
     <ScrollView>
       {/* Profile Header - Without Edit Buttons */}
@@ -288,6 +300,13 @@ const UserProfileView = () => {
       {/* Worker-specific sections */}
       {user.accountType === "worker" && (
         <>
+          <Dashboard
+            workerId={Array.isArray(userId) ? userId[0] : userId} // Pass the userId to the Dashboard component
+            onStatPress={(statType) => {
+              console.log(`Pressed ${statType} stat`);
+              // Navigate to detailed stats screen
+            }}
+          />
           {/* Bio Section */}
           <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
             <Text
@@ -437,6 +456,22 @@ const UserProfileView = () => {
             />
           </View>
         )}
+      {/* Reviews Section - Worker only */}
+      {user.accountType === "worker" && (
+        <>
+          <Reviews
+            workerId={Array.isArray(userId) ? userId[0] : userId}
+            onClientPress={(clientId) => {
+              handleNavigatetoclientprofiele(clientId);
+              // Navigate to client profile
+            }}
+            onViewAllPress={() => {
+              console.log("View all reviews");
+              // Navigate to all reviews screen
+            }}
+          />
+        </>
+      )}
     </ScrollView>
   );
 };
