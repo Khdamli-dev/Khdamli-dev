@@ -397,7 +397,9 @@ const PublicRequest = () => {
       >
         <View className="flex-row justify-between items-center">
           <View className="flex-row items-center flex-1">
-            <TouchableOpacity onPress={() => navigateToProfile(item.client_id, 1)}>
+            <TouchableOpacity
+              onPress={() => navigateToProfile(item.client_id, 1)}
+            >
               <Image
                 source={
                   item.client_profile_image
@@ -409,7 +411,9 @@ const PublicRequest = () => {
             </TouchableOpacity>
 
             <View className="flex-1">
-              <TouchableOpacity onPress={() => navigateToProfile(item.client_id, 1)}>
+              <TouchableOpacity
+                onPress={() => navigateToProfile(item.client_id, 1)}
+              >
                 <Text className="font-medium">
                   {item.client_username || "Client"}
                 </Text>
@@ -469,9 +473,6 @@ const PublicRequest = () => {
               <View>
                 <Text className="font-medium">
                   {userData.username || "Your Request"}
-                </Text>
-                <Text numberOfLines={1} className="text-gray-500">
-                  {truncateText(item.description, 40)}
                 </Text>
               </View>
             </View>
@@ -830,21 +831,24 @@ const PublicRequest = () => {
   const renderWorkerRequest = (item: WorkerPublicRequest) => {
     const isExpanded = expandedRequestId === item.id;
 
-    const modifyRequestStatus = async (status : number) => {
+    const modifyRequestStatus = async (status: number) => {
       try {
-        await apiClient.put(`/work/job-request/${item.id}/public-request/status`, {
-          status
-        });
+        await apiClient.put(
+          `/work/job-request/${item.id}/public-request/status`,
+          {
+            status,
+          }
+        );
 
         item.status = getStatusTextFromCode(status);
-        setRequests(prevRequests => {
+        setRequests((prevRequests) => {
           // Create a new array with the updated item
-          return prevRequests.map(req => 
-            req.id === item.id ? {...req, status: item.status} : req
+          return prevRequests.map((req) =>
+            req.id === item.id ? { ...req, status: item.status } : req
           );
         });
         notifications?.markPublicRequestAsRead();
-      } catch (err : any) {
+      } catch (err: any) {
         if (err.response?.status === 401) {
           if (await refreshAccessToken()) {
             await modifyRequestStatus(status);
@@ -859,10 +863,10 @@ const PublicRequest = () => {
           );
         }
       }
-    }
+    };
 
     const getStatusTextFromCode = (statusCode: number): string => {
-      switch(statusCode) {
+      switch (statusCode) {
         case 1:
           return RequestStatus.ACCEPTED;
         case 2:
@@ -871,7 +875,6 @@ const PublicRequest = () => {
           return RequestStatus.VERIFICATION_PENDING;
       }
     };
-  
 
     if (!isExpanded) {
       return renderWorkerCollapsedView(item);
@@ -1022,20 +1025,24 @@ const PublicRequest = () => {
         {/* For PENDING_WORKER_VERIFICATION requests */}
         {item.status === RequestStatus.VERIFICATION_PENDING && (
           <View className="flex-row justify-between mt-4 px-2">
-          <TouchableOpacity
-            className="flex-1 bg-green-600 items-center justify-center py-3 rounded-lg shadow mr-2"
-            onPress={async () => await modifyRequestStatus(1)}
-          >
-            <Text className="text-base font-medium text-white">Confirm Work</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            className="flex-1 bg-red-500 items-center justify-center py-3 rounded-lg shadow"
-            onPress={async () => await modifyRequestStatus(2)}
-          >
-            <Text className="text-base font-medium text-white">Cancel Work</Text>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity
+              className="flex-1 bg-green-600 items-center justify-center py-3 rounded-lg shadow mr-2"
+              onPress={async () => await modifyRequestStatus(1)}
+            >
+              <Text className="text-base font-medium text-white">
+                Confirm Work
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              className="flex-1 bg-red-500 items-center justify-center py-3 rounded-lg shadow"
+              onPress={async () => await modifyRequestStatus(2)}
+            >
+              <Text className="text-base font-medium text-white">
+                Cancel Work
+              </Text>
+            </TouchableOpacity>
+          </View>
         )}
 
         {/* For COMPLETED requests - Worker sees completed status */}
