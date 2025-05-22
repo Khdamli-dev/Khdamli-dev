@@ -281,6 +281,7 @@ CREATE TABLE "request_type" (
   "id" smallserial PRIMARY KEY,
   "name" VARCHAR(30) NOT NULL
 );
+
 CREATE TABLE review (
     id INTEGER PRIMARY KEY,
     rating NUMERIC(2,1) CHECK (rating >= 1.0 AND rating <= 5.0),

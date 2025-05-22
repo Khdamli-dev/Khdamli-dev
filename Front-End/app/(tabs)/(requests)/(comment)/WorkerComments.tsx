@@ -11,13 +11,17 @@ import {
   Alert,
 } from "react-native";
 import React, { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Dispatch, SetStateAction } from "react";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import apiClient from "@/api/appClient";
+import { handelcall } from "../SomeStandarFunctions";
+import { Ionicons } from "@expo/vector-icons";
 
 // Updated interface to match backend response from getRequestMessages
 interface WorkerComment {
   worker_id: number;
+  phone_number: string;
   username: string;
   profile_image: string | null;
   location: {
@@ -28,9 +32,6 @@ interface WorkerComment {
   categories: string[];
   message: string;
   created_at: string;
-  // Local state fields (not from backend)
-  status?: string;
-  isConfirmed?: boolean;
 }
 
 interface ApiResponse {
@@ -49,9 +50,12 @@ interface WorkerCommentsProps {
 const WorkerComments: React.FC<WorkerCommentsProps> = ({
   setBadgeCount = () => {},
 }) => {
-  const { id } = useLocalSearchParams();
-  const requestId : number = id ? parseInt(id as string, 10) : 0;
-
+  const { id, status, workerId } = useLocalSearchParams();
+  const requestId: number = id ? parseInt(id as string, 10) : 0;
+  const requestStatus: string = status ? (status as string) : "On Hold";
+  const workerIdNumber: number = workerId
+    ? parseInt(workerId as string, 10)
+    : 0;
   const [workerCommentsArray, setWorkerCommentsArray] = useState<
     WorkerComment[]
   >([]);
@@ -61,7 +65,37 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
   const [expandedCommentIds, setExpandedCommentIds] = useState<Set<number>>(
     new Set()
   );
+  const [waiting_agrement_worker, setWaitingAgrementWorker] = useState<
+    Set<number>
+  >(new Set());
   const [total, setTotal] = useState<number>(0);
+
+  const loadWaitingAgreementWorkers = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(
+        `waiting_agreement_${requestId}`
+      );
+      if (stored) {
+        const workerIds = JSON.parse(stored) as number[];
+        setWaitingAgrementWorker(new Set(workerIds));
+      }
+    } catch (error) {
+      console.error("Error loading waiting agreement workers:", error);
+    }
+  };
+
+  // Save waiting agreement workers to storage
+  const saveWaitingAgreementWorkers = async (workers: Set<number>) => {
+    try {
+      const workersArray = Array.from(workers);
+      await AsyncStorage.setItem(
+        `waiting_agreement_${requestId}`,
+        JSON.stringify(workersArray)
+      );
+    } catch (error) {
+      console.error("Error saving waiting agreement workers:", error);
+    }
+  };
 
   const fetchWorkerComments = async (requestId: number, pageNum: number) => {
     if (loading || !hasMore) return;
@@ -72,7 +106,6 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
       const response = await apiClient.get<ApiResponse>(
         `/work/job-request/${requestId}/messages?page=${pageNum}`
       );
-     
 
       if (response.data.success) {
         const result = response.data.messages;
@@ -82,29 +115,14 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
         if (result.length === 0 || result.length < response.data.limit) {
           setHasMore(false);
         }
-
-        // Add status field to each comment (for local state management)
-        const commentsWithStatus = result.map((comment) => ({
-          ...comment,
-          status: "pending",
-          isConfirmed: false,
-        }));
-
-        // For page 1, replace the data, otherwise append
-        if (pageNum === 1) {
-          setWorkerCommentsArray(commentsWithStatus);
-        } else {
+        if (requestStatus == "Accepted" || requestStatus == "Completed") {
           setWorkerCommentsArray((prev) => [
             ...prev,
-            ...commentsWithStatus.filter(
-              (comment) =>
-                !prev.some(
-                  (prevComment) => prevComment.worker_id === comment.worker_id
-                )
-            ),
+            ...result.filter((comment) => comment.worker_id == workerIdNumber),
           ]);
+        } else {
+          setWorkerCommentsArray(result);
         }
-
         // Increment page for next fetch
         setPage(pageNum + 1);
       } else {
@@ -120,17 +138,16 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
   const handleAccept = async (workerId: number) => {
     try {
       // Update the request with status 1 (accepted) and set the workerId
-      await apiClient.put(`/work/job-request/${requestId}/select-worker/${workerId}`);
-
-      // Update UI to show only the accepted worker's comment
-      setWorkerCommentsArray((prev) =>
-        prev
-          .filter((comment) => comment.worker_id === workerId)
-          .map((comment) => ({ ...comment, status: "accepted" }))
+      await apiClient.put(
+        `/work/job-request/${requestId}/select-worker/${workerId}`
       );
-
-      // Keep the accepted comment expanded to show the confirmation button
-      setExpandedCommentIds((prev) => {
+      setWaitingAgrementWorker((prev) => {
+        const newSet = new Set(prev);
+        newSet.add(workerId);
+        saveWaitingAgreementWorkers(newSet);
+        return newSet;
+      });
+      setExpandedCommentIds(() => {
         const newSet = new Set<number>();
         newSet.add(workerId);
         return newSet;
@@ -174,36 +191,24 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
     }
   };
 
-  const handleConfirmCompletion = async (workerId: number) => {
-    try {
-      // Update the request status to completed (assuming 4 means "completed")
-      await apiClient.put(`/work/job-request/status/${requestId}`, {
-        status: 4,
-      });
-
-      // Update the comment to mark it as confirmed
-      setWorkerCommentsArray((prev) =>
-        prev.map((comment) =>
-          comment.worker_id === workerId
-            ? { ...comment, isConfirmed: true }
-            : comment
-        )
-      );
-
-      // Show confirmation message
-      Alert.alert(
-        "Work Completed",
-        "You have successfully confirmed the completion of this work.",
-        [{ text: "OK" }]
-      );
-    } catch (error) {
-      console.error("Error confirming work completion:", error);
-      Alert.alert(
-        "Error",
-        "Failed to confirm work completion. Please try again."
-      );
+  useEffect(() => {
+    if (requestId) {
+      loadWaitingAgreementWorkers();
     }
-  };
+  }, [requestId]);
+
+  const navigateToProfile = (id: number, role: number) => {
+      router.push({
+        pathname: "/(tabs)/(home)/profileAsView",
+        params: {
+          status,
+          requestId,
+          userId: id,
+          userRole: role,
+          origin: "workerComments",
+        },
+      });
+    };
 
   const toggleCommentExpansion = (workerId: number) => {
     setExpandedCommentIds((prev) => {
@@ -227,7 +232,7 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
   // Update badge count whenever workerCommentsArray changes
   useEffect(() => {
     const pendingComments = workerCommentsArray.filter(
-      (comment) => comment.status === "pending"
+      (comment) => requestStatus !== "Completed" && requestStatus !== "Accepted"
     ).length;
     setBadgeCount(pendingComments);
   }, [workerCommentsArray, setBadgeCount]);
@@ -273,13 +278,21 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
             ) : null
           }
           renderItem={({ item }: { item: WorkerComment }) => {
+            console.log("Item:", requestStatus);
             const isExpanded = expandedCommentIds.has(item.worker_id);
+            const isWaitingAgreement = waiting_agrement_worker.has(
+              item.worker_id
+            );
             return (
               <View className="mb-4">
                 <View className="bg-white rounded-lg shadow-sm overflow-hidden">
                   {/* Header with user info */}
-                  <View className="flex-row p-4 border-b border-gray-100">
-                    <View className="mr-3">
+                  <View className=" flex-row p-4 border-b border-gray-100">
+                    <TouchableOpacity className=" mr-3"
+                    onPress={() => {
+                      navigateToProfile(item.worker_id, 2);
+                    }}
+                    >
                       {item.profile_image ? (
                         <Image
                           source={{ uri: item.profile_image }}
@@ -292,11 +305,17 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
                           </Text>
                         </View>
                       )}
-                    </View>
+                    </TouchableOpacity>
                     <View className="flex-1 justify-center">
-                      <Text className="text-lg font-semibold">
-                        {item.username}
-                      </Text>
+                      <TouchableOpacity
+                      onPress={() => {
+                        navigateToProfile(item.worker_id, 2);
+                      }}
+                      >
+                        <Text className="text-lg font-semibold">
+                          {item.username}
+                        </Text>
+                      </TouchableOpacity>
                       <Text className="text-xs text-gray-500">
                         {item.location.city || "Unknown"},{" "}
                         {item.location.region || "Unknown"}
@@ -307,7 +326,19 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
                         </Text>
                       )}
                     </View>
-                    <View className="justify-center">
+                    <View className=" flex-col justify-between py-3">
+                      <View className="items-center ">
+                        {requestStatus == "Accepted" && (
+                          <TouchableOpacity
+                            className="mr-4"
+                            onPress={() => {
+                              handelcall(item.phone_number);
+                            }}
+                          >
+                            <Ionicons name="call" size={32} color="#000" />
+                          </TouchableOpacity>
+                        )}
+                      </View>
                       <Text className="text-xs text-gray-500">
                         {formatDate(item.created_at)}
                       </Text>
@@ -334,14 +365,16 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
                   </TouchableOpacity>
 
                   {/* Action buttons - only shown when expanded */}
-                  {isExpanded && item.status === "pending" && (
+                  {isExpanded && requestStatus === "On Hold" && (
                     <View className="flex-col w-full">
                       <TouchableOpacity
-                        className="bg-green-600 py-3 items-center"
                         onPress={() => handleAccept(item.worker_id)}
+                        className={`${isWaitingAgreement ? "bg-blue-700" : "bg-specialGreen"} py-3 items-center`}
                       >
                         <Text className="text-white font-bold">
-                          Accept Worker
+                          {isWaitingAgreement
+                            ? "Waiting for Agreement of worker"
+                            : "Accept Worker"}
                         </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
@@ -350,38 +383,6 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
                       >
                         <Text className="text-white font-bold">Reject</Text>
                       </TouchableOpacity>
-                    </View>
-                  )}
-
-                  {/* Show status if already accepted with confirmation button */}
-                  {isExpanded &&
-                    item.status === "accepted" &&
-                    !item.isConfirmed && (
-                      <View className="flex-col w-full">
-                        <View className="bg-green-100 p-2 items-center">
-                          <Text className="text-green-700 font-medium">
-                            Work Accepted
-                          </Text>
-                        </View>
-                        <TouchableOpacity
-                          className="bg-blue-600 py-3 items-center mt-2"
-                          onPress={() =>
-                            handleConfirmCompletion(item.worker_id)
-                          }
-                        >
-                          <Text className="text-white font-bold">
-                            Confirm Work Completion
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    )}
-
-                  {/* Show completion confirmed status */}
-                  {item.status === "accepted" && item.isConfirmed && (
-                    <View className="bg-blue-100 p-2 items-center">
-                      <Text className="text-blue-700 font-medium">
-                        Work Completion Confirmed
-                      </Text>
                     </View>
                   )}
                 </View>
