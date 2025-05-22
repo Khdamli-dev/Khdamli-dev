@@ -176,7 +176,6 @@ const PrivateRequests = () => {
         params,
       });
       const result = response.data.request;
-      console.log(result);
 
       // Update the specific request rather than appending to the array
       setRequests((prev) => {
@@ -349,8 +348,8 @@ const PrivateRequests = () => {
 
       // First submit the rating
       await apiClient.post(`/work/job-request/${tempRequest.id}/complete`, {
-         workerId : tempRequest.workerId,
-         clientId: tempRequest.clientId,
+        workerId : tempRequest.workerId,
+        clientId: tempRequest.clientId,
         rating: rating,
         review: ratingComment,
       });
@@ -381,55 +380,6 @@ const PrivateRequests = () => {
   const handleConfirmCompletion = async (request: ClientPrivateRequest) => {
     setTempRequest(request);
     setRatingModalVisible(true);
-  };
-
-  // Handle rejecting completion
-  const handleRejectCompletion = async (id: number) => {
-    try {
-      await apiClient.put(`/work/job-request/${id}/state`, {
-        state: RequestStatus.ACCEPTED,
-      });
-
-      // Update local state
-      setRequests(
-        requests.map((request) =>
-          request.id === id
-            ? { ...request, status: RequestStatus.ACCEPTED }
-            : request
-        )
-      );
-
-      Alert.alert(
-        "Success",
-        "Completion rejected. Request status set back to accepted."
-      );
-    } catch (err: any) {
-      console.error("Failed to reject completion:", err);
-      Alert.alert("Error", "Failed to reject completion");
-    }
-  };
-
-  // Handle cancelling request
-  const handleCancelRequest = async (id: number) => {
-    try {
-      await apiClient.put(`/work/job-request/${id}/state`, {
-        state: RequestStatus.CANCELLED,
-      });
-
-      // Update local state
-      setRequests(
-        requests.map((request) =>
-          request.id === id
-            ? { ...request, status: RequestStatus.CANCELLED }
-            : request
-        )
-      );
-
-      Alert.alert("Success", "Request cancelled successfully");
-    } catch (err: any) {
-      console.error("Failed to cancel request:", err);
-      Alert.alert("Error", "Failed to cancel request");
-    }
   };
 
   useEffect(() => {
@@ -695,7 +645,7 @@ const PrivateRequests = () => {
             className="bg-red-500 w-full items-center justify-center py-3 mt-3 rounded"
             onPress={() => handleDeleteRequest(item.id)}
           >
-            <Text className="text-base text-white">Delete Request</Text>
+            <Text className="text-base text-white">Cancel Request</Text>
           </TouchableOpacity>
         )}
 
@@ -708,29 +658,6 @@ const PrivateRequests = () => {
               <Text className="text-base text-white">Declare Completed</Text>
             </TouchableOpacity>
           )}
-
-        {/* Client verification section - when job is marked as completed by worker */}
-        {item.status === RequestStatus.PENDING_CLIENT_VERIFICATION && (
-          <View className="mt-3">
-            <Text className="text-base text-blue-600 mb-2">
-              Worker has marked this job as completed.
-            </Text>
-            <View className="flex-row">
-              <TouchableOpacity
-                className="bg-green-500 w-1/2 justify-center items-center py-2 mr-1 rounded-l"
-                onPress={() => console.log('first')}
-              >
-                <Text className="text-base text-white">Confirm Completion</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className="bg-red-500 w-1/2 justify-center items-center py-2 ml-1 rounded-r"
-                onPress={() => handleRejectCompletion(item.id)}
-              >
-                <Text className="text-base text-white">Reject Completion</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
       </View>
     );
   };
@@ -810,9 +737,6 @@ const PrivateRequests = () => {
             <Text className="font-bold">About Service: </Text>
             <Text className="text-green-500">{item.description}</Text>
           </Text>
-          <Text className="text-base mb-1">
-            <Text className="text-green-500">{item.payment_method}</Text>
-          </Text>
         </View>
 
         <View className="mt-4">
@@ -874,16 +798,6 @@ const PrivateRequests = () => {
             </TouchableOpacity>
           </View>
         )}
-
-        {/* For PENDING_CLIENT_VERIFICATION requests - Worker sees waiting status */}
-        {item.status === RequestStatus.PENDING_CLIENT_VERIFICATION && (
-          <View className="bg-yellow-100 border border-yellow-400 items-center justify-center py-3 mt-3 rounded">
-            <Text className="text-base text-yellow-800">
-              Waiting for client confirmation
-            </Text>
-          </View>
-        )}
-
         {/* For COMPLETED requests - Worker sees completed status */}
         {item.status === RequestStatus.COMPLETED && (
           <View className="bg-green-100 border border-green-400 items-center justify-center py-3 mt-3 rounded">
