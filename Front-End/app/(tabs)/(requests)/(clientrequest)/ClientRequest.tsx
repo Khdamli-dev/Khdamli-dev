@@ -33,7 +33,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ResizeMode, Video } from 'expo-av'; // Import for video playback
 import { formatDateTime } from '../SomeStandarFunctions';
 import { useNotifications } from '@/context/NotificationContext';
-import { Rating } from "react-native-ratings";
+import { Rating } from 'react-native-ratings';
 
 // Define the UserRole enum
 enum UserRole {
@@ -82,7 +82,7 @@ const PublicRequest = () => {
   const [tempRequest, setTempRequest] = useState<ClientPublicRequest | null>();
   const [ratingModalVisible, setRatingModalVisible] = useState(false);
   const [rating, setRating] = useState(0);
-  const [ratingComment, setRatingComment] = useState("");
+  const [ratingComment, setRatingComment] = useState('');
   const [userData, setUserData] = useState<{
     username: string;
     profile_image: string;
@@ -278,43 +278,43 @@ const PublicRequest = () => {
   };
 
   // Reting
-    const handleRatingSubmit = async () => {
-      try {
-        if (!tempRequest) {
-          Alert.alert("Error", "Please provide a rating");
-          return;
-        }
-  
-        // First submit the rating
-        await apiClient.post(`/work/job-request/${tempRequest.id}/complete`, {
-          workerId : tempRequest.workerId,
-          clientId: tempRequest.clientId,
-          rating: rating,
-          review: ratingComment,
-        });
-  
-        // Then complete the request
-  
-        // Update local state
-        setRequestIds((prevIds) => prevIds.filter((id) => id !== tempRequest.id));
-        setRatingModalVisible(false);
-        setTempRequest(null);
-        setRating(0);
-        setRatingComment(""); // Clear comment
-  
-        Alert.alert("Success", "Request completed and rating submitted");
-      } catch (err: any) {
-        if (err.response?.status === 401) {
-          if (await refreshAccessToken()) {
-            await handleRatingSubmit();
-          } else {
-           console.log(err)
-          }
-        }
-        console.error("Failed to submit rating:", err);
-        Alert.alert("Error", "Failed to submit rating");
+  const handleRatingSubmit = async () => {
+    try {
+      if (!tempRequest) {
+        Alert.alert('Error', 'Please provide a rating');
+        return;
       }
-    };
+
+      // First submit the rating
+      await apiClient.post(`/work/job-request/${tempRequest.id}/complete`, {
+        workerId: tempRequest.workerId,
+        clientId: tempRequest.clientId,
+        rating: rating,
+        review: ratingComment,
+      });
+
+      // Then complete the request
+
+      // Update local state
+      setRequestIds((prevIds) => prevIds.filter((id) => id !== tempRequest.id));
+      setRatingModalVisible(false);
+      setTempRequest(null);
+      setRating(0);
+      setRatingComment(''); // Clear comment
+
+      Alert.alert('Success', 'Request completed and rating submitted');
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        if (await refreshAccessToken()) {
+          await handleRatingSubmit();
+        } else {
+          console.log(err);
+        }
+      }
+      console.error('Failed to submit rating:', err);
+      Alert.alert('Error', 'Failed to submit rating');
+    }
+  };
 
   const handleSelectRequest = (id: number) => {
     router.push({
@@ -609,19 +609,21 @@ const PublicRequest = () => {
           </ScrollView>
         </View>
 
-        <View className="flex-row py-2 mt-2">
+        <View className="flex-row py-2 mt-2 justify-center items-center">
           <TouchableOpacity
             onPress={() => handleSelectRequest(item.id)}
-            className="bg-green-500 w-1/2 justify-center items-center py-2 rounded-l"
+            className="bg-green-500 w-1/2 justify-center items-center py-2 rounded-l mr-2"
           >
             <Text className="text-base text-white">Comments</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            className="bg-red-500 w-1/2 justify-center items-center py-2 rounded-r"
-            onPress={() => deleteRequest(item.id)}
-          >
-            <Text className="text-base text-white">Cancel</Text>
-          </TouchableOpacity>
+          {(item.status === RequestStatus.ON_HOLD || item.status === RequestStatus.VERIFICATION_PENDING) &&
+            <TouchableOpacity
+              className="bg-red-500 w-1/2 justify-center items-center py-2 rounded-r"
+              onPress={() => deleteRequest(item.id)}
+            >
+              <Text className="text-base text-white">Cancel</Text>
+            </TouchableOpacity>
+          }
         </View>
 
         {/* Client verification section - when job is marked as completed by worker */}
