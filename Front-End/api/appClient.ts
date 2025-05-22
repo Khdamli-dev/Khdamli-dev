@@ -1,8 +1,10 @@
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 
+import CONFIG from "@/config";
+
 const apiClient = axios.create({
-  baseURL: "http://192.168.143.116:8000",
+  baseURL: CONFIG.API_URL,
 });
 
 apiClient.interceptors.request.use(

@@ -19,7 +19,7 @@ const getUnreadCount = async (req: Request, res: Response) => {
     const privateRequestId : string | undefined = process.env.PRIVATE_REQUEST_ID;
     const onHoldRequestId : string | undefined = process.env.ON_HOLD_REQUEST_ID;
     if (!privateRequestId || !onHoldRequestId){
-        throw new Error("missing envirement variables");
+      throw new Error("missing envirement variables");
     }
 
     const { rows } = await pool.query(`

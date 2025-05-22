@@ -11,11 +11,15 @@ import {
   FlatList,
   Platform,
   Alert,
+  TextInput,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  MaterialCommunityIcons,
   Ionicons,
+  MaterialCommunityIcons,
   MaterialIcons,
 } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -23,12 +27,14 @@ import { router } from 'expo-router';
 import {
   WorkerPublicRequest,
   ClientPublicRequest,
-} from '../../../../Interfaces/Requestsinterfaces';
-import apiClient from '@/api/appClient';
-import refreshAccessToken from '@/api/refreshAccessToken';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ResizeMode, Video } from 'expo-av'; // Import for video playback
-//import { realTimePublicRequestStatus } from '@/api/realTime';
+} from "../../../../Interfaces/Requestsinterfaces";
+import apiClient from "@/api/appClient";
+import refreshAccessToken from "@/api/refreshAccessToken";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ResizeMode, Video } from "expo-av"; // Import for video playback
+import { formatDateTime, handelcall } from "../SomeStandarFunctions";
+import { useNotifications } from "@/context/NotificationContext";
+import { Rating } from "react-native-ratings";
 
 // Define the UserRole enum
 enum UserRole {
@@ -41,7 +47,7 @@ enum RequestStatus {
   PENDING = 'Pending',
   ACCEPTED = 'Accepted',
   ON_HOLD = 'On Hold',
-  PENDING_CLIENT_VERIFICATION = 'pending_client_verification',
+  VERIFICATION_PENDING = 'verification pending',
   COMPLETED = 'Completed',
   CANCELLED = 'Cancelled',
 }
@@ -62,6 +68,7 @@ interface MediaItem {
 const defaultProfileImage = require('../../../../assets/images/images (1).jpg');
 
 const PublicRequest = () => {
+  const notifications = useNotifications();
   const [selectedMedia, setSelectedMedia] = useState(0);
   const [mediaModalVisible, setMediaModalVisible] = useState(false);
   const [userRole, setUserRole] = useState<UserRole>();
@@ -73,12 +80,18 @@ const PublicRequest = () => {
   const [expandedRequestId, setExpandedRequestId] = useState<number | null>(
     null,
   );
+  const [tempRequest, setTempRequest] = useState<ClientPublicRequest | null>();
+  const [ratingModalVisible, setRatingModalVisible] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [ratingComment, setRatingComment] = useState('');
   const [userData, setUserData] = useState<{
+    id: number;
     username: string;
     profile_image: string;
   }>({
-    username: '',
-    profile_image: '',
+    id: 0,
+    username: "",
+    profile_image: "",
   });
 
   // Store current viewing media for modal access
@@ -89,6 +102,36 @@ const PublicRequest = () => {
 
   const { width: windowWidth, height: windowHeight } = Dimensions.get('window');
   const scrollViewRef = useRef<ScrollView>(null);
+  const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+  const [commentText, setCommentText] = useState('');
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [commentModalVisible, setCommentModalVisible] = useState(false);
+  const [initialComment, setInitialComment] = useState<string | null>(null);
+  const commentInputRef = useRef<TextInput>(null);
+
+  const handleEditComment = (
+    requestId: number,
+    currentComment: string = '',
+  ) => {
+    setEditingId(requestId);
+    setCommentModalVisible(true);
+    setInitialComment(currentComment);
+    // Focus on the text input after a short delay (to ensure modal is visible)
+    setTimeout(() => {
+      commentInputRef.current?.focus();
+    }, 300);
+  };
+
+  const navigateToProfile = (id: number, role: number) => {
+    router.push({
+      pathname: "/(tabs)/(home)/profileAsView",
+      params: {
+        userId: id,
+        userRole: role,
+        origin: "publicRequest",
+      },
+    });
+  };
 
   // Determine if user is client or worker and get user data
   useEffect(() => {
@@ -99,8 +142,9 @@ const PublicRequest = () => {
           const user = JSON.parse(userDataStr);
           setUserRole(user.role == 1 ? UserRole.CLIENT : UserRole.WORKER);
           setUserData({
-            username: user.username || '',
-            profile_image: user.profile_image || '',
+            id: user.id,
+            username: user.username || "",
+            profile_image: user.profile_image || "",
           });
         }
       } catch (error) {
@@ -153,6 +197,11 @@ const PublicRequest = () => {
         setRequestIds((prevIds) => prevIds.filter((id) => id !== requestId));
       }
     } catch (err: any) {
+      console.error(
+        'Error deleting request:',
+        err.response?.data?.message || err.message,
+      );
+
       if (err.response?.status === 401) {
         if (await refreshAccessToken()) {
           await deleteRequest(requestId);
@@ -167,11 +216,6 @@ const PublicRequest = () => {
         );
       }
     }
-  };
-
-  const handleEditComment = (requestId: number) => {
-    // Navigate to comment editing page or show modal
-    console.log('Edit comment for request:', requestId);
   };
 
   const fetchRequests = async () => {
@@ -217,6 +261,7 @@ const PublicRequest = () => {
       const userData = await AsyncStorage.getItem('user');
       const user = JSON.parse(userData || '');
       let params: { role: string; request_type: string; worker_id?: number };
+
       if (userRole === UserRole.CLIENT) {
         params = { role: 'client', request_type: 'public' };
       } else {
@@ -245,6 +290,45 @@ const PublicRequest = () => {
       }
       console.error('Error fetching request details:', err.response?.data);
       alert('Error fetching request details');
+    }
+  };
+
+  // Reting
+  const handleRatingSubmit = async () => {
+    try {
+      if (!tempRequest) {
+        Alert.alert('Error', 'Please provide a rating');
+        return;
+      }
+
+      // First submit the rating
+      await apiClient.post(`/work/job-request/${tempRequest.id}/complete`, {
+        workerId: tempRequest.workerId,
+        clientId: tempRequest.clientId,
+        rating: rating,
+        review: ratingComment,
+      });
+
+      // Then complete the request
+
+      // Update local state
+      setRequestIds((prevIds) => prevIds.filter((id) => id !== tempRequest.id));
+      setRatingModalVisible(false);
+      setTempRequest(null);
+      setRating(0);
+      setRatingComment(''); // Clear comment
+
+      Alert.alert('Success', 'Request completed and rating submitted');
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        if (await refreshAccessToken()) {
+          await handleRatingSubmit();
+        } else {
+          console.log(err);
+        }
+      }
+      console.error('Failed to submit rating:', err);
+      Alert.alert('Error', 'Failed to submit rating');
     }
   };
 
@@ -280,7 +364,7 @@ const PublicRequest = () => {
         return (
           <MaterialIcons name="hourglass-empty" size={24} color="orange" />
         );
-      case RequestStatus.PENDING_CLIENT_VERIFICATION:
+      case RequestStatus.VERIFICATION_PENDING:
         return <MaterialIcons name="pending-actions" size={24} color="blue" />;
       case RequestStatus.COMPLETED:
         return <MaterialIcons name="verified" size={24} color="blue" />;
@@ -326,20 +410,12 @@ const PublicRequest = () => {
       >
         <View className="flex-row justify-between items-center">
           <View className="flex-row items-center flex-1">
-            <Image
-              source={
-                userData.profile_image
-                  ? { uri: userData.profile_image }
-                  : defaultProfileImage
-              }
-              className="w-12 h-12 rounded-full mr-3"
-            />
             <View className="flex-1">
               <Text className="font-medium">
                 {userData.username || 'Your Request'}
               </Text>
               <Text numberOfLines={1} className="text-gray-500">
-                {truncateText(item.description, 40)}
+                {truncateText(item.description, 20)}
               </Text>
             </View>
           </View>
@@ -371,20 +447,29 @@ const PublicRequest = () => {
       >
         <View className="flex-row justify-between items-center">
           <View className="flex-row items-center flex-1">
-            <Image
-              source={
-                item.client_profile_image
-                  ? { uri: item.client_profile_image }
-                  : defaultProfileImage
-              }
-              className="w-12 h-12 rounded-full mr-3"
-            />
+            <TouchableOpacity onPress={() => navigateToProfile(item.client_id, 1)}>
+              <Image
+                source={
+                  item.client_profile_image
+                    ? { uri: item.client_profile_image }
+                    : defaultProfileImage
+                }
+                className="w-12 h-12 rounded-full mr-3"
+              />
+            </TouchableOpacity>
+
             <View className="flex-1">
-              <Text className="font-medium">
-                {item.client_username || 'Client'}
-              </Text>
-              <Text numberOfLines={1} className="text-gray-500">
-                {truncateText(item.description, 40)}
+              <TouchableOpacity onPress={() => navigateToProfile(item.client_id, 1)}>
+                <Text className="font-medium">
+                  {item.client_username || "Client"}
+                </Text>
+              </TouchableOpacity>
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                className="text-gray-500"
+              >
+                {item.worker_comment}
               </Text>
             </View>
           </View>
@@ -409,8 +494,13 @@ const PublicRequest = () => {
 
   // Render client view - using ClientPublicRequest interface
   const renderClientRequest = (item: ClientPublicRequest) => {
-    const isExpanded = expandedRequestId === item.id;
+    // Handle confirming completion
+    const handleConfirmCompletion = async (request: ClientPublicRequest) => {
+      setTempRequest(request);
+      setRatingModalVisible(true);
+    };
 
+    const isExpanded = expandedRequestId === item.id;
     if (!isExpanded) {
       return renderClientCollapsedView(item);
     }
@@ -456,18 +546,20 @@ const PublicRequest = () => {
         </TouchableOpacity>
 
         <View>
-          <View className="flex-row justify-between items-center mb-2">
-            <Text className="text-lg font-medium">Request Details:</Text>
-          </View>
+          <Text className="text-lg font-medium mb-2">Request Details:</Text>
 
           <View className="pl-2">
             <Text className="text-base mb-1">
               <Text className="font-bold">Date Request: </Text>
-              <Text className="text-green-500">{item.sent_date}</Text>
+              <Text className="text-green-500">
+                {formatDateTime(item.sent_date)}
+              </Text>
             </Text>
             <Text className="text-base mb-1">
               <Text className="font-bold">Work time: </Text>
-              <Text className="text-green-500">{item.work_date}</Text>
+              <Text className="text-green-500">
+                {formatDateTime(item.work_date)}
+              </Text>
             </Text>
             <Text className="text-base mb-1">
               <Text className="font-bold">Address: </Text>
@@ -480,14 +572,10 @@ const PublicRequest = () => {
               <Text className="font-bold">Category: </Text>
               <Text className="text-green-500">{item.category}</Text>
             </Text>
-            <Text className="text-base mb-1">
+            <Text className="text-base mb-2">
               <Text className="font-bold">About Service: </Text>
-              <Text className="text-green-500">{item.description}</Text>
             </Text>
-            <Text className="text-base mb-1">
-              <Text className="font-bold">Payment Method: </Text>
-              <Text className="text-green-500">{item.payment_method}</Text>
-            </Text>
+            <Text className="text-green-500 mb-3 pl-1">{item.description}</Text>
           </View>
         </View>
 
@@ -542,23 +630,25 @@ const PublicRequest = () => {
           </ScrollView>
         </View>
 
-        <View className="flex-row py-2 mt-2">
+        <View className="flex-row py-2 mt-2 justify-center items-center">
           <TouchableOpacity
             onPress={() => handleSelectRequest(item.id)}
-            className="bg-green-500 w-1/2 justify-center items-center py-2 rounded-l"
+            className="bg-green-500 w-1/2 justify-center items-center py-2 rounded-l mr-2"
           >
             <Text className="text-base text-white">Comments</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            className="bg-red-500 w-1/2 justify-center items-center py-2 rounded-r"
-            onPress={() => deleteRequest(item.id)}
-          >
-            <Text className="text-base text-white">Cancel</Text>
-          </TouchableOpacity>
+          {(item.status === RequestStatus.ON_HOLD || item.status === RequestStatus.VERIFICATION_PENDING) &&
+            <TouchableOpacity
+              className="bg-red-500 w-1/2 justify-center items-center py-2 rounded-r"
+              onPress={() => deleteRequest(item.id)}
+            >
+              <Text className="text-base text-white">Cancel</Text>
+            </TouchableOpacity>
+          }
         </View>
 
         {/* Client verification section - when job is marked as completed by worker */}
-        {item.status === RequestStatus.PENDING_CLIENT_VERIFICATION && (
+        {item.status === RequestStatus.VERIFICATION_PENDING && (
           <View className="mt-3">
             <Text className="text-base text-blue-600 mb-2">
               Worker has marked this job as completed.
@@ -579,13 +669,271 @@ const PublicRequest = () => {
             </View>
           </View>
         )}
+        {item.status === RequestStatus.ACCEPTED &&
+          userRole === UserRole.CLIENT && (
+            <TouchableOpacity
+              className="bg-green-500 w-full items-center justify-center py-3 mt-3 rounded"
+              onPress={() => handleConfirmCompletion(item)}
+            >
+              <Text className="text-base text-white">Declare Completed</Text>
+            </TouchableOpacity>
+          )}
       </View>
+    );
+  };
+
+  const saveComment = async (
+    requestid?: number | null,
+    commentText?: string
+  ) => {
+    if (!editingId) return;
+
+    setLoading(true);
+    try {
+      const workerId = userData.id; // Assuming this is the worker ID
+      await apiClient.put(
+        `/work/job-request/${requestid}/comment/`,
+        {
+          workerId,
+          message: commentText,
+        },
+      );
+
+      setEditingId(null);
+
+      // Show success message
+      Alert.alert("Success", "Your comment has been saved to the database");
+
+      // Refresh the requests to ensure we have the latest data from server
+      fetchRequests();
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        if (await refreshAccessToken()) {
+          await saveComment(editingId, commentText);
+        } else {
+          // Token refresh failed, redirect to login
+          router.push('/(auth)');
+        }
+      } else {
+        console.error(
+          'Error updating comment in database:',
+          err.response?.data?.message || err.message,
+        );
+        Alert.alert(
+          'Database Error',
+          'Failed to save your comment to the database. Please try again.',
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteComment = async (requestId?: number | null) => {
+    if (!editingId) return;
+    setLoading(true);
+    try {
+      console.log("editingId", editingId);
+      let workerId = userData.id; // Assuming this is the worker ID
+      await apiClient.delete(`/work/job-request/${requestId}/comment/`, {
+        data: {
+          workerId: workerId,
+        },
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      Alert.alert("Success", "Your comment has been deleted");
+
+      // Refresh the requests
+      fetchRequests();
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        if (await refreshAccessToken()) {
+          await deleteComment(editingId);
+        } else {
+          router.push("/(auth)");
+        }
+      } else {
+        console.error(
+          "Error deleting comment:",
+          err.response?.data?.message || err.message
+        );
+        Alert.alert("Error", "Failed to delete your comment");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const CommentEditModal = () => {
+    const [commentText, setCommentText] = useState(initialComment || "");
+    const commentInputRef = useRef(null);
+    const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+    useEffect(() => {
+      const keyboardDidShowListener = Keyboard.addListener(
+        "keyboardDidShow",
+        () => setKeyboardVisible(true)
+      );
+      const keyboardDidHideListener = Keyboard.addListener(
+        "keyboardDidHide",
+        () => setKeyboardVisible(false)
+      );
+
+      return () => {
+        keyboardDidShowListener.remove();
+        keyboardDidHideListener.remove();
+      };
+    }, []);
+
+    return (
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={commentModalVisible}
+        onRequestClose={() => setCommentModalVisible(false)}
+      >
+        <View className="flex-1  justify-center bg-black/70  ">
+          <KeyboardAwareScrollView
+            enableOnAndroid={true}
+            enableAutomaticScroll={true}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{
+              flexGrow: 1,
+              justifyContent: "center",
+              width: "100%",
+              paddingHorizontal: 16,
+            }}
+          >
+            <View className="bg-white/80 rounded-2xl p-6   mt-4">
+              <View className="flex-row justify-between items-center mb-5">
+                <Text className="text-xl font-bold text-gray-800">
+                  Edit Your Comment
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    if (keyboardVisible) {
+                      Keyboard.dismiss();
+                      setTimeout(() => setCommentModalVisible(false), 100);
+                    } else {
+                      setCommentModalVisible(false);
+                    }
+                  }}
+                  className="p-2 rounded-full bg-gray-100"
+                >
+                  <Ionicons name="close" size={22} color="#333" />
+                </TouchableOpacity>
+              </View>
+
+              <TextInput
+                ref={commentInputRef}
+                className="bg-white/45 p-4 rounded-xl text-base h-40 mb-5 "
+                multiline={true}
+                value={commentText}
+                onChangeText={setCommentText}
+                placeholder="Enter your comment here..."
+                textAlignVertical="top"
+                autoFocus={false}
+                disableFullscreenUI={true}
+                keyboardType="default"
+                returnKeyType="default"
+                onSubmitEditing={() => {}}
+              />
+
+              <View className="flex-row justify-between space-x-3 mt-2 px-5 ">
+                <TouchableOpacity
+                  className="py-3 px-6 rounded-lg items-center border"
+                  onPress={() => {
+                    if (keyboardVisible) {
+                      Keyboard.dismiss();
+                      setTimeout(() => {
+                        setCommentModalVisible(false);
+                      }, 100);
+                    } else {
+                      setCommentModalVisible(false);
+                    }
+                    deleteComment(editingId);
+                  }}
+                >
+                  <Text className="text-gray-700 font-medium">
+                    Delete Comment
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  className="bg-specialGreen py-3 px-6 rounded-lg items-center shadow-sm"
+                  onPress={() => {
+                    if (keyboardVisible) {
+                      Keyboard.dismiss();
+                      setTimeout(() => {
+                        setCommentModalVisible(false);
+                      }, 100);
+                    } else {
+                      setCommentModalVisible(false);
+                    }
+                    saveComment(editingId, commentText);
+                  }}
+                >
+                  <Text className="text-white font-medium">Save</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </KeyboardAwareScrollView>
+        </View>
+      </Modal>
     );
   };
 
   // Render worker view - using WorkerPublicRequest interface
   const renderWorkerRequest = (item: WorkerPublicRequest) => {
     const isExpanded = expandedRequestId === item.id;
+
+    const modifyRequestStatus = async (status: number) => {
+      try {
+        await apiClient.put(
+          `/work/job-request/${item.id}/public-request/status`,
+          {
+            status,
+          },
+        );
+
+        item.status = getStatusTextFromCode(status);
+        setRequests((prevRequests) => {
+          // Create a new array with the updated item
+          return prevRequests.map((req) =>
+            req.id === item.id ? { ...req, status: item.status } : req,
+          );
+        });
+        notifications?.markPublicRequestAsRead();
+      } catch (err: any) {
+        if (err.response?.status === 401) {
+          if (await refreshAccessToken()) {
+            await modifyRequestStatus(status);
+          } else {
+            // need to login
+            router.push('/(auth)');
+          }
+        } else {
+          console.error(
+            'Error fetching requests:',
+            err.response?.data?.message || err.message,
+          );
+        }
+      }
+    };
+
+    const getStatusTextFromCode = (statusCode: number): string => {
+      switch (statusCode) {
+        case 1:
+          return RequestStatus.ACCEPTED;
+        case 2:
+          return RequestStatus.ON_HOLD;
+        default:
+          return RequestStatus.VERIFICATION_PENDING;
+      }
+    };
 
     if (!isExpanded) {
       return renderWorkerCollapsedView(item);
@@ -597,8 +945,11 @@ const PublicRequest = () => {
           onPress={() => toggleExpandRequest(item.id)}
           className="mb-3"
         >
-          <View className="flex-row justify-between items-center">
-            <View className="flex-row items-center">
+          <View className="flex-row justify-between items-center ">
+            <TouchableOpacity
+              className="flex-row items-center "
+              onPress={() => navigateToProfile(item.client_id, 1)}
+            >
               <Image
                 source={
                   item.client_profile_image
@@ -611,14 +962,11 @@ const PublicRequest = () => {
                 <Text className="font-medium">
                   {item.client_username || 'Client'}
                 </Text>
-                <Text numberOfLines={1} className="text-gray-500">
-                  {truncateText(item.description, 40)}
-                </Text>
               </View>
-            </View>
+            </TouchableOpacity>
             <View className="flex-row items-center">
               {getStatusIcon(item.status)}
-              <Text className="ml-1 text-gray-600 text-sm capitalize">
+              <Text className="ml-1 text-gray-600 text-base capitalize">
                 {item.status}
               </Text>
               <MaterialIcons
@@ -631,43 +979,24 @@ const PublicRequest = () => {
           </View>
         </TouchableOpacity>
 
-        <View className="flex-row mb-3">
-          <View className="flex-1">
-            <Text className="text-lg font-medium">
-              {item.client_username || 'Client'}
-            </Text>
-            <View className="flex-row items-center mt-1">
-              {getStatusIcon(item.status)}
-              <Text className="ml-1 text-gray-600 capitalize">
-                {item.status === RequestStatus.ON_HOLD
-                  ? 'On Hold'
-                  : item.status === RequestStatus.PENDING_CLIENT_VERIFICATION
-                    ? 'Pending Verification'
-                    : item.status === RequestStatus.COMPLETED
-                      ? 'Completed'
-                      : item.status === RequestStatus.ACCEPTED
-                        ? 'Accepted'
-                        : item.status || 'On Hold'}
-              </Text>
-            </View>
-          </View>
-          <View className="flex-row items-center">
-            <TouchableOpacity className="mr-2">
-              <Ionicons name="call" size={30} color="#000" />
-            </TouchableOpacity>
-            <TouchableOpacity>
-              <MaterialCommunityIcons
-                name="message-text-outline"
-                size={30}
-                color="#000"
-              />
-            </TouchableOpacity>
+        <View className="flex-row mb-3 justify-end">
+          <View className="items-center ">
+            {item.status == "Accepted" && (
+              <TouchableOpacity
+                className="mr-4"
+                onPress={() => {
+                  handelcall("251911111111");
+                }}
+              >
+                <Ionicons name="call" size={32} color="#000" />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
         <View className="pl-2">
           <Text className="text-base mb-1">
-            <Text className="font-bold">Request Date: </Text>
+            <Text className="font-bold">Request Date:</Text>
             <Text className="text-green-500">{item.post_date}</Text>
           </Text>
           <Text className="text-base mb-1">
@@ -677,30 +1006,28 @@ const PublicRequest = () => {
               {item.location?.country}
             </Text>
           </Text>
-          <Text className="text-base mb-1">
-            <Text className="font-bold">Category: </Text>
+          <Text className="text-base mb-2">
+            <Text className="font-bold text-black">Category:</Text>
             <Text className="text-green-500">{item.category}</Text>
           </Text>
-          <Text className="text-base mb-1">
-            <Text className="font-bold">About Service: </Text>
+          <Text className="text-base mb-2">
+            <Text className="font-bold text-black">About Service: </Text>
             <Text className="text-green-500">{item.description}</Text>
           </Text>
           {item.worker_comment && (
-            <Text className="text-base mb-1">
-              <Text className="font-bold">Your Comment: </Text>
+            <Text className="text-base mb-2">
+              <Text className="font-bold text-black">Your Comment: </Text>
               <Text className="text-green-500">{item.worker_comment}</Text>
             </Text>
           )}
           {item.comment_date && (
-            <Text className="text-base mb-1">
-              <Text className="font-bold">Comment Date: </Text>
-              <Text className="text-green-500">{item.comment_date}</Text>
+            <Text className="text-base mb-2">
+              <Text className="font-bold text-black">Comment Date: </Text>
+              <Text className="text-green-500">
+                {formatDateTime(item.comment_date)}
+              </Text>
             </Text>
           )}
-          <Text className="text-base mb-1">
-            <Text className="font-bold">Payment Method: </Text>
-            <Text className="text-green-500">{item.payment_method}</Text>
-          </Text>
         </View>
 
         <View className="mt-4">
@@ -754,22 +1081,26 @@ const PublicRequest = () => {
           </ScrollView>
         </View>
 
-        {/* Action buttons based on status */}
-        {item.status === RequestStatus.ACCEPTED && (
-          <TouchableOpacity
-            className="bg-blue-500 items-center justify-center py-3 mt-3 rounded"
-            onPress={() => console.log('Mark as completed')}
-          >
-            <Text className="text-base text-white">Mark as Completed</Text>
-          </TouchableOpacity>
-        )}
+        {/* For PENDING_WORKER_VERIFICATION requests */}
+        {item.status === RequestStatus.VERIFICATION_PENDING && (
+          <View className="flex-row justify-between mt-4 px-2">
+            <TouchableOpacity
+              className="flex-1 bg-green-600 items-center justify-center py-3 rounded-lg shadow mr-2"
+              onPress={async () => await modifyRequestStatus(1)}
+            >
+              <Text className="text-base font-medium text-white">
+                Confirm Work
+              </Text>
+            </TouchableOpacity>
 
-        {/* For PENDING_CLIENT_VERIFICATION requests - Worker sees waiting status */}
-        {item.status === RequestStatus.PENDING_CLIENT_VERIFICATION && (
-          <View className="bg-yellow-100 border border-yellow-400 items-center justify-center py-3 mt-3 rounded">
-            <Text className="text-base text-yellow-800">
-              Waiting for client confirmation
-            </Text>
+            <TouchableOpacity
+              className="flex-1 bg-red-500 items-center justify-center py-3 rounded-lg shadow"
+              onPress={async () => await modifyRequestStatus(2)}
+            >
+              <Text className="text-base font-medium text-white">
+                Cancel Work
+              </Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -785,7 +1116,7 @@ const PublicRequest = () => {
         {/* ONLY show Edit Comment button for worker */}
         <TouchableOpacity
           className="bg-blue-500 items-center justify-center py-3 mt-3 rounded"
-          onPress={() => handleEditComment(item.id)}
+          onPress={() => handleEditComment(item.id, item.worker_comment)}
         >
           <Text className="text-base text-white">Edit Comment</Text>
         </TouchableOpacity>
@@ -918,6 +1249,69 @@ const PublicRequest = () => {
               <Text className="text-white text-center">
                 {selectedMedia + 1} / {currentViewingMedia?.length}
               </Text>
+            </View>
+          </View>
+        </Modal>
+        <CommentEditModal />
+        <Modal
+          visible={ratingModalVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setRatingModalVisible(false)}
+        >
+          <View className="flex-1 bg-black/50 justify-center items-center">
+            <View className="bg-white p-6 rounded-xl w-[90%] max-w-[400px]">
+              <Text className="text-xl font-bold text-center mb-4">
+                Rate Worker Performance
+              </Text>
+
+              <Text className="text-center text-gray-600 mb-6">
+                Please rate and comment on the worker's service
+              </Text>
+
+              <Rating
+                type="star"
+                ratingCount={5}
+                imageSize={40}
+                startingValue={rating}
+                onFinishRating={(value: number) => setRating(value)}
+                style={{ paddingVertical: 10 }}
+              />
+
+              <TextInput
+                className="border border-gray-300 rounded-xl p-3 mt-4 mb-2"
+                placeholder="Add your comment (optional)"
+                multiline
+                numberOfLines={3}
+                maxLength={200}
+                value={ratingComment}
+                onChangeText={setRatingComment}
+              />
+
+              <View className="flex-row justify-between mt-6">
+                <TouchableOpacity
+                  onPress={() => {
+                    setRatingModalVisible(false);
+                    setTempRequest(null);
+                    setRating(0);
+                    setRatingComment(''); // Clear comment
+                  }}
+                  className="bg-gray-500 py-3 px-6 rounded-xl flex-1 mr-2 justify-center"
+                >
+                  <Text className="text-white text-center font-semibold">
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleRatingSubmit}
+                  className="bg-green-500 py-3 px-6 rounded-xl flex-1 ml-2"
+                >
+                  <Text className="text-white text-center font-semibold">
+                    Submit & Complete
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </Modal>

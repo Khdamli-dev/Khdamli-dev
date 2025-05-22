@@ -19,7 +19,7 @@ export const MaterialTopTab = withLayoutContext<
   MaterialTopTabNavigationEventMap
 >(Navigator);
 
-const PrivateTabLabel = ({ title, count = 0 } : {title : string, count : number}) : JSX.Element => {
+const TabLabel = ({ title, count = 0 } : {title : string, count : number}) : JSX.Element => {
   return (
     <View className="relative items-center flex">
       <Text className="text-[15px] font-bold capitalize text-[#2B524A]">
@@ -31,7 +31,6 @@ const PrivateTabLabel = ({ title, count = 0 } : {title : string, count : number}
 };
 
 const TopTabs = () => {
-  const { unreadRequests } = useNotifications();
   return (
     <MaterialTopTab
       screenOptions={{
@@ -45,15 +44,19 @@ const TopTabs = () => {
         },
       }}
     >
-      <MaterialTopTab.Screen
-        name="ClientRequest"
-        options={{ title: "Public" }}
+      <MaterialTopTab.Screen 
+        name="ClientRequest" 
+        options={{ 
+          tabBarLabel: ({ color }) => (
+            <TabLabel title="Public" count={useNotifications()?.unreadPublicRequests || 0} />
+          )
+        }}
       />
       <MaterialTopTab.Screen 
         name="Private" 
         options={{ 
           tabBarLabel: ({ color }) => (
-            <PrivateTabLabel title="Private" count={unreadRequests} />
+            <TabLabel title="Private" count={useNotifications()?.unreadRequests || 0} />
           )
         }}
       />

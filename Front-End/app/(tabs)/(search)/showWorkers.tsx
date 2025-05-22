@@ -33,82 +33,6 @@ interface SubCategory {
   parent_category: string;
 }
 
-// // Mock data for testing
-// const MOCK_WORKERS: Worker[] = [
-//   {
-//     workerId: 1,
-//     workerName: "Ahmed Hassan",
-//     profileImage: "https://randomuser.me/api/portraits/men/20.jpg",
-//     region: "Algeria",
-//     city: "Sidi Bel Abbes",
-//   },
-//   {
-//     workerId: 2,
-//     workerName: "Mohammed Ali",
-//     profileImage: "https://randomuser.me/api/portraits/men/22.jpg",
-//     region: "Algeria",
-//     city: "Oran",
-//   },
-//   {
-//     workerId: 3,
-//     workerName: "Said Mezouar",
-//     profileImage: "https://randomuser.me/api/portraits/men/23.jpg",
-//     region: "Algeria",
-//     city: "Algiers",
-//   },
-//   {
-//     workerId: 4,
-//     workerName: "Karim Benali",
-//     profileImage: "https://randomuser.me/api/portraits/men/24.jpg",
-//     region: "Algeria",
-//     city: "Constantine",
-//   },
-//   {
-//     workerId: 5,
-//     workerName: "Omar Taleb",
-//     profileImage: "https://randomuser.me/api/portraits/men/25.jpg",
-//     region: "Algeria",
-//     city: "Annaba",
-//   },
-//   {
-//     workerId: 6,
-//     workerName: "Yacine Bouhafs",
-//     profileImage: "https://randomuser.me/api/portraits/men/26.jpg",
-//     region: "Algeria",
-//     city: "Sidi Bel Abbes",
-//   },
-//   {
-//     workerId: 7,
-//     workerName: "Hamza Belhadj",
-//     profileImage: "https://randomuser.me/api/portraits/men/27.jpg",
-//     region: "Algeria",
-//     city: "Oran",
-//   },
-// ];
-
-// const MOCK_SUBCATEGORIES: Record<string, SubCategory> = {
-//   "101": {
-//     id: "101",
-//     name: "Pipe Repair",
-//     description: "Fix leaking pipes and water systems",
-//   },
-//   "102": {
-//     id: "102",
-//     name: "Drainage",
-//     description: "Unblock drains and repair systems",
-//   },
-//   "201": {
-//     id: "201",
-//     name: "Wiring",
-//     description: "Home electrical wiring services",
-//   },
-//   "301": {
-//     id: "301",
-//     name: "Furniture",
-//     description: "Custom furniture making and repair",
-//   },
-// };
-
 const ServiceProvidersScreen = () => {
   const screenWidth = Dimensions.get("window").width;
 
@@ -206,14 +130,6 @@ const ServiceProvidersScreen = () => {
     });
   };
 
-  // Handle send request to worker
-  const handleSendRequest = (worker: Worker) => {
-    router.push({
-      pathname: "./requeste",
-      params: { type: "2" },
-    });
-  };
-
   // Handle pull-to-refresh
   const onRefresh = () => {
     setRefreshing(true);
@@ -225,6 +141,16 @@ const ServiceProvidersScreen = () => {
     return text.length > maxLength
       ? text.substring(0, maxLength) + "..."
       : text;
+  };
+
+  // Focus on the handleSendRequest function and the TouchableOpacity button
+
+  // Handle send request to worker
+  const handleSendRequest = (worker: Worker) => {
+    router.push({
+      pathname: "./requeste",
+      params: { workerId: worker.id },
+    });
   };
 
   const renderWorkerItem = ({ item }: { item: Worker }) => {
@@ -268,17 +194,16 @@ const ServiceProvidersScreen = () => {
 
           {/* Send Request Button */}
           {role === 1 && (
-            <>
-              <TouchableOpacity
-                className="bg-[#F8A100] py-2 px-4 rounded-md mt-3 flex-row items-center justify-center"
-                onPress={() => handleSendRequest(item)}
-              >
-                <EvilIcons name="envelope" size={24} color="white" />
-                <Text className="text-white font-medium ml-1">
-                  Send Request
-                </Text>
-              </TouchableOpacity>
-            </>
+            <TouchableOpacity
+              className="bg-[#F8A100] py-2 px-4 rounded-md mt-3 flex-row items-center justify-center"
+              onPress={() => handleSendRequest(item)}
+              activeOpacity={0.7}
+            >
+              <EvilIcons name="envelope" size={24} color="white" />
+              <Text className="text-white font-medium ml-1">
+                Send Request
+              </Text>
+            </TouchableOpacity>
           )}
         </View>
       </TouchableOpacity>

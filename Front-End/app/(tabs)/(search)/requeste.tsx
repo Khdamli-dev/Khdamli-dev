@@ -24,7 +24,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import OneCategorySelector from "@/Component/selectOneCategory";
 import WilayaDropdown from "@/Component/wilayaDropDown";
 import AddressDropdown from "@/Component/addressDropDown";
-import PaymentMethod from "@/Component/paymentMethods";
 import TheTime from "@/Component/time";
 import DatePicker from "@/Component/date";
 import MediaUploader, { MediaItem } from "@/Component/mediaUploader";
@@ -247,7 +246,6 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
           worker : +workerId,
           status: 3, // "On Hold"
         };
-        console.log("hhh");
         const response = await apiClient.post(
           `/work/job-request/`,
           jobRequest

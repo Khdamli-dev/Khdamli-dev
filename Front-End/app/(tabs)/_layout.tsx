@@ -35,6 +35,23 @@ const CustomTabBarIcon = ({
   );
 };
 
+// Component that uses the notification context
+const RequestsTabIcon = ({ color, focused }: { color: string; focused: boolean }) => {
+  const notifications = useNotifications();
+
+  return (
+    <View className="relative w-12 h-12 items-center justify-center">
+      <CustomTabBarIcon name="clipboard" color={color} focused={focused} />
+      {notifications && (
+        <NotificationBadge
+          count={notifications.unreadPublicRequests + notifications.unreadRequests}
+          size="large"
+        />
+      )}
+    </View>
+  );
+};
+
 export default function TabLayout() {
   const workerRoleId: number = 2;
   const [role, setRole] = useState<number | null>(null);
@@ -55,93 +72,86 @@ export default function TabLayout() {
     fetchRole();
   }, []);
 
-  // Only use NotificationProvider if the role matches
-  const TabsContent = (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: '#396F65',
-          height: 60,
-          borderTopWidth: 0,
-          paddingBottom: 0,
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          marginTop: -10,
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="(home)"
-        options={{
-          tabBarLabel: ({ focused }) =>
-            focused ? (
-              <Text className="text-[#F8A100] font-medium my-1">Home</Text>
-            ) : null,
-          tabBarIcon: ({ color, focused }) => (
-            <CustomTabBarIcon name="home" color={color} focused={focused} />
-          ),
+  // Define tabs content with proper context handling
+  const TabsContent = () => {
+    return (
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarStyle: {
+            backgroundColor: '#396F65',
+            height: 60,
+            borderTopWidth: 0,
+            paddingBottom: 0,
+          },
+          tabBarLabelStyle: {
+            fontSize: 12,
+            marginTop: -10,
+          },
         }}
-      />
-      <Tabs.Screen
-        name="(search)"
-        options={{
-          tabBarLabel: ({ focused }) =>
-            focused ? (
-              <Text className="text-[#F8A100] font-medium my-1">Search</Text>
-            ) : null,
-          tabBarIcon: ({ color, focused }) => (
-            <CustomTabBarIcon name="search" color={color} focused={focused} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="(requests)"
-        options={{
-          tabBarLabel: ({ focused }) =>
-            focused ? (
-              <Text className="text-[#F8A100] font-medium my-1">Requests</Text>
-            ) : null,
-          tabBarIcon: ({ color, focused }) => (
-            <View className="relative w-12 h-12 items-center justify-center">
+      >
+        <Tabs.Screen
+          name="(home)"
+          options={{
+            tabBarLabel: ({ focused }) =>
+              focused ? (
+                <Text className="text-[#F8A100] font-medium my-1">Home</Text>
+              ) : null,
+            tabBarIcon: ({ color, focused }) => (
+              <CustomTabBarIcon name="home" color={color} focused={focused} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="(search)"
+          options={{
+            tabBarLabel: ({ focused }) =>
+              focused ? (
+                <Text className="text-[#F8A100] font-medium my-1">Search</Text>
+              ) : null,
+            tabBarIcon: ({ color, focused }) => (
+              <CustomTabBarIcon name="search" color={color} focused={focused} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="(requests)"
+          options={{
+            tabBarLabel: ({ focused }) =>
+              focused ? (
+                <Text className="text-[#F8A100] font-medium my-1">Requests</Text>
+              ) : null,
+            tabBarIcon: ({ color, focused }) => (
+              <RequestsTabIcon color={color} focused={focused} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="(profile)"
+          options={{
+            tabBarLabel: ({ focused }) =>
+              focused ? (
+                <Text className="text-[#F8A100] font-medium my-1">Profile</Text>
+              ) : null,
+            tabBarIcon: ({ color, focused }) => (
               <CustomTabBarIcon
-                name="clipboard"
+                name="user-circle-o"
                 color={color}
                 focused={focused}
               />
-              {workerRoleId && role === workerRoleId && (
-                <NotificationBadge
-                  count={useNotifications().unreadRequests}
-                  size="large"
-                />
-              )}
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="(profile)"
-        options={{
-          tabBarLabel: ({ focused }) =>
-            focused ? (
-              <Text className="text-[#F8A100] font-medium my-1">Profile</Text>
-            ) : null,
-          tabBarIcon: ({ color, focused }) => (
-            <CustomTabBarIcon
-              name="user-circle-o"
-              color={color}
-              focused={focused}
-            />
-          ),
-        }}
-      />
-    </Tabs>
-  );
+            ),
+          }}
+        />
+      </Tabs>
+    );
+  };
+
   // Conditionally wrap with Provider
   return workerRoleId && role === workerRoleId ? (
-    <NotificationProvider>{TabsContent}</NotificationProvider>
+    <NotificationProvider>
+      <TabsContent />
+    </NotificationProvider>
   ) : (
-    TabsContent
+    <TabsContent />
   );
 }

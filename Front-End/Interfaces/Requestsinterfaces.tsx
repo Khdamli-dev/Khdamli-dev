@@ -1,5 +1,9 @@
 interface WorkerPrivateRequest {
-  id : number;
+  workerId : number,
+  clientId : number,
+  id: number;
+  client_id: number;
+  client_phone_number: string;
   client_username: string;
   category: string;
   media: {
@@ -14,17 +18,18 @@ interface WorkerPrivateRequest {
   };
   sent_date: string;
   description: string;
-  payment_method: string;
   status: string;
-};
+}
 interface ClientPrivateRequest {
-  id : number;
+  workerId : number,
+  clientId : number,
+  id: number;
   status: string;
   worker_username: string;
   worker_profile_image: string;
   sent_date: string;
   category: string;
-  description : string;
+  description: string;
   media: {
     type: string;
     url: string;
@@ -34,11 +39,11 @@ interface ClientPrivateRequest {
     region: string;
     country: string;
   };
-  payment_method: string;
-};
+}
 interface WorkerPublicRequest {
-  id : number;
+  id: number;
   category: string;
+  client_id: number;
   client_username: string;
   client_profile_image: string;
   worker_comment: string;
@@ -54,11 +59,12 @@ interface WorkerPublicRequest {
     type: string;
     url: string;
   }[];
-  payment_method: string;
   status: string;
-};
+}
 interface ClientPublicRequest {
-  id : number;
+  workerId : number,
+  clientId : number,
+  id: number;
   category: string;
   location: {
     city: string;
@@ -72,12 +78,11 @@ interface ClientPublicRequest {
     type: string;
     url: string;
   }[];
-  payment_method: string;
   status: string;
-};
+}
 export {
-  WorkerPrivateRequest , 
-  WorkerPublicRequest ,
-  ClientPrivateRequest ,
-  ClientPublicRequest
+  WorkerPrivateRequest,
+  WorkerPublicRequest,
+  ClientPrivateRequest,
+  ClientPublicRequest,
 };
