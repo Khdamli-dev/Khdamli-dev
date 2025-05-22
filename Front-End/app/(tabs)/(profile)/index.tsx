@@ -35,7 +35,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { FontAwesome } from "@expo/vector-icons";
 import apiClient from "@/api/appClient";
-
+import Dashboard from "@/Component/ProfileComponents/Dashboard";
+import Reviews from "@/Component/ProfileComponents/Reviews";
 const { width } = Dimensions.get("window");
 
 type RootStackParamList = {
@@ -112,13 +113,13 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     category: null,
     gallery: null,
   });
-
+  const [userId, setUserId] = useState<string>("");
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const userData = await AsyncStorage.getItem("user");
         const user: any = JSON.parse(userData as any);
-
+        setUserId(user.id);
         if (!user) {
           return;
         }
@@ -239,7 +240,18 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
       </View>
     </TouchableOpacity>
   );
-
+  const handleNavigatetoclientprofiele = (clientId: string) => {
+    console.log(`Navigate to client: ${clientId}`);
+    router.push({
+          pathname: "/clientProfile",
+          params: {
+            userId: clientId,
+            userRole: 1,
+          },
+        });
+    // Navigate to client profile
+  };
+ 
   return (
     <ScrollView>
       <LinearGradient
@@ -312,6 +324,13 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
       </LinearGradient>
       {user.accountType === "worker" && (
         <>
+          <Dashboard
+            workerId={userId} // Pass the userId to the Dashboard component
+            onStatPress={(statType) => {
+              console.log(`Pressed ${statType} stat`);
+              // Navigate to detailed stats screen
+            }}
+          />
           <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
             <Text
               className="text-center text-[#BD7D06]  mb-2.5"
@@ -414,51 +433,64 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         )}
       </View>
       {user.accountType === "worker" && (
-        <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
-          <View className="flex-row justify-between items-center mb-2.5">
-            <Text
-              className="text-center text-[#BD7D06]  mb-2.5 text-[20px]"
-              style={{ fontFamily: "Itim_400Regular" }}
-            >
-              Some Pictures
-            </Text>
-            <TouchableOpacity
-              className="items-center my-2.5 p-1.25"
-              onPress={pickGalleryMedia}
-            >
-              <Plus size={22} color="#BD7D06" strokeWidth={4} />
-            </TouchableOpacity>
-          </View>
-          <FlatList
-            data={user.gallery}
-            renderItem={({ item }) => (
-              <View className="relative mx-4">
-                {item.type === "image" ? (
-                  <Image
-                    source={{ uri: item.uri }}
-                    className="h-[300px] rounded-[10px] my-1.5"
-                    style={{ width: width - 32 }}
-                  />
-                ) : (
-                  <Video
-                    source={{ uri: item.uri }}
-                    className="h-[300px] rounded-[10px] my-1.5"
-                    style={{ width: width - 32 }}
-                    useNativeControls={true}
-                    resizeMode={ResizeMode.CONTAIN}
-                    shouldPlay={false}
-                  />
-                )}
+        <>
+          <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
+            <View className="flex-row justify-between items-center mb-2.5">
+              <Text
+                className="text-center text-[#BD7D06]  mb-2.5 text-[20px]"
+                style={{ fontFamily: "Itim_400Regular" }}
+              >
+                Some Pictures
+              </Text>
+              <TouchableOpacity
+                className="items-center my-2.5 p-1.25"
+                onPress={pickGalleryMedia}
+              >
+                <Plus size={22} color="#BD7D06" strokeWidth={4} />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={user.gallery}
+              renderItem={({ item }) => (
+                <View className="relative mx-4">
+                  {item.type === "image" ? (
+                    <Image
+                      source={{ uri: item.uri }}
+                      className="h-[300px] rounded-[10px] my-1.5"
+                      style={{ width: width - 32 }}
+                    />
+                  ) : (
+                    <Video
+                      source={{ uri: item.uri }}
+                      className="h-[300px] rounded-[10px] my-1.5"
+                      style={{ width: width - 32 }}
+                      useNativeControls={true}
+                      resizeMode={ResizeMode.CONTAIN}
+                      shouldPlay={false}
+                    />
+                  )}
 
-                <TouchableOpacity className="absolute top-[10px] right-[10px] bg-[rgba(255,0,0,0.7)] rounded-[15px] p-2">
-                  <Trash size={20} color="white" />
-                </TouchableOpacity>
-              </View>
-            )}
-            keyExtractor={(item, index) => item.uri + index}
-            scrollEnabled={false}
+                  <TouchableOpacity className="absolute top-[10px] right-[10px] bg-[rgba(255,0,0,0.7)] rounded-[15px] p-2">
+                    <Trash size={20} color="white" />
+                  </TouchableOpacity>
+                </View>
+              )}
+              keyExtractor={(item, index) => item.uri + index}
+              scrollEnabled={false}
+            />
+          </View>
+          <Reviews
+            workerId={userId}
+            onClientPress={(clientId) => {
+              handleNavigatetoclientprofiele(clientId);
+              // Navigate to client profile
+            }}
+            onViewAllPress={() => {
+              console.log("View all reviews");
+              // Navigate to all reviews screen
+            }}
           />
-        </View>
+        </>
       )}
     </ScrollView>
   );
