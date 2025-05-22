@@ -25,7 +25,6 @@ const changeToWorkerRole = async (req: Request, res: Response) => {
     const role: number = 2;
     // check if he already have role
     if (role == existUser[0].role) {
-      console.log(existUser[0].role)
       res.status(400).json({ message: 'you already have worker role' });
       return;
     }
@@ -54,7 +53,6 @@ const changeToWorkerRole = async (req: Request, res: Response) => {
 
     res.status(201).json({ message: 'worker added' , success : true});
   } catch (error) {
-    console.log(error);
     res.status(500).json({ message: 'internal error' });
   }
 };

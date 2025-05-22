@@ -1,11 +1,12 @@
-import { View } from "react-native";
-import React, { useEffect, useRef } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Animated, Easing } from "react-native";
-import { useRouter } from "expo-router";
-import * as SecureStore from "expo-secure-store";
-import apiClient from "@/api/appClient";
-import refreshAccessToken from "@/api/refreshAccessToken";
+import { View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Animated, Easing } from 'react-native';
+import { useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
+import apiClient from '@/api/appClient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { connectSocket } from '@/api/socket';
 
 const AppStartUp = () => {
   const router = useRouter();
@@ -13,6 +14,15 @@ const AppStartUp = () => {
   const leftAnim = useRef(new Animated.Value(-200)).current;
   const rightAnim = useRef(new Animated.Value(200)).current;
   const imageAnim = useRef(new Animated.Value(200)).current;
+  const getUserVerificationStatus = async () => {
+  try {
+    const status = await AsyncStorage.getItem('userVerified');
+    return status === 'true';
+  } catch (error) {
+    console.error('Error retrieving verification status:', error);
+    return false;
+  }
+};
 
   useEffect(() => {
     // تشغيل الأنيميشن
@@ -39,26 +49,66 @@ const AppStartUp = () => {
 
     // التحقق من تسجيل الدخول بعد 3 ثوانٍ
     const checkLoginStatus = async () => {
-      // refresh the access token
-      const refreshToken = await SecureStore.getItemAsync("refreshToken");
-      if (!refreshToken) {
-        router.replace("/(auth)");
-        return;
-      }
-
       try {
-        const response = await apiClient.post("/auth/refresh", null, {
+        // Check if refresh token exists
+        const refreshToken = await SecureStore.getItemAsync('refreshToken');
+        if (!refreshToken) {
+          router.replace('/(auth)');
+          return;
+        }
+
+        // Try to refresh the access token
+        const response = await apiClient.post('/auth/refresh', null, {
           headers: {
-            "x-refresh-token": `Bearer ${refreshToken}`,
+            'x-refresh-token': `Bearer ${refreshToken}`,
           },
         });
+        
         if (response.data.success) {
-          const { accessToken }: { accessToken: string } = response.data;
-          await SecureStore.setItemAsync("accessToken", accessToken);
-          router.replace("/(tabs)/(home)");
-        } else router.replace("/(auth)");
+          const { accessToken, user } = response.data;
+          
+          // Store the new access token
+          await SecureStore.setItemAsync('accessToken', accessToken);
+          
+          // Update user data in AsyncStorage
+          await AsyncStorage.setItem('user', JSON.stringify(user));
+           const isVerified = await getUserVerificationStatus();
+          
+          if (!isVerified) {
+            // Redirect to verification page
+            router.push('/(auth)/verifyAccount?sendEmail=true');
+            return;
+          }
+
+          // Connect socket and join user room
+          try {
+            console.log('Connecting to socket...');
+            const socket = connectSocket();
+
+            // Wait a brief moment to ensure connection is established
+            setTimeout(() => {
+              if (socket.connected) {
+                console.log(`Joining room for user ${user.id}`);
+                socket.emit('user-room', user.id);
+              } else {
+                console.warn('Socket not connected yet, cannot join room');
+                // Retry joining room
+                socket.on('connect', () => {
+                  console.log(
+                    `Socket connected, now joining room for user ${user.id}`,
+                  );
+                  socket.emit('user-room', user.id);
+                });
+              }
+            }, 500);
+          } catch (socketError) {
+            console.error('Socket connection error:', socketError);
+          }
+
+          router.replace('/(tabs)/(home)');
+        } else router.replace('/(auth)');
       } catch (error) {
-        router.replace("/(auth)");
+        router.replace('/(auth)');
       }
     };
 
@@ -77,9 +127,9 @@ const AppStartUp = () => {
           >
             KH
           </Animated.Text>
-          <View className=" items-end flex-col">
+          <View className="items-end flex-col">
             <Animated.Image
-              source={require("../assets/images/startUpPhoto.jpg")}
+              source={require('../assets/images/startUpPhoto.jpg')}
               className="w-full h-32"
               style={{
                 transform: [{ translateX: imageAnim }],

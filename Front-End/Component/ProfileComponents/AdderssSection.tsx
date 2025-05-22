@@ -14,19 +14,37 @@ import refreshAccessToken from "@/api/refreshAccessToken";
 
 import DropdownSearch from "./DropdownSearch";
 import apiClient from "@/api/appClient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const AddressSection = ({
   onChange,
 }: {
   onChange: (data: {
-    wilayaId: number | null;
-    dairaId: number | null;
-    addressname: string | null;
-    addressId: number | null;
+    region: number | null;
+    city: number | null;
+    street: string | null;
+    addressName: number | null;
   }) => void;
 }) => {
-  const [loading, setLoading] = useState(false);
+  const handleAddressChange = (region: number | null, city: number | null) => {
+    const changes: {
+      region: number | null;
+      city: number | null;
+    } = {
+      region: region !== initialWilaya ? region : null,
+      city: city !== initialDaira ? city : null,
+    };
 
+    // Only call onChange if there are actual changes
+    if (changes.region !== null || changes.city !== null) {
+      onChange(changes as any);
+    }
+  };
+  const [loading, setLoading] = useState(false);
+  const [initialWilaya, setInitialWilaya] = useState<number | null>(null);
+  const [initialDaira, setInitialDaira] = useState<number | null>(null);
+  const [prevwly, setprevwly] = useState();
+  const [prevadr, setprevadr] = useState();
   const [wilayas, setWilayas] = useState<{ id: number; name: string }[]>([]);
   const [filteredWilayas, setFilteredWilayas] = useState<
     { id: number; name: string }[]
@@ -60,6 +78,52 @@ const AddressSection = ({
   const [wilayaInput, setWilayaInput] = useState("");
   const [dairaInput, setDairaInput] = useState("");
   const [addressInput, setAddressInput] = useState("");
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const userData = await AsyncStorage.getItem("user");
+        const user: any = JSON.parse(userData as any);
+
+        if (!user) {
+          return;
+        }
+
+        const { id, role } = user;
+        const endpoint =
+          role === 1 ? `/users/client/` : role === 2 ? `/users/worker/` : null;
+        if (endpoint) {
+          const response = await apiClient.get(`${endpoint}${id}`);
+          console.log(response);
+          const newUserData =
+            role === 1
+              ? {
+                  region: response.data.client.location.region,
+                  city: response.data.client.location.city,
+                }
+              : {
+                  region: response.data.worker.location.region,
+                  city: response.data.worker.location.city,
+                };
+          setprevwly(newUserData.city);
+          setprevadr(newUserData.region);
+          setInitialWilaya(newUserData.region?.id);
+          setInitialDaira(newUserData.city?.id);
+        } else {
+          console.log("Unknown role");
+        }
+      } catch (error: any) {
+        if (error.response?.status === 401) {
+          if (await refreshAccessToken()) {
+            await fetchUser();
+          }
+        }
+        console.error("Failed to fetch user data", error);
+      }
+    };
+
+    fetchUser();
+  }, []);
 
   useEffect(() => {
     const fetchRegions = async () => {
@@ -177,14 +241,7 @@ const AddressSection = ({
               setFilteredWilayas([]);
               setSelectedDaira(null);
               setDairaInput("");
-              // setSelectedAddress(null);
-              // setAddressInput("");
-              onChange({
-                wilayaId: item.id,
-                dairaId: null,
-                addressname: null,
-                addressId: null,
-              });
+              handleAddressChange(item.id, null);
             }}
             renderItem={(item) => (
               <Text className="p-[10px] bg-[#f8f8f8] border-b border-black">
@@ -192,7 +249,7 @@ const AddressSection = ({
               </Text>
             )}
             keyExtractor={(item) => item.id.toString()}
-            placeholder=" Enter Your Wilaya"
+            placeholder={prevadr || "Enter Your City"}
           />
 
           <DropdownSearch
@@ -208,15 +265,7 @@ const AddressSection = ({
               setSelectedDaira(item);
               setDairaInput(item.name);
               setFilteredDairas([]);
-
-              // setSelectedAddress(null);
-              // setAddressInput("");
-              onChange({
-                wilayaId: selectedWilaya?.id || null,
-                dairaId: item.id,
-                addressname: null,
-                addressId: null,
-              });
+              handleAddressChange(selectedWilaya?.id || null, item.id);
             }}
             renderItem={(item) => (
               <Text className="p-[10px] bg-[#f8f8f8] border-b border-black">
@@ -224,7 +273,7 @@ const AddressSection = ({
               </Text>
             )}
             keyExtractor={(item) => item.id.toString()}
-            placeholder=" Enter Your Baladiya"
+            placeholder={prevwly || "Enter Your Address"}
           />
 
           {/* <DropdownSearch

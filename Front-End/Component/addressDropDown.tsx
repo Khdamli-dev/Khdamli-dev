@@ -47,7 +47,6 @@ const AddressDropdown: React.FC<AddressDropdownProps> = ({
           router.push("/(auth)");
         }
       }
-      console.log(error);
     }
   };
 

@@ -20,7 +20,6 @@ const getRegions = async (req: Request, res: Response) => {
       regions: regions
     });
   } catch (error) {
-    console.log(error);
     res.status(500).json({ message: "internal error" });
   }
 };

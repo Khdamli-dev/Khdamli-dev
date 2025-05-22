@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { Request, Response } from "express";
 import makeJwtToken from "../utils/authentication/makeJwtToken";
 import { JwtToken, JwtUserPayload } from "../interface/jwtToken";
+import pool from "../database/dbConnection";
 
 dotenv.config();
 
@@ -29,7 +30,7 @@ const refreshAccessToken = (req: Request, res: Response) => {
   }
 
   // check refresh token
-  jwt.verify(refreshToken, refreshTokenSecret, (err, decode) => {
+  jwt.verify(refreshToken, refreshTokenSecret, async (err, decode) => {
     if (err) {
       res.status(403).json({
         message: "you are forbidden, fake refresh token",
@@ -40,11 +41,27 @@ const refreshAccessToken = (req: Request, res: Response) => {
 
     // generate new access token
     const decodedToken: JwtUserPayload = decode as JwtUserPayload;
-    const { userId, role }: { userId: string; role: string } =
-      decodedToken.userInfo;
+    const { userId }: { userId: string } = decodedToken.userInfo;
+
+    // get user
+    const { rows: user } = await pool.query(
+      `
+        SELECT * from "user"
+        WHERE id=$1
+        `,
+      [userId]
+    );
+    if (!user.length) {
+      res.status(403).json({
+        message: "you are forbidden, don't have account",
+        success: false,
+      });
+      return;
+    }
+
     let info: JwtToken = {
       userId,
-      role,
+      role: String(user[0].role),
       time: "30m",
       secret: process.env.Access_Token_Secret || "",
     };
@@ -53,6 +70,7 @@ const refreshAccessToken = (req: Request, res: Response) => {
       success: true,
       message: "generate new access token with success",
       accessToken,
+      user: user[0],
     });
   });
 };

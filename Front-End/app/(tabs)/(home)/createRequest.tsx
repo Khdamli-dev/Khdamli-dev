@@ -9,7 +9,6 @@ import {
   TextInput,
   Dimensions,
   Platform,
-  Button,
 } from "react-native";
 import { router } from "expo-router";
 import {
@@ -267,7 +266,6 @@ const uploadSelectedMedia = async (requestId: number) => {
          type: 1, // Public request
          status: 3, // "On Hold"
        };
-       console.log(user.role);
        const response = await apiClient.post(
          `/work/job-request/`,
          jobRequest 

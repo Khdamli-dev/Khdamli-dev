@@ -22,7 +22,7 @@ const verifyEmailConfirmationOTP = async (req: Request, res: Response) => {
     // Verify OTP from otp_codes table
     const { rows } = await pool.query(
       `SELECT expires_at FROM otp_codes WHERE user_id = $1 AND otp = $2 AND purpose = $3`,
-      [id, otp , "account_verification"],
+      [id, +otp , "account_verification"],
     );
     if (!rows.length) {
       res.status(400).json({

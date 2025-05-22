@@ -1,7 +1,6 @@
 import apiClient from "@/api/appClient";
-import CONFIG from "@/config";
 import { EvilIcons } from "@expo/vector-icons";
-import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import React, { useState, useEffect } from "react";
 import {
@@ -44,78 +43,6 @@ interface Worker {
   };
 }
 
-// Mock data for testing
-const MOCK_CATEGORIES: Category[] = [
-  {
-    id: "1",
-    name: "Plumbing",
-    description: "All plumbing services",
-    logo: "https://randomuser.me/api/portraits/women/20.jpg",
-    parent_category: null,
-  },
-  {
-    id: "2",
-    name: "Electrical",
-    description: "Electrical services and repairs",
-    logo: "https://via.placeholder.com/150",
-    parent_category: null,
-  },
-  {
-    id: "3",
-    name: "Carpentry",
-    description: "Wood work and repairs",
-    logo: "https://via.placeholder.com/150",
-    parent_category: null,
-  },
-  {
-    id: "4",
-    name: "Painting",
-    description: "Interior and exterior painting",
-    logo: "https://via.placeholder.com/150",
-    parent_category: null,
-  },
-  {
-    id: "5",
-    name: "Cleaning",
-    description: "Home and office cleaning",
-    logo: "https://via.placeholder.com/150",
-    parent_category: null,
-  },
-  {
-    id: "6",
-    name: "Gardening with Very Long Service Name",
-    description: "Garden maintenance",
-    logo: "https://via.placeholder.com/150",
-    parent_category: null,
-  },
-];
-
-
-
-const MOCK_SEARCH_RESULTS: SearchResult[] = [
-  {
-    id: "1",
-    name: "Pipe Repair",
-    description: "Fix leaking pipes and water systems",
-    logo: "https://randomuser.me/api/portraits/women/20.jpg",
-    category: "Plumbing",
-  },
-  {
-    id: "2",
-    name: "Electrical Wiring",
-    description: "Install or repair electrical wiring",
-    logo: "https://randomuser.me/api/portraits/women/20.jpg",
-    category: "Electrical",
-  },
-  {
-    id: "3",
-    name: "Furniture Assembly",
-    description: "Assemble new furniture",
-    logo: "https://via.placeholder.com/150",
-    category: "Carpentry",
-  },
-];
-
 const HomeScreen = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -123,11 +50,24 @@ const HomeScreen = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  const [role, setRole] = useState(1); //1 for client 2 for worker
   // Get screen width for responsive sizing
   const screenWidth = Dimensions.get("window").width;
   const categoryWidth = (screenWidth - 48) / 3; // 48 is for padding
+  // Fetch user Role
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      try {
+        const userData = await AsyncStorage.getItem("user");
+        const user = JSON.parse(userData || "");
+        setRole(user.role);
+      } catch (error) {
+        console.error("Error fetching user role:", error);
+      }
+    };
 
+    fetchUserRole();
+  }, []);
   useEffect(() => {
     fetchCategories();
   }, []);
@@ -135,17 +75,6 @@ const HomeScreen = () => {
   // Fetch categories for initial display
   const fetchCategories = async () => {
     try {
-  //     setIsLoading(true);
-
-  //     // For testing: use mock data instead of API call
-  //     setTimeout(() => {
-  //       setCategories(MOCK_CATEGORIES);
-  //       setError(null);
-  //       setIsLoading(false);
-  //     }, 1000);
-
-      // Uncomment this for real API usage
-      
       const response = await apiClient.get(`/work/categories`);
       // Filter categories to include only top-level categories
       const filteredCategories = response.data.categories.filter(
@@ -153,8 +82,7 @@ const HomeScreen = () => {
       );
       setCategories(filteredCategories);
       setError(null);
-     
-    } catch (error : any) {
+    } catch (error: any) {
       console.error("Error fetching categories:", error.response.data);
       setError("فشل في تحميل الفئات. يرجى المحاولة مرة أخرى.");
     } finally {
@@ -173,28 +101,14 @@ const HomeScreen = () => {
       setIsLoading(true);
       setIsSearching(true);
 
-      // For testing: use mock data instead of API call
-      // setTimeout(() => {
-      //   // Filter mock workers by name containing the search query
-      //   const filteredWorkers = MOCK_WORKERS.filter((worker) =>
-      //     worker.workerName.toLowerCase().includes(searchQuery.toLowerCase())
-      //   );
-      //   setSearchResults(filteredWorkers);
-      //   setError(null);
-      //   setIsLoading(false);
-      // }, 1000);
-
-      // Uncomment this for real API usage
-      
       // Make API call to backend with search query
       const response = await apiClient.get(`/work/worker/`, {
-        params: { name: searchQuery }
+        params: { name: searchQuery },
       });
-      
+
       // Assuming the API returns data that matches the Worker interface
       setSearchResults(response.data.workers);
       setError(null);
-     
     } catch (error) {
       console.error("Error searching:", error);
       setError("فشل في البحث. يرجى المحاولة مرة أخرى.");
@@ -214,18 +128,19 @@ const HomeScreen = () => {
   // Handle category selection
   const handleCategoryPress = (category: Category) => {
     // Navigate or show details for the selected category
-    console.log("Category pressed:", category.name);
     router.push({
       pathname: "./subCategory",
       params: { category: JSON.stringify(category) },
-    }); 
+    });
   };
 
   // Handle worker selection
   const handleWorkerPress = (worker: Worker) => {
     // Navigate or show details for the selected worker
-    console.log("Worker pressed:", worker.username);
-    // Example: router.push(`/workers/${worker.workerId}`);
+    router.push({
+      pathname: "./workerProfile",
+      params: { workerId: worker.id },
+    });
   };
 
   // Function to truncate text with ellipsis
@@ -234,7 +149,7 @@ const HomeScreen = () => {
       ? text.substring(0, maxLength) + "..."
       : text;
   };
-   const handleSendRequest = (worker: Worker) => {
+  const handleSendRequest = (worker: Worker) => {
     router.push({
       pathname: "./requeste",
       params: { type: "2" },
@@ -264,7 +179,7 @@ const HomeScreen = () => {
     );
   };
 
- const renderWorkerItem = ({ item }: { item: Worker }) => {
+  const renderWorkerItem = ({ item }: { item: Worker }) => {
     return (
       <TouchableOpacity
         onPress={() => handleWorkerPress(item)}
@@ -304,13 +219,19 @@ const HomeScreen = () => {
           </View>
 
           {/* Send Request Button */}
-          <TouchableOpacity
-            className="bg-[#F8A100] py-2 px-4 rounded-md mt-3 flex-row items-center justify-center"
-            onPress={() => handleSendRequest(item)}
-          >
-            <EvilIcons name="envelope" size={24} color="white" />
-            <Text className="text-white font-medium ml-1">Send Request</Text>
-          </TouchableOpacity>
+          {role == 1 && (
+            <>
+              <TouchableOpacity
+                className="bg-[#F8A100] py-2 px-4 rounded-md mt-3 flex-row items-center justify-center"
+                onPress={() => handleSendRequest(item)}
+              >
+                <EvilIcons name="envelope" size={24} color="white" />
+                <Text className="text-white font-medium ml-1">
+                  Send Request
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </TouchableOpacity>
     );

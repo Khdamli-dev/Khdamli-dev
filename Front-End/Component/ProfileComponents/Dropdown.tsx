@@ -10,6 +10,7 @@ import { ComponentType } from "react";
 import { LucideProps } from "lucide-react-native";
 type DropdownProps = {
   label: string;
+  prev: string;
   icon: ComponentType<LucideProps>;
   selectedItems: { id: number; name: string }[];
   allItems: { id: number; name: string }[];
@@ -17,10 +18,10 @@ type DropdownProps = {
   setShowList: (val: boolean) => void;
   toggleSelection: (item: { id: number; name: string }) => void;
 };
-import { useEffect } from "react";
 
 const Dropdown: React.FC<DropdownProps> = ({
   label,
+  prev,
   icon: Icon,
   selectedItems,
   allItems,
@@ -45,7 +46,7 @@ const Dropdown: React.FC<DropdownProps> = ({
                     : JSON.stringify(item.name)
                 )
                 .join(", ")
-            : `Select ${label}`}
+            : `${prev}`}
         </Text>
         <ChevronDown size={22} color="#F8A100" />
       </TouchableOpacity>

@@ -6,6 +6,7 @@ import Dropdown from "./Dropdown";
 import apiClient from "@/api/appClient";
 import refreshAccessToken from "@/api/refreshAccessToken";
 import { router } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface Category {
   id: string | number;
@@ -34,6 +35,65 @@ interface GeneralInfoProps {
 }
 const GeneralInfo: React.FC<GeneralInfoProps> = ({ onInfoChange }) => {
   const [loading, setLoading] = useState(false);
+  const [prevpay, setPrevpay] = useState<string[]>([]);
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const userData = await AsyncStorage.getItem("user");
+        const user: any = JSON.parse(userData as any);
+
+        if (!user) {
+          return;
+        }
+        const { id, role } = user;
+        const endpoint =
+          role === 1 ? `/users/client/` : role === 2 ? `/users/worker/` : null;
+        if (endpoint) {
+          const response = await apiClient.get(`${endpoint}${id}`);
+          const newUserData =
+            role === 1
+              ? {
+                  fullName: response.data.client.username,
+                  accountType: "client",
+                }
+              : role === 2
+                ? {
+                    fullName: response.data.worker.username,
+                    accountType: "worker",
+                    bio: response.data.worker.bio,
+                    category: response.data.worker.categories.filter(
+                      (cat: Category) => cat.parent_category !== null
+                    ),
+                    paymentMethod: response.data.worker.payment_methods,
+                  }
+                : null;
+          const initialRoleValue =
+            newUserData?.accountType === "client"
+              ? { id: 1, name: "Client" }
+              : newUserData?.accountType === "worker"
+                ? { id: 2, name: "Worker" }
+                : null;
+
+          setPreviousName(newUserData?.fullName || null);
+          setRole(initialRoleValue);
+          setInitialRole(initialRoleValue);
+          setprevcat(newUserData?.category);
+          setPrevpay(newUserData?.paymentMethod || []);
+
+          setBio(newUserData?.bio);
+        }
+      } catch (error: any) {
+        if (error.response?.status === 401) {
+          if (await refreshAccessToken()) {
+            await fetchUser();
+          }
+        }
+        console.error("Failed to fetch user data", error);
+      }
+    };
+
+    fetchUser();
+  }, []);
 
   // Fetch Categories
   const [filteredCategories, setfilteredCategories] = useState<Category[]>([]);
@@ -77,7 +137,6 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onInfoChange }) => {
       try {
         setLoading(true);
         fetchCategories();
-
         fetchPaymentMethods();
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -97,15 +156,22 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onInfoChange }) => {
       setCategories(parentCategories);
     }
   }, [filteredCategories]);
-  const [fontsLoaded] = useFonts({ Itim_400Regular });
-  const [fullName, setFullName] = useState("Khalil Djajia");
-  const [role, setRole] = useState<{ id: number; name: string } | null>(null);
 
-  const [roles, setRoles] = useState<{ id: number; name: string }[]>([
+  const [fontsLoaded] = useFonts({ Itim_400Regular });
+  const [fullName, setFullName] = useState<string | null>(null);
+  const [previousName, setPreviousName] = useState<string | null>(null);
+  const [role, setRole] = useState<{ id: number; name: string } | null>(null);
+  const [prevcat, setprevcat] = useState<Category[]>([]);
+
+  const [roles] = useState<{ id: number; name: string }[]>([
     { id: 1, name: "Client" },
     { id: 2, name: "Worker" },
   ]);
   const [showRoleList, setShowRoleList] = useState(false);
+  const [initialRole, setInitialRole] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
   const [payment, setPayment] = useState<Payment[]>([]);
   const [selectedPayments, setSelectedPayments] = useState<Payment[]>([]);
   const [showPaymentList, setShowPaymentList] = useState(false);
@@ -117,7 +183,7 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onInfoChange }) => {
   >([]);
   const [showCategoryList, setShowCategoryList] = useState(false);
   const [showSubCategoryList, setShowSubCategoryList] = useState(false);
-  const [bio, setBio] = useState("");
+  const [bio, setBio] = useState<string>("");
   const toggleCategorySelection = (item: { id: number; name: string }) => {
     const category = categories.find((c) => String(c.id) === String(item.id));
     if (category) {
@@ -128,7 +194,6 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onInfoChange }) => {
           ? prevSelected.filter((selected) => selected.id !== category.id)
           : [...prevSelected, category];
 
-        // استدعاء fetchSubCategories مع القائمة المحدثة مباشرة
         fetchSubCategoriesForSelectedCategories(newSelected);
         return newSelected;
       });
@@ -184,25 +249,22 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onInfoChange }) => {
   };
   useEffect(() => {
     const userInfo = {
-      fullName,
-      accountType: role?.id ?? null,
+      fullName: fullName || "",
+      accountType: role?.id || null,
       paymentMethods: selectedPayments.map((p) => p.id),
-      bio,
-      subCategories:
-        role?.name === "Worker" ? selectedSubCategories.map((sc) => sc.id) : [],
+      bio: bio || "",
+      subCategories: selectedSubCategories.map((sc) => sc.id),
     };
 
     onInfoChange(userInfo);
   }, [
     fullName,
     role?.id,
-    role?.name,
-    selectedPayments.map((p) => p.id).join(),
-    selectedSubCategories.map((sc) => sc.id).join(),
+    selectedPayments,
+    selectedSubCategories,
     bio,
     onInfoChange,
   ]);
-
   return (
     <View
       className="bg-white p-4 rounded-[20px] mb-4 shadow-lg"
@@ -227,8 +289,9 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onInfoChange }) => {
           <User size={22} color="#F8A100" style={styles.Name} />
           <TextInput
             style={[styles.input, styles.Name]}
-            value={fullName}
-            onChangeText={setFullName}
+            value={fullName || ""}
+            onChangeText={(e) => setFullName(e)}
+            placeholder="Enter your full name"
           />
         </View>
       </View>
@@ -237,12 +300,10 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onInfoChange }) => {
       <View className="mb-3">
         <Dropdown
           label="Account Type"
+          prev={role?.name || ""}
           icon={User}
           selectedItems={role ? [{ id: role.id, name: role.name }] : []}
-          allItems={roles.map((r, index) => ({
-            id: index,
-            name: r.name,
-          }))}
+          allItems={roles}
           showList={showRoleList}
           setShowList={setShowRoleList}
           toggleSelection={(item: { name: string; id: number }) =>
@@ -253,67 +314,77 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onInfoChange }) => {
 
       {/* Worker-specific Fields */}
       {role?.name === "Worker" && (
-        <View className="mb-3">
-          <Dropdown
-            label="Categories"
-            icon={Briefcase}
-            selectedItems={
-              Array.isArray(selectedCategories)
-                ? selectedCategories.map((cat) => ({
-                    id: typeof cat.id === "string" ? parseInt(cat.id) : cat.id,
-                    name: cat.name,
-                  }))
-                : []
-            }
-            allItems={categories.map((cat) => ({
-              id: typeof cat.id === "string" ? parseInt(cat.id) : cat.id,
-              name: cat.name,
-            }))}
-            showList={showCategoryList}
-            setShowList={setShowCategoryList}
-            toggleSelection={toggleCategorySelection}
-          />
+        <>
+          <View className="mb-3">
+            <Dropdown
+              label="Categories"
+              prev={prevcat?.map((cat) => cat.name).join(", ") || ""}
+              icon={Briefcase}
+              selectedItems={
+                Array.isArray(selectedCategories)
+                  ? selectedCategories.map((cat) => ({
+                      id:
+                        typeof cat.id === "string" ? parseInt(cat.id) : cat.id,
+                      name: cat.name,
+                    }))
+                  : []
+              }
+              allItems={categories.map((cat) => ({
+                id: typeof cat.id === "string" ? parseInt(cat.id) : cat.id,
+                name: cat.name,
+              }))}
+              showList={showCategoryList}
+              setShowList={setShowCategoryList}
+              toggleSelection={toggleCategorySelection}
+            />
 
+            <Dropdown
+              label="Branches"
+              prev={prevcat?.map((cat) => cat.name).join(", ") || ""}
+              icon={Network}
+              selectedItems={
+                Array.isArray(selectedSubCategories)
+                  ? selectedSubCategories
+                  : []
+              }
+              allItems={subCategories.map((cat) => ({
+                id: typeof cat.id === "string" ? parseInt(cat.id) : cat.id,
+                name: cat.name,
+              }))}
+              showList={showSubCategoryList}
+              setShowList={setShowSubCategoryList}
+              toggleSelection={toggleSubCategorySelection as any}
+            />
+          </View>
+          {/* Payment Method Dropdown */}
           <Dropdown
-            label="Branches"
-            icon={Network}
-            selectedItems={
-              Array.isArray(selectedSubCategories) ? selectedSubCategories : []
+            label="Payment Methods"
+            prev={
+              prevpay.length > 0
+                ? prevpay.join(", ")
+                : "Payment Method Not Selected"
             }
-            allItems={subCategories.map((cat) => ({
-              id: typeof cat.id === "string" ? parseInt(cat.id) : cat.id,
-              name: cat.name,
-            }))}
-            showList={showSubCategoryList}
-            setShowList={setShowSubCategoryList}
-            toggleSelection={toggleSubCategorySelection as any}
+            icon={Wallet}
+            selectedItems={selectedPayments}
+            allItems={payment}
+            showList={showPaymentList}
+            setShowList={setShowPaymentList}
+            toggleSelection={togglePaymentSelection}
           />
-        </View>
+          {/* Bio Section */}
+          <View style={styles.aa}>
+            <Text style={styles.bb}>Edit Your Bio</Text>
+            <View style={styles.cc}>
+              <TextInput
+                value={bio}
+                onChangeText={setBio}
+                placeholder="Write your bio here..."
+                multiline
+              />
+            </View>
+          </View>
+        </>
       )}
-
-      {/* Payment Method Dropdown */}
-      <Dropdown
-        label="Payment Methods"
-        icon={Wallet}
-        selectedItems={selectedPayments}
-        allItems={payment}
-        showList={showPaymentList}
-        setShowList={setShowPaymentList}
-        toggleSelection={togglePaymentSelection}
-      />
-
-      {/* Bio Section */}
-      <View style={styles.aa}>
-        <Text style={styles.bb}>Edit Your Bio</Text>
-        <View style={styles.cc}>
-          <TextInput
-            value={bio}
-            onChangeText={setBio}
-            placeholder="Enter your bio"
-            multiline
-          />
-        </View>
-      </View>
     </View>
   );
 };

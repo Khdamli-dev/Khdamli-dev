@@ -24,6 +24,7 @@ import {
   CreditCard,
   User,
   Globe,
+  Settings,
 } from "lucide-react-native";
 import CONFIG from "../../../config";
 import { Video, ResizeMode } from "expo-av";
@@ -83,7 +84,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     type: "image" | "video";
     uri: string;
   };
-
+  const [image, setImage] = useState<string | null>(null);
   const [user, setUser] = useState<{
     fullName: string | null;
     registration_date: string | null;
@@ -121,7 +122,6 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         const user: any = JSON.parse(userData as any);
 
         if (!user) {
-          console.log("User does not exist");
           return;
         }
 
@@ -158,7 +158,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                   paymentMethod: response.data.worker.payment_methods,
                   gallery: response.data.worker.media,
                 };
-
+          console.log(newUserData.category);
           setUser((prev) => ({ ...prev, ...newUserData }));
         } else {
           console.log("Unknown role");
@@ -217,16 +217,14 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         : null,
     }));
   };
-  const log = () => {
-    console.log(user.workingDays);
-  };
 
   const updateProfileImage = (newImage: string) => {
     setUser((prevUser) => ({
       ...prevUser,
       image: newImage,
     }));
-    console.log(newImage);
+    setImage(newImage);
+    console.log("the url of this photo is ===" + newImage);
   };
   // const [fontsLoaded] = useFonts({ Itim_400Regular });
   // if (!fontsLoaded) return <Text>Loading...</Text>;
@@ -266,7 +264,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
             className="absolute top-[30px] left-[30px]"
             onPress={() => router.push("/(tabs)/(profile)/(settings)")}
           >
-            <FontAwesome name="user" size={38} color="#BD7D06" />
+            <Settings size={38} color="#BD7D06" />
           </TouchableOpacity>
           <TouchableOpacity
             className="absolute top-[30px] right-[30px]"
@@ -377,12 +375,12 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         />
         <ProfileItem
           label="Region"
-          value={user.region}
+          value={user.region ?? "The Region not selected "}
           Icon={(props) => <Globe {...props} />}
         />
         <ProfileItem
           label="City"
-          value={user.city}
+          value={user.city ?? "The City not selected"}
           Icon={(props) => <MapPin {...props} />}
         />
       </View>
@@ -395,12 +393,12 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         />
         <ProfileItem
           label="Age"
-          value={`${user.age} Years`}
+          value={user.age ? `${user.age} Years` : "The age is not selected"}
           Icon={(props) => <Clock {...props} />}
         />
         <ProfileItem
           label="Gender"
-          value={user.gender}
+          value={user.gender ?? "The Gender is not selected"}
           Icon={(props) => <User {...props} />}
         />
         {user.accountType === "worker" && (
@@ -463,7 +461,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
 
                 <TouchableOpacity
                   className="absolute top-[10px] right-[10px] bg-[rgba(255,0,0,0.7)] rounded-[15px] p-2"
-                  onPress={() => log()}
+                  onPress={() => console.log()}
                 >
                   <Trash size={20} color="white" />
                 </TouchableOpacity>
