@@ -5,6 +5,7 @@ const modifyComment = async (req: Request, res: Response) => {
   try {
     const requestId: number = parseInt(req.params.requestId);
     const { workerId, message } = req.body;
+   
     if (isNaN(requestId) || isNaN(+workerId) || !message) {
       res.status(400).json({
         message: "missing request id or comment",

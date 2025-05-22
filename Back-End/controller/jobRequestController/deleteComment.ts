@@ -5,6 +5,8 @@ const deleteComment = async (req: Request, res: Response) => {
   try {
     const requestId: number = parseInt(req.params.requestId);
     const workerId: number = parseInt(req.body.workerId);
+    console.log("workerId", workerId);
+    console.log("requestId", requestId);
     if (isNaN(workerId) || isNaN(requestId)) {
       res.status(400).json({
         message: "missing request or worker id",

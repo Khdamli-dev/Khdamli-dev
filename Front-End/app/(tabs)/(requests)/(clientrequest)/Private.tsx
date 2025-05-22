@@ -31,7 +31,7 @@ import { ResizeMode, Video } from "expo-av";
 import { getSocket } from "@/api/socket";
 import { useNotifications } from "@/context/NotificationContext";
 import { Rating } from "react-native-ratings";
-import { formatDateTime } from "../SomeStandarFunctions";
+import { formatDateTime, handelcall } from "../SomeStandarFunctions";
 
 //import { realTimePrivateRequestStatus, realTimeRequests } from '@/api/realTime';
 
@@ -54,8 +54,6 @@ enum RequestStatus {
 
 // Default placeholder image for missing profile images
 const defaultProfileImage = require("../../../../assets/images/images (1).jpg");
-
-
 
 const PrivateRequests = () => {
   const notifications = useNotifications();
@@ -123,7 +121,16 @@ const PrivateRequests = () => {
   const toggleExpandRequest = (id: number) => {
     setExpandedRequestId(expandedRequestId === id ? null : id);
   };
-
+  const navigateToProfile = (id: number, role: number) => {
+    router.push({
+      pathname: "/(tabs)/(home)/profileAsView",
+      params: {
+        userId: id,
+        userRole: role,
+        origin: "privateRequest",
+      },
+    });
+  };
   const fetchRequests = async () => {
     setLoading(true);
     try {
@@ -429,18 +436,22 @@ const PrivateRequests = () => {
       >
         <View className="flex-row justify-between items-center">
           <View className="flex-row items-center flex-1">
-            <Image
-              source={
-                item.worker_profile_image
-                  ? { uri: item.worker_profile_image }
-                  : defaultProfileImage
-              }
-              className="w-12 h-12 rounded-full mr-3"
-            />
+            <TouchableOpacity onPress={() => navigateToProfile(29, 1)}>
+              <Image
+                source={
+                  item.worker_profile_image
+                    ? { uri: item.worker_profile_image }
+                    : defaultProfileImage
+                }
+                className="w-12 h-12 rounded-full mr-3"
+              />
+            </TouchableOpacity>
             <View className="flex-1">
-              <Text className="font-medium">
-                {item.worker_username || "Worker"}
-              </Text>
+              <TouchableOpacity onPress={() => navigateToProfile(29, 1)}>
+                <Text className="font-medium">
+                  {item.worker_username || "Worker"}
+                </Text>
+              </TouchableOpacity>
               <Text numberOfLines={1} className="text-gray-500">
                 {truncateText(item.description, 40)}
               </Text>
@@ -474,18 +485,28 @@ const PrivateRequests = () => {
       >
         <View className="flex-row justify-between items-center">
           <View className="flex-row items-center flex-1">
-            <Image
-              source={
-                item.client_profile_image
-                  ? { uri: item.client_profile_image }
-                  : defaultProfileImage
-              }
-              className="w-12 h-12 rounded-full mr-3"
-            />
+            <TouchableOpacity
+              onPress={() => {
+                navigateToProfile(item.client_id, 1);
+              }}
+            >
+              <Image
+                source={
+                  item.client_profile_image
+                    ? { uri: item.client_profile_image }
+                    : defaultProfileImage
+                }
+                className="w-12 h-12 rounded-full mr-3"
+              />
+            </TouchableOpacity>
             <View className="flex-1">
-              <Text className="font-medium">
-                {item.client_username || "Client"}
-              </Text>
+              <TouchableOpacity
+                onPress={() => navigateToProfile(item.client_id, 1)}
+              >
+                <Text className="font-medium">
+                  {item.client_username || "Client"}
+                </Text>
+              </TouchableOpacity>
               <Text numberOfLines={1} className="text-gray-500">
                 {truncateText(item.description, 40)}
               </Text>
@@ -671,7 +692,12 @@ const PrivateRequests = () => {
           className="mb-3"
         >
           <View className="flex-row justify-between items-center">
-            <View className="flex-row items-center">
+            <TouchableOpacity
+              className="flex-row items-center"
+              onPress={() => {
+                navigateToProfile(item.client_id, 1);
+              }}
+            >
               <Image
                 source={
                   item.client_profile_image
@@ -684,9 +710,8 @@ const PrivateRequests = () => {
                 <Text className="font-medium">
                   {item.client_username || "Client"}
                 </Text>
-                
               </View>
-            </View>
+            </TouchableOpacity>
             <View className="flex-row items-center">
               {getStatusIcon(item.status)}
               <Text className="ml-1 text-gray-600 text-sm capitalize">
@@ -703,16 +728,16 @@ const PrivateRequests = () => {
         </TouchableOpacity>
 
         <View className="flex-row justify-end mb-3">
-          <TouchableOpacity className="mr-2">
-            <Ionicons name="call" size={30} color="#000" />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <MaterialCommunityIcons
-              name="message-text-outline"
-              size={30}
-              color="#000"
-            />
-          </TouchableOpacity>
+          {item.status === "Accepted" && (
+            <TouchableOpacity
+              className="mr-4"
+              onPress={() => {
+                handelcall(item.client_phone_number);
+              }}
+            >
+              <Ionicons name="call" size={32} color="#000" />
+            </TouchableOpacity>
+          )}
         </View>
 
         <View className="pl-2">

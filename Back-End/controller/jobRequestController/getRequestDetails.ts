@@ -69,6 +69,7 @@ const getRequestDetails = async (req: Request, res: Response) => {
         co.name AS country,
         rs.name AS status,
         uc.username AS client_username,
+        uc.phone_number AS client_phone_number,
         uc.profile_image AS client_profile_image,
         uw.username AS worker_username,
         uw.profile_image AS worker_profile_image
@@ -168,6 +169,7 @@ const getRequestDetails = async (req: Request, res: Response) => {
     } else {
       // role === "worker"
       if (request_type === "public") {
+        response.client_id = requestRow.client_id;
         response.client_username = requestRow.client_username;
         response.client_profile_image = requestRow.client_profile_image;
         response.worker_comment = workerComment;
@@ -175,6 +177,8 @@ const getRequestDetails = async (req: Request, res: Response) => {
         response.post_date = requestRow.sent_time.toISOString();
       } else {
         // private
+        response.client_id = requestRow.client_id;
+        response.client_phone_number = requestRow.client_phone_number;
         response.client_username = requestRow.client_username;
         response.client_profile_image = requestRow.client_profile_image;
         response.client_location = response.location;
