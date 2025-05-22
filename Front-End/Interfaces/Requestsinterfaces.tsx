@@ -18,7 +18,6 @@ interface WorkerPrivateRequest {
   };
   sent_date: string;
   description: string;
-  payment_method: string;
   status: string;
 }
 interface ClientPrivateRequest {
@@ -60,10 +59,11 @@ interface WorkerPublicRequest {
     type: string;
     url: string;
   }[];
-  payment_method: string;
   status: string;
 }
 interface ClientPublicRequest {
+  workerId : number,
+  clientId : number,
   id: number;
   category: string;
   location: {
@@ -78,7 +78,6 @@ interface ClientPublicRequest {
     type: string;
     url: string;
   }[];
-  payment_method: string;
   status: string;
 }
 export {
