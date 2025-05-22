@@ -52,7 +52,8 @@ const styles = StyleSheet.create({
 });
 
 const UserProfileView = () => {
-  const { userId, userRole, origin } = useLocalSearchParams();
+  const { status, requestId, userId, userRole, origin } =
+    useLocalSearchParams();
   const [role, setRole] = useState(1); // 1 Client 2 worker
   const [user, setUser] = useState<{
     fullName: string | null;
@@ -227,6 +228,15 @@ const UserProfileView = () => {
                 router.replace("/(tabs)/(requests)/(clientrequest)/Private");
                 break;
               }
+              case "workerComments": {
+                router.back();
+                router.replace({
+                  pathname: "/(tabs)/(requests)/(comment)/WorkerComments",
+                  params: { requestId, status, workerId: userId },
+                });
+                break;
+              }
+
               default: {
                 router.back();
                 break;
