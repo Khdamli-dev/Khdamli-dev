@@ -50,7 +50,7 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
   setBadgeCount = () => {},
 }) => {
   const { id } = useLocalSearchParams();
-  const requestId = id ? parseInt(id as string, 10) : undefined;
+  const requestId : number = id ? parseInt(id as string, 10) : 0;
 
   const [workerCommentsArray, setWorkerCommentsArray] = useState<
     WorkerComment[]
@@ -120,11 +120,7 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
   const handleAccept = async (workerId: number) => {
     try {
       // Update the request with status 1 (accepted) and set the workerId
-      await apiClient.put(`/work/job-request/status/${requestId}`, {
-        status: 1,
-        public: true,
-        workerId: workerId, // Make sure workerId is passed correctly
-      });
+      await apiClient.put(`/work/job-request/${requestId}/select-worker/${workerId}`);
 
       // Update UI to show only the accepted worker's comment
       setWorkerCommentsArray((prev) =>
@@ -345,7 +341,7 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
                         onPress={() => handleAccept(item.worker_id)}
                       >
                         <Text className="text-white font-bold">
-                          Accept Work
+                          Accept Worker
                         </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
