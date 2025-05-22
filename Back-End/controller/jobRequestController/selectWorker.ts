@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import pool from '../../database/dbConnection';
 import dotenv from 'dotenv';
-import { sendPrivateRequest } from './jobRequestEmitter';
+import { acceptWorkerOnPublicRequest } from './jobRequestEmitter';
 
 dotenv.config();
 
@@ -19,19 +19,18 @@ const selectWorker = async (req: Request, res: Response) => {
 
   try {
     const publicRequest: string | undefined = process.env.PUBLIC_REQUEST_ID;
-    const privateRequest: string | undefined = process.env.PRIVATE_REQUEST_ID;
-    if (!publicRequest || !privateRequest) {
+    if (!publicRequest) {
       throw new Error("envirement variable don't exist");
     }
 
     const { rows } = await pool.query(
       `
         UPDATE request
-        SET worker = $1, type = $4
+        SET worker = $1
         WHERE (id = $2 AND type = $3)
         RETURNING *;
         `,
-      [workerId, requestId, +publicRequest, +privateRequest],
+      [workerId, requestId, +publicRequest],
     );
 
     // request don't exist
@@ -44,7 +43,7 @@ const selectWorker = async (req: Request, res: Response) => {
     }
 
     // send to it to worker to make it real time
-    await sendPrivateRequest(rows[0]);
+    await acceptWorkerOnPublicRequest(rows[0]);
 
     res.status(200).json({
       message: 'set worker in public request with success',

@@ -13,6 +13,7 @@ import getRequestDetails from "../../controller/jobRequestController/getRequestD
 import checkRole from "../../middleware/checkRole";
 import getRequests from "../../controller/jobRequestController/getRequests";
 import getPublicRequests from "../../controller/jobRequestController/getPublicRequests";
+import modifyPublicRequestStatus from "../../controller/jobRequestController/modifyPublicRequestStatus";
 import modifyComment from "../../controller/jobRequestController/modifyComment";
 import deleteComment from "../../controller/jobRequestController/deleteComment";
 import markCompleted from "../../controller/jobRequestController/markCompleted";
@@ -35,18 +36,16 @@ request.put("/:requestId", checkRole([clientRoleId]), modifyRequest);
 request.put("/media/:requestId", checkRole([clientRoleId]), uploadMedia);
 
 request.put("/status/:requestId", updateRequestStatus);
+
 // this route is used to select worker in public request
-request.put(
-  "/:requestId/select-worker/:workerId",
-  checkRole([clientRoleId]),
-  selectWorker
-);
+request.put("/:requestId/select-worker/:workerId", checkRole([clientRoleId]), selectWorker);
+
 // this route is used to make a comment on public request
 request.post("/:requestId/comment", checkRole([workerRoleId]), createComment);
 
 request.put("/:requestId/comment",checkRole([workerRoleId]) , modifyComment);
 
-request.delete("/:requestId/comment",checkRole([workerRoleId]) , deleteComment);
+request.delete("/:requestId/comment", checkRole([workerRoleId]), deleteComment);
 
 request.get("/:requestId/messages", getRequestMessages);
 
@@ -54,6 +53,9 @@ request.get("/", getRequests);
 
 request.get("/public/:id",getPublicRequests);
 
-request.post("/:requestId/complete",checkRole([clientRoleId]),markCompleted);
+// this route is used to allow worker accept or reject public request that he choosen on it
+request.put('/:requestId/public-request/status', checkRole([workerRoleId]), modifyPublicRequestStatus);
+
+request.post("/:requestId/complete", checkRole([clientRoleId]), markCompleted);
 
 export default request;

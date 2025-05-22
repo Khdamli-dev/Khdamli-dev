@@ -32,7 +32,7 @@ import refreshAccessToken from "@/api/refreshAccessToken";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ResizeMode, Video } from "expo-av"; // Import for video playback
 import { formatDateTime } from "../SomeStandarFunctions";
-//import { realTimePublicRequestStatus } from '@/api/realTime';
+import { useNotifications } from "@/context/NotificationContext";
 
 // Define the UserRole enum
 enum UserRole {
@@ -45,7 +45,7 @@ enum RequestStatus {
   PENDING = "Pending",
   ACCEPTED = "Accepted",
   ON_HOLD = "On Hold",
-  PENDING_CLIENT_VERIFICATION = "pending_client_verification",
+  VERIFICATION_PENDING = "verification pending",
   COMPLETED = "Completed",
   CANCELLED = "Cancelled",
 }
@@ -66,6 +66,7 @@ interface MediaItem {
 const defaultProfileImage = require("../../../../assets/images/images (1).jpg");
 
 const PublicRequest = () => {
+  const notifications = useNotifications();
   const [selectedMedia, setSelectedMedia] = useState(0);
   const [mediaModalVisible, setMediaModalVisible] = useState(false);
   const [userRole, setUserRole] = useState<UserRole>();
@@ -303,7 +304,7 @@ const PublicRequest = () => {
         return (
           <MaterialIcons name="hourglass-empty" size={24} color="orange" />
         );
-      case RequestStatus.PENDING_CLIENT_VERIFICATION:
+      case RequestStatus.VERIFICATION_PENDING:
         return <MaterialIcons name="pending-actions" size={24} color="blue" />;
       case RequestStatus.COMPLETED:
         return <MaterialIcons name="verified" size={24} color="blue" />;
@@ -575,7 +576,7 @@ const PublicRequest = () => {
         </View>
 
         {/* Client verification section - when job is marked as completed by worker */}
-        {item.status === RequestStatus.PENDING_CLIENT_VERIFICATION && (
+        {item.status === RequestStatus.VERIFICATION_PENDING && (
           <View className="mt-3">
             <Text className="text-base text-blue-600 mb-2">
               Worker has marked this job as completed.
@@ -808,6 +809,49 @@ const PublicRequest = () => {
   const renderWorkerRequest = (item: WorkerPublicRequest) => {
     const isExpanded = expandedRequestId === item.id;
 
+    const modifyRequestStatus = async (status : number) => {
+      try {
+        await apiClient.put(`/work/job-request/${item.id}/public-request/status`, {
+          status
+        });
+
+        item.status = getStatusTextFromCode(status);
+        setRequests(prevRequests => {
+          // Create a new array with the updated item
+          return prevRequests.map(req => 
+            req.id === item.id ? {...req, status: item.status} : req
+          );
+        });
+        notifications?.markPublicRequestAsRead();
+      } catch (err : any) {
+        if (err.response?.status === 401) {
+          if (await refreshAccessToken()) {
+            await modifyRequestStatus(status);
+          } else {
+            // need to login
+            router.push("/(auth)");
+          }
+        } else {
+          console.error(
+            "Error fetching requests:",
+            err.response?.data?.message || err.message
+          );
+        }
+      }
+    }
+
+    const getStatusTextFromCode = (statusCode: number): string => {
+      switch(statusCode) {
+        case 1:
+          return RequestStatus.ACCEPTED;
+        case 2:
+          return RequestStatus.ON_HOLD;
+        default:
+          return RequestStatus.VERIFICATION_PENDING;
+      }
+    };
+  
+
     if (!isExpanded) {
       return renderWorkerCollapsedView(item);
     }
@@ -951,23 +995,23 @@ const PublicRequest = () => {
           </ScrollView>
         </View>
 
-        {/* Action buttons based on status */}
-        {item.status === RequestStatus.ACCEPTED && (
+        {/* For PENDING_WORKER_VERIFICATION requests */}
+        {item.status === RequestStatus.VERIFICATION_PENDING && (
+          <View className="flex-row justify-between mt-4 px-2">
           <TouchableOpacity
-            className="bg-blue-500 items-center justify-center py-3 mt-3 rounded"
-            onPress={() => console.log("Mark as completed")}
+            className="flex-1 bg-green-600 items-center justify-center py-3 rounded-lg shadow mr-2"
+            onPress={async () => await modifyRequestStatus(1)}
           >
-            <Text className="text-base text-white">Mark as Completed</Text>
+            <Text className="text-base font-medium text-white">Confirm Work</Text>
           </TouchableOpacity>
-        )}
-
-        {/* For PENDING_CLIENT_VERIFICATION requests - Worker sees waiting status */}
-        {item.status === RequestStatus.PENDING_CLIENT_VERIFICATION && (
-          <View className="bg-yellow-100 border border-yellow-400 items-center justify-center py-3 mt-3 rounded">
-            <Text className="text-base text-yellow-800">
-              Waiting for client confirmation
-            </Text>
-          </View>
+          
+          <TouchableOpacity
+            className="flex-1 bg-red-500 items-center justify-center py-3 rounded-lg shadow"
+            onPress={async () => await modifyRequestStatus(2)}
+          >
+            <Text className="text-base font-medium text-white">Cancel Work</Text>
+          </TouchableOpacity>
+        </View>
         )}
 
         {/* For COMPLETED requests - Worker sees completed status */}

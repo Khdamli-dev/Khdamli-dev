@@ -26,7 +26,7 @@ import refreshAccessToken from "@/api/refreshAccessToken";
 import {
   WorkerPrivateRequest,
   ClientPrivateRequest,
-} from "@/Interfaces/Requestsinterfaces";
+} from '../../../../Interfaces/Requestsinterfaces';
 import { ResizeMode, Video } from "expo-av";
 import { getSocket } from "@/api/socket";
 import { useNotifications } from "@/context/NotificationContext";
@@ -157,13 +157,6 @@ const PrivateRequests = () => {
       setLoading(false);
     }
   };
-
-  /*  const fetch_request_message = async (requestId: number) => {
-    try {
-      const response = apiClient.get(`/work/job-request/${requestId}/messages`);
-      const result = (await response).data.messages;
-    } catch (err: any) {}
-  }; */
 
   const fetchRequestsDetails = async (requestId: number) => {
     try {
