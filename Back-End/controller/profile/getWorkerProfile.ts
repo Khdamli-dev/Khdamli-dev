@@ -10,26 +10,6 @@ const getWorkerProfile = async (req: Request, res: Response) => {
       return;
     }
 
-    // Check if user exists and is a worker (role ID 2)
-    const userCheck = await pool.query(
-      `
-      SELECT u.id, u.role
-      FROM "user" u
-      WHERE u.id = $1
-      `,
-      [workerId]
-    );
-
-    if (!userCheck.rows.length) {
-      res.status(404).json({ message: "User not found", worker: null, success: false });
-      return;
-    }
-
-    if (userCheck.rows[0].role !== 2) {
-      res.status(403).json({ message: "User is not a worker", worker: null, success: false });
-      return;
-    }
-
     // Fetch worker personal and professional info
     const workerData = await pool.query(
       `
@@ -62,6 +42,10 @@ const getWorkerProfile = async (req: Request, res: Response) => {
       `,
       [workerId]
     );
+    if (!workerData.rowCount){
+      res.status(404).json({ message: "User not found", worker: null, success: false });
+      return;
+    }
 
     // Fetch categories and pricing
     const categoriesData = await pool.query(
