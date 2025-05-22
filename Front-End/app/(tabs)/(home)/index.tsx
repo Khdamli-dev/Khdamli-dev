@@ -30,7 +30,6 @@ import { Video, ResizeMode } from "expo-av";
 import apiClient from "@/api/appClient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import refreshAccessToken from "@/api/refreshAccessToken";
-
 // Media item can be image, video or none
 interface MediaItem {
   type: "image" | "video" | "none";
@@ -307,6 +306,7 @@ const HomeScreen = () => {
           }
         } else {
           setComments([]); // Set empty array if no messages found
+          console.log("No comments found or invalid response format");
         }
       } catch (err: any) {
         console.error("Failed to load comments", err);
@@ -414,6 +414,7 @@ const HomeScreen = () => {
       params: {
         userId: id,
         userRole: role,
+        origin: "home",
       },
     });
   };

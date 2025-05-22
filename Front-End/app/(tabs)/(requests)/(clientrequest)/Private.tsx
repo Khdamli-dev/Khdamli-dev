@@ -11,6 +11,7 @@ import {
   FlatList,
   Platform,
   Alert,
+  TextInput,
 } from "react-native";
 import React, { useState, useRef, useEffect } from "react";
 import {
@@ -25,11 +26,13 @@ import refreshAccessToken from "@/api/refreshAccessToken";
 import {
   WorkerPrivateRequest,
   ClientPrivateRequest,
-} from "../../../../Interfaces/Requestsinterfaces";
+} from "@/Interfaces/Requestsinterfaces";
 import { ResizeMode, Video } from "expo-av";
 import { getSocket } from "@/api/socket";
 import { useNotifications } from "@/context/NotificationContext";
-import { formatDateTime,handelcall } from "../SomeStandarFunctions";
+import { Rating } from "react-native-ratings";
+import { formatDateTime, handelcall } from "../SomeStandarFunctions";
+
 //import { realTimePrivateRequestStatus, realTimeRequests } from '@/api/realTime';
 
 // Define the UserRole enum
@@ -54,6 +57,11 @@ const defaultProfileImage = require("../../../../assets/images/images (1).jpg");
 
 const PrivateRequests = () => {
   const notifications = useNotifications();
+  const [ratingModalVisible, setRatingModalVisible] = useState(false);
+  const [tempRequestId, setTempRequestId] = useState<number | null>(null);
+  const [rating, setRating] = useState(0);
+  const [ratingComment, setRatingComment] = useState("");
+
   const [selectedMedia, setSelectedMedia] = useState(0);
   const [mediaModalVisible, setMediaModalVisible] = useState(false);
   const [userRole, setUserRole] = useState<UserRole>();
@@ -114,7 +122,16 @@ const PrivateRequests = () => {
   const toggleExpandRequest = (id: number) => {
     setExpandedRequestId(expandedRequestId === id ? null : id);
   };
-
+  const navigateToProfile = (id: number, role: number) => {
+    router.push({
+      pathname: "/(tabs)/(home)/profileAsView",
+      params: {
+        userId: id,
+        userRole: role,
+        origin: "privateRequest",
+      },
+    });
+  };
   const fetchRequests = async () => {
     setLoading(true);
     try {
@@ -361,29 +378,50 @@ const PrivateRequests = () => {
       Alert.alert("Error", "Failed to mark request as completed");
     }
   };
-
-  // Handle confirming completion
-  const handleConfirmCompletion = async (requestId: number) => {
+  // Reting
+  const handleRatingSubmit = async () => {
     try {
-      await apiClient.put(`/work/job-request/status/${requestId}`, {
+      if (!tempRequestId) {
+        Alert.alert("Error", "Please provide a rating");
+        return;
+      }
+
+      // First submit the rating
+      await apiClient.post(`/work/ratings`, {
+        request_id: tempRequestId,
+        rating: rating,
+        comment: ratingComment,
+      });
+
+      // Then complete the request
+      await apiClient.put(`/work/job-request/status/${tempRequestId}`, {
         status: 4,
       });
 
       // Update local state
-      setRequestIds((prevIds) => prevIds.filter((id) => id !== requestId));
+      setRequestIds((prevIds) => prevIds.filter((id) => id !== tempRequestId));
+      setRatingModalVisible(false);
+      setTempRequestId(null);
+      setRating(0);
+      setRatingComment(""); // Clear comment
 
-      Alert.alert("Success", "Request confirmed as completed");
+      Alert.alert("Success", "Request completed and rating submitted");
     } catch (err: any) {
       if (err.response?.status === 401) {
         if (await refreshAccessToken()) {
-          await handleConfirmCompletion(requestId);
+          await handleRatingSubmit();
         } else {
           router.push("/(auth)");
         }
       }
-      console.error("Failed to confirm completion:", err);
-      Alert.alert("Error", "Failed to confirm completion");
+      console.error("Failed to submit rating:", err);
+      Alert.alert("Error", "Failed to submit rating");
     }
+  };
+  // Handle confirming completion
+  const handleConfirmCompletion = async (requestId: number) => {
+    setTempRequestId(requestId);
+    setRatingModalVisible(true);
   };
 
   // Handle rejecting completion
@@ -447,7 +485,7 @@ const PrivateRequests = () => {
         const socket = getSocket();
 
         // Listen for new requests
-        socket.on("private-request", (data) => {
+        socket.on("private-request", (data: any) => {
           console.log("New request received:", data);
           setRequestIds((prev) => [...prev, data]);
         });
@@ -482,18 +520,22 @@ const PrivateRequests = () => {
       >
         <View className="flex-row justify-between items-center">
           <View className="flex-row items-center flex-1">
-            <Image
-              source={
-                item.worker_profile_image
-                  ? { uri: item.worker_profile_image }
-                  : defaultProfileImage
-              }
-              className="w-12 h-12 rounded-full mr-3"
-            />
+            <TouchableOpacity onPress={() => navigateToProfile(29, 1)}>
+              <Image
+                source={
+                  item.worker_profile_image
+                    ? { uri: item.worker_profile_image }
+                    : defaultProfileImage
+                }
+                className="w-12 h-12 rounded-full mr-3"
+              />
+            </TouchableOpacity>
             <View className="flex-1">
-              <Text className="font-medium">
-                {item.worker_username || "Worker"}
-              </Text>
+              <TouchableOpacity onPress={() => navigateToProfile(29, 1)}>
+                <Text className="font-medium">
+                  {item.worker_username || "Worker"}
+                </Text>
+              </TouchableOpacity>
               <Text numberOfLines={1} className="text-gray-500">
                 {truncateText(item.description, 40)}
               </Text>
@@ -527,18 +569,28 @@ const PrivateRequests = () => {
       >
         <View className="flex-row justify-between items-center">
           <View className="flex-row items-center flex-1">
-            <Image
-              source={
-                item.client_profile_image
-                  ? { uri: item.client_profile_image }
-                  : defaultProfileImage
-              }
-              className="w-12 h-12 rounded-full mr-3"
-            />
+            <TouchableOpacity
+              onPress={() => {
+                navigateToProfile(item.client_id, 1);
+              }}
+            >
+              <Image
+                source={
+                  item.client_profile_image
+                    ? { uri: item.client_profile_image }
+                    : defaultProfileImage
+                }
+                className="w-12 h-12 rounded-full mr-3"
+              />
+            </TouchableOpacity>
             <View className="flex-1">
-              <Text className="font-medium">
-                {item.client_username || "Client"}
-              </Text>
+              <TouchableOpacity
+                onPress={() => navigateToProfile(item.client_id, 1)}
+              >
+                <Text className="font-medium">
+                  {item.client_username || "Client"}
+                </Text>
+              </TouchableOpacity>
               <Text numberOfLines={1} className="text-gray-500">
                 {truncateText(item.description, 40)}
               </Text>
@@ -702,14 +754,15 @@ const PrivateRequests = () => {
           </TouchableOpacity>
         )}
 
-        {item.status === RequestStatus.ACCEPTED && (
-          <TouchableOpacity
-            className="bg-green-500 w-full items-center justify-center py-3 mt-3 rounded"
-            onPress={() => handleConfirmCompletion(item.id)}
-          >
-            <Text className="text-base text-white">Declare Completed</Text>
-          </TouchableOpacity>
-        )}
+        {item.status === RequestStatus.ACCEPTED &&
+          userRole === UserRole.CLIENT && (
+            <TouchableOpacity
+              className="bg-green-500 w-full items-center justify-center py-3 mt-3 rounded"
+              onPress={() => handleConfirmCompletion(item.id)}
+            >
+              <Text className="text-base text-white">Declare Completed</Text>
+            </TouchableOpacity>
+          )}
 
         {/* Client verification section - when job is marked as completed by worker */}
         {item.status === RequestStatus.PENDING_CLIENT_VERIFICATION && (
@@ -746,7 +799,12 @@ const PrivateRequests = () => {
           className="mb-3"
         >
           <View className="flex-row justify-between items-center">
-            <View className="flex-row items-center">
+            <TouchableOpacity
+              className="flex-row items-center"
+              onPress={() => {
+                navigateToProfile(item.client_id, 1);
+              }}
+            >
               <Image
                 source={
                   item.client_profile_image
@@ -760,7 +818,7 @@ const PrivateRequests = () => {
                   {item.client_username || "Client"}
                 </Text>
               </View>
-            </View>
+            </TouchableOpacity>
             <View className="flex-row items-center">
               {getStatusIcon(item.status)}
               <Text className="ml-1 text-gray-600 text-sm capitalize">
@@ -781,7 +839,7 @@ const PrivateRequests = () => {
             <TouchableOpacity
               className="mr-4"
               onPress={() => {
-                handelcall("251911111111");
+                handelcall(item.client_phone_number);
               }}
             >
               <Ionicons name="call" size={32} color="#000" />
@@ -1039,6 +1097,68 @@ const PrivateRequests = () => {
                   }}
                 />
               ))}
+            </View>
+          </View>
+        </Modal>
+        <Modal
+          visible={ratingModalVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setRatingModalVisible(false)}
+        >
+          <View className="flex-1 bg-black/50 justify-center items-center">
+            <View className="bg-white p-6 rounded-xl w-[90%] max-w-[400px]">
+              <Text className="text-xl font-bold text-center mb-4">
+                Rate Worker Performance
+              </Text>
+
+              <Text className="text-center text-gray-600 mb-6">
+                Please rate and comment on the worker's service
+              </Text>
+
+              <Rating
+                type="star"
+                ratingCount={5}
+                imageSize={40}
+                startingValue={rating}
+                onFinishRating={(value: number) => setRating(value)}
+                style={{ paddingVertical: 10 }}
+              />
+
+              <TextInput
+                className="border border-gray-300 rounded-xl p-3 mt-4 mb-2"
+                placeholder="Add your comment (optional)"
+                multiline
+                numberOfLines={3}
+                maxLength={200}
+                value={ratingComment}
+                onChangeText={setRatingComment}
+              />
+
+              <View className="flex-row justify-between mt-6">
+                <TouchableOpacity
+                  onPress={() => {
+                    setRatingModalVisible(false);
+                    setTempRequestId(null);
+                    setRating(0);
+                    setRatingComment(""); // Clear comment
+                  }}
+                  className="bg-gray-500 py-3 px-6 rounded-xl flex-1 mr-2 justify-center"
+                >
+                  <Text className="text-white text-center font-semibold">
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleRatingSubmit}
+                  className="bg-green-500 py-3 px-6 rounded-xl flex-1 ml-2"
+                >
+                  <Text className="text-white text-center font-semibold">
+                    Submit & Complete
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </Modal>

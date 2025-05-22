@@ -1,5 +1,7 @@
 interface WorkerPrivateRequest {
   id: number;
+  client_id: number;
+  client_phone_number: string;
   client_username: string;
   category: string;
   media: {
@@ -38,6 +40,7 @@ interface ClientPrivateRequest {
 interface WorkerPublicRequest {
   id: number;
   category: string;
+  client_id: number;
   client_username: string;
   client_profile_image: string;
   worker_comment: string;

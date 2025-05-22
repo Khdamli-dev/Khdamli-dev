@@ -17,11 +17,7 @@ import {
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import React, { useState, useRef, useEffect } from "react";
-import {
-  MaterialCommunityIcons,
-  Ionicons,
-  MaterialIcons,
-} from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 // Import the interfaces from your interfaces file
 import {
@@ -79,9 +75,11 @@ const PublicRequest = () => {
     null
   );
   const [userData, setUserData] = useState<{
+    id: number;
     username: string;
     profile_image: string;
   }>({
+    id: 0,
     username: "",
     profile_image: "",
   });
@@ -94,7 +92,7 @@ const PublicRequest = () => {
 
   const { width: windowWidth, height: windowHeight } = Dimensions.get("window");
   const scrollViewRef = useRef<ScrollView>(null);
-  const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [commentModalVisible, setCommentModalVisible] = useState(false);
   const [initialComment, setInitialComment] = useState<string | null>(null);
   const commentInputRef = useRef<TextInput>(null);
@@ -103,13 +101,24 @@ const PublicRequest = () => {
     requestId: number,
     currentComment: string = ""
   ) => {
-    setEditingCommentId(requestId);
+    setEditingId(requestId);
     setCommentModalVisible(true);
     setInitialComment(currentComment);
     // Focus on the text input after a short delay (to ensure modal is visible)
     setTimeout(() => {
       commentInputRef.current?.focus();
     }, 300);
+  };
+
+  const navigateToProfile = (id: number, role: number) => {
+    router.push({
+      pathname: "/(tabs)/(home)/profileAsView",
+      params: {
+        userId: id,
+        userRole: role,
+        origin: "publicRequest",
+      },
+    });
   };
 
   // Determine if user is client or worker and get user data
@@ -121,6 +130,7 @@ const PublicRequest = () => {
           const user = JSON.parse(userDataStr);
           setUserRole(user.role == 1 ? UserRole.CLIENT : UserRole.WORKER);
           setUserData({
+            id: user.id,
             username: user.username || "",
             profile_image: user.profile_image || "",
           });
@@ -386,18 +396,23 @@ const PublicRequest = () => {
       >
         <View className="flex-row justify-between items-center">
           <View className="flex-row items-center flex-1">
-            <Image
-              source={
-                item.client_profile_image
-                  ? { uri: item.client_profile_image }
-                  : defaultProfileImage
-              }
-              className="w-12 h-12 rounded-full mr-3"
-            />
+            <TouchableOpacity onPress={() => navigateToProfile(item.client_id, 1)}>
+              <Image
+                source={
+                  item.client_profile_image
+                    ? { uri: item.client_profile_image }
+                    : defaultProfileImage
+                }
+                className="w-12 h-12 rounded-full mr-3"
+              />
+            </TouchableOpacity>
+
             <View className="flex-1">
-              <Text className="font-medium">
-                {item.client_username || "Client"}
-              </Text>
+              <TouchableOpacity onPress={() => navigateToProfile(item.client_id, 1)}>
+                <Text className="font-medium">
+                  {item.client_username || "Client"}
+                </Text>
+              </TouchableOpacity>
               <Text
                 numberOfLines={1}
                 ellipsizeMode="tail"
@@ -600,27 +615,30 @@ const PublicRequest = () => {
     );
   };
 
-  const saveComment = async (commentText?: string) => {
-    if (!editingCommentId) return;
+  const saveComment = async (
+    requestid?: number | null,
+    commentText?: string
+  ) => {
+    if (!editingId) return;
 
     setLoading(true);
     try {
-      // Get current timestamp for the comment_date
-      const currentDate = new Date().toISOString();
-
-      // Make API call to update the comment in the database
-      console.log(
-        "Saving comment:",
-        commentText,
-        "for request ID:",
-        editingCommentId
+      console.log("Saving comment:", commentText, "for request ID:", editingId);
+      const workerId = userData.id; // Assuming this is the worker ID
+      await apiClient.put(
+        `/work/job-request/${requestid}/comment/`,
+        {
+          workerId: workerId,
+          message: commentText,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
       );
 
-      await apiClient.patch(`/work/job-request/${editingCommentId}/comment/`, {
-        worker_comment: commentText,
-      });
-
-      setEditingCommentId(null);
+      setEditingId(null);
 
       // Show success message
       Alert.alert("Success", "Your comment has been saved to the database");
@@ -630,7 +648,7 @@ const PublicRequest = () => {
     } catch (err: any) {
       if (err.response?.status === 401) {
         if (await refreshAccessToken()) {
-          await saveComment();
+          await saveComment(editingId, commentText);
         } else {
           // Token refresh failed, redirect to login
           router.push("/(auth)");
@@ -650,14 +668,19 @@ const PublicRequest = () => {
     }
   };
 
-  const deleteComment = async () => {
-    if (!editingCommentId) return;
+  const deleteComment = async (requestId?: number | null) => {
+    if (!editingId) return;
     setLoading(true);
     try {
-      console.log("editingCommentId", editingCommentId);
-
-      await apiClient.patch(`/work/job-request/${editingCommentId}/comment/`, {
-        worker_comment: "",
+      console.log("editingId", editingId);
+      let workerId = userData.id; // Assuming this is the worker ID
+      await apiClient.delete(`/work/job-request/${requestId}/comment/`, {
+        data: {
+          workerId: workerId,
+        },
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
 
       Alert.alert("Success", "Your comment has been deleted");
@@ -667,7 +690,7 @@ const PublicRequest = () => {
     } catch (err: any) {
       if (err.response?.status === 401) {
         if (await refreshAccessToken()) {
-          await deleteComment();
+          await deleteComment(editingId);
         } else {
           router.push("/(auth)");
         }
@@ -770,7 +793,7 @@ const PublicRequest = () => {
                     } else {
                       setCommentModalVisible(false);
                     }
-                    deleteComment();
+                    deleteComment(editingId);
                   }}
                 >
                   <Text className="text-gray-700 font-medium">
@@ -789,7 +812,7 @@ const PublicRequest = () => {
                     } else {
                       setCommentModalVisible(false);
                     }
-                    saveComment(commentText);
+                    saveComment(editingId, commentText);
                   }}
                 >
                   <Text className="text-white font-medium">Save</Text>
@@ -816,8 +839,11 @@ const PublicRequest = () => {
           onPress={() => toggleExpandRequest(item.id)}
           className="mb-3"
         >
-          <View className="flex-row justify-between items-center">
-            <View className="flex-row items-center">
+          <View className="flex-row justify-between items-center ">
+            <TouchableOpacity
+              className="flex-row items-center "
+              onPress={() => navigateToProfile(item.client_id, 1)}
+            >
               <Image
                 source={
                   item.client_profile_image
@@ -831,7 +857,7 @@ const PublicRequest = () => {
                   {item.client_username || "Client"}
                 </Text>
               </View>
-            </View>
+            </TouchableOpacity>
             <View className="flex-row items-center">
               {getStatusIcon(item.status)}
               <Text className="ml-1 text-gray-600 text-base capitalize">
