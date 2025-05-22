@@ -125,36 +125,26 @@ const getRequestDetails = async (req: Request, res: Response) => {
         `,
         [requestId, workerId]
       );
-
       if (commentData.rows.length) {
         workerComment = commentData.rows[0].message;
         commentDate = commentData.rows[0].created_at.toISOString();
       }
-    }
 
-    // Validate request_type against request.worker
-    const isPublic = requestRow.worker_id === null;
-    if (request_type === "public" && !isPublic) {
-      res.status(400).json({
-        message: "Request is private, not public",
-        request: null,
-        success: false,
-      });
-      return;
-    }
-    if (request_type === "private" && isPublic) {
-      res.status(400).json({
-        message: "Request is public, not private",
-        request: null,
-        success: false,
-      });
-      return;
+      const onholdRequestId : string | undefined = process.env.ON_HOLD_REQUEST_ID;
+      if (!onholdRequestId){
+        throw new Error("missing envirement variables");
+      }
+      if (requestRow.worker_id == workerId && requestRow.status_id == onholdRequestId){
+        requestRow.status = "verification pending";
+      }
     }
 
     // Build response based on role and request_type
     const response: { [key: string]: any } = {};
 
     // Common fields across scenarios
+    response.workerId = requestRow.worker_id;
+    response.clientId = requestRow.client_id;
     response.id = requestId;
     response.category = requestRow.category;
     response.description = requestRow.description || null;

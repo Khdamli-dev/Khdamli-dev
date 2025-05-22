@@ -1,4 +1,6 @@
 interface WorkerPrivateRequest {
+  workerId : number,
+  clientId : number,
   id: number;
   client_id: number;
   client_phone_number: string;
@@ -20,6 +22,8 @@ interface WorkerPrivateRequest {
   status: string;
 }
 interface ClientPrivateRequest {
+  workerId : number,
+  clientId : number,
   id: number;
   status: string;
   worker_username: string;
