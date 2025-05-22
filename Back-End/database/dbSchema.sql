@@ -159,6 +159,31 @@ CREATE TABLE "worker" (
   -- the worker will be added to user table after that he will be added to worker table with same id
 );
 
+-- increment sent_requests and complete requests automatically
+CREATE OR REPLACE FUNCTION increment_requests_stats()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- increment sent requests
+    IF (NEW.type = 2 AND NEW.status = 3) OR (NEW.type = 1 AND NEW.status = 1) THEN
+      UPDATE "worker" SET sent_requests = sent_requests + 1
+      WHERE id = NEW.worker;
+    END IF;
+
+    -- increment completed requests
+    IF (NEW.status = 4) THEN
+      UPDATE "worker" SET completed_requests = completed_requests + 1
+      WHERE id = NEW.worker;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_requests_stats
+AFTER INSERT OR UPDATE ON "request"
+FOR EACH ROW
+EXECUTE FUNCTION increment_requests_stats();
+
 CREATE TABLE "category" (
   "id" SERIAL PRIMARY KEY,
   "name" VARCHAR(80) NOT NULL UNIQUE, -- the query of search category by its name is frequently
