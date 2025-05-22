@@ -80,27 +80,6 @@ CREATE TABLE "role" (
   "name" VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE "permission" (
-  "id" smallserial PRIMARY KEY,
-  "name" VARCHAR(100) NOT NULL
-);
-
-CREATE TABLE "role_permission" (
-  "role" smallint NOT NULL,
-  "permission" smallint NOT NULL,
-  PRIMARY KEY("permission","role"), -- frequent query is to get all roles of one permission
-  CONSTRAINT "FK_role-permission_permission"
-    FOREIGN KEY("permission")
-      REFERENCES "permission"("id")
-      ON DELETE CASCADE 
-      ON UPDATE CASCADE,
-  CONSTRAINT "FK_role-permission_role"
-    FOREIGN KEY("role")
-      REFERENCES "role"("id")
-      ON DELETE RESTRICT
-      ON UPDATE CASCADE
-);
-
 CREATE TYPE sex_enum AS ENUM('male','female');
 
 CREATE TABLE "sex" (
@@ -168,8 +147,9 @@ CREATE TABLE "worker" (
   "active" BOOLEAN NOT NULL,
   "transport" BOOLEAN NOT NULL,
   "sent_requests" smallint NOT NULL,
-  "accepted_requests" smallint NOT NULL,
   "completed_requests" smallint NOT NULL,
+  "review_count" smallint NOT NULL,
+  "review_sum" NUMERIC(1000,1) NOT NULL,
   "nbr_media" smallint NOT NULL,
   CONSTRAINT "FK_worker_user"
     FOREIGN KEY("id")
@@ -298,6 +278,21 @@ CREATE TABLE "review" (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
+
+-- increment worker review count and sum after insert new review for him
+CREATE OR REPLACE FUNCTION increment_review_count()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE "worker" SET review_count = review_count + 1, review_sum = review_sum + NEW.rating
+    WHERE id = NEW.worker_id;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_review_count
+AFTER INSERT ON "review"
+FOR EACH ROW
+EXECUTE FUNCTION increment_review_count();
 
 CREATE TABLE "request_status" (
   "id" smallserial PRIMARY KEY,
