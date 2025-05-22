@@ -229,8 +229,13 @@ const EditProfileScreen = ({ navigation }: ProfileScreenProps) => {
       // Get changed address info and add to changes object if not empty
       const changedAddressInfo = getChangedAddressInfo();
       console.log("Changed address info:", changedAddressInfo);
-      if (Object.keys(changedAddressInfo).length > 0) {
+      if (
+        Object.keys(changedAddressInfo).length > 0 &&
+        changedAddressInfo.region != null
+      ) {
         changes.addressInfo = changedAddressInfo;
+      } else {
+        changes.addressInfo = null;
       }
 
       // Only make API request if there are actual changes
@@ -248,7 +253,14 @@ const EditProfileScreen = ({ navigation }: ProfileScreenProps) => {
           console.log("Changes to be sent:", personalInfo);
           // Make API call to update profile
           const response = await apiClient.put(endpoint, {
-            personalInfo: { address: personalInfo },
+            personalInfo: {
+              address: personalInfo.region ? personalInfo : null,
+            },
+            workerInfo: {
+              workingHours: workingDays,
+              categories: userInfo.subCategories,
+              bio: userInfo.bio,
+            },
           });
           // if (response.status === 200 || response.status === 201) {
           console.log("Successfully updated profile with changes:", changes);

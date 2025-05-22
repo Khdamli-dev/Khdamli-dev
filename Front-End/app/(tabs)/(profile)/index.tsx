@@ -218,13 +218,46 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     }));
   };
 
-  const updateProfileImage = (newImage: string) => {
+  const updateProfileImage = async (newImage: string) => {
     setUser((prevUser) => ({
       ...prevUser,
       image: newImage,
     }));
     setImage(newImage);
     console.log("the url of this photo is ===" + newImage);
+    const userData = await AsyncStorage.getItem("user");
+    const user: any = JSON.parse(userData as any);
+
+    if (!user) {
+      return;
+    }
+
+    const { id } = user;
+
+    // Create FormData object
+    const formData = new FormData();
+
+    // Append the image to the FormData object
+    formData.append("profile_image", {
+      uri: newImage,
+      type: "image/jpeg", // or the correct mime type of your image
+      name: "profile_image.jpg", // or a suitable name for the image file
+    } as any);
+
+    try {
+      const response = await apiClient.put(
+        `/users/${id}/profile-picture`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "form-data",
+          },
+        }
+      );
+      console.log(response.data);
+    } catch (error: any) {
+      console.error("Error updating profile image:", error.response.data);
+    }
   };
   // const [fontsLoaded] = useFonts({ Itim_400Regular });
   // if (!fontsLoaded) return <Text>Loading...</Text>;
