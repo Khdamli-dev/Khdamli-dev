@@ -2,6 +2,8 @@ interface WorkerPrivateRequest {
   workerId : number,
   clientId : number,
   id: number;
+  client_id: number;
+  client_phone_number: string;
   client_username: string;
   category: string;
   media: {
@@ -16,7 +18,6 @@ interface WorkerPrivateRequest {
   };
   sent_date: string;
   description: string;
-  payment_method: string;
   status: string;
 }
 interface ClientPrivateRequest {
@@ -42,6 +43,7 @@ interface ClientPrivateRequest {
 interface WorkerPublicRequest {
   id: number;
   category: string;
+  client_id: number;
   client_username: string;
   client_profile_image: string;
   worker_comment: string;
@@ -57,10 +59,11 @@ interface WorkerPublicRequest {
     type: string;
     url: string;
   }[];
-  payment_method: string;
   status: string;
 }
 interface ClientPublicRequest {
+  workerId : number,
+  clientId : number,
   id: number;
   category: string;
   location: {
@@ -75,7 +78,6 @@ interface ClientPublicRequest {
     type: string;
     url: string;
   }[];
-  payment_method: string;
   status: string;
 }
 export {

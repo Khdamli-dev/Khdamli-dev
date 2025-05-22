@@ -1,5 +1,8 @@
 import { Request, Response } from "express";
 import pool from "../../database/dbConnection";
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const getRequests = async (req: Request, res: Response) => {
   try {
@@ -19,22 +22,26 @@ const getRequests = async (req: Request, res: Response) => {
       return;
     }
 
+    const onholdRequestStatusId: string | undefined = process.env.ON_HOLD_REQUEST_ID;
+    const publicRequestId: string | undefined = process.env.PUBLIC_REQUEST_ID;
+    const acceptedRequestStatusId: string | undefined = process.env.ACCEPTED_REQUEST_ID;
+    if (!onholdRequestStatusId || !publicRequestId || !acceptedRequestStatusId){
+      throw new Error('missing envirement variables');
+    }
+
     let query: string;
     let values: any[] = [];
 
-    if (worker && +type! === 1) {
+    if (worker && +type! === +publicRequestId) {
       // Special case: type 1 (public), get requests where the worker commented
       query = `
-                                SELECT r.id
-FROM request r
-INNER JOIN public_request_messages prm ON r.id = prm.request
-WHERE r.type = 1 
-  AND r.status IN (1, 3) 
-  AND r.worker IS NULL 
-  AND prm.worker = $1
-
-            `;
-      values = [+worker];
+      SELECT r.id
+      FROM request r
+      INNER JOIN public_request_messages prm ON r.id = prm.request
+      WHERE r.type = $3 
+      AND r.status = $2 
+      AND prm.worker = $1`;
+      values = [+worker, +onholdRequestStatusId, +publicRequestId];
     } else {
       query = `SELECT id FROM request WHERE`;
       if (worker) {
@@ -44,8 +51,8 @@ WHERE r.type = 1
         query += ` client = $1`;
         values.push(+client);
       }
-      query += ` AND (status = 1 OR status = 3) AND type = $2`;
-      values.push(+type!);
+      query += ` AND status IN($3, $4) AND type = $2`;
+      values.push(+type!, +onholdRequestStatusId, +acceptedRequestStatusId);
     }
 
     const { rows } = await pool.query(query, values);

@@ -30,7 +30,6 @@ import { Video, ResizeMode } from "expo-av";
 import apiClient from "@/api/appClient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import refreshAccessToken from "@/api/refreshAccessToken";
-
 // Media item can be image, video or none
 interface MediaItem {
   type: "image" | "video" | "none";
@@ -415,6 +414,7 @@ const HomeScreen = () => {
       params: {
         userId: id,
         userRole: role,
+        origin: "home",
       },
     });
   };

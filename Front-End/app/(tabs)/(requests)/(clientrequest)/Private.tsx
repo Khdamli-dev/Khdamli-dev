@@ -26,12 +26,12 @@ import refreshAccessToken from "@/api/refreshAccessToken";
 import {
   WorkerPrivateRequest,
   ClientPrivateRequest,
-} from "@/Interfaces/Requestsinterfaces";
+} from '../../../../Interfaces/Requestsinterfaces';
 import { ResizeMode, Video } from "expo-av";
 import { getSocket } from "@/api/socket";
 import { useNotifications } from "@/context/NotificationContext";
 import { Rating } from "react-native-ratings";
-import { formatDateTime } from "../SomeStandarFunctions";
+import { formatDateTime, handelcall } from "../SomeStandarFunctions";
 
 //import { realTimePrivateRequestStatus, realTimeRequests } from '@/api/realTime';
 
@@ -54,8 +54,6 @@ enum RequestStatus {
 
 // Default placeholder image for missing profile images
 const defaultProfileImage = require("../../../../assets/images/images (1).jpg");
-
-
 
 const PrivateRequests = () => {
   const notifications = useNotifications();
@@ -123,7 +121,16 @@ const PrivateRequests = () => {
   const toggleExpandRequest = (id: number) => {
     setExpandedRequestId(expandedRequestId === id ? null : id);
   };
-
+  const navigateToProfile = (id: number, role: number) => {
+    router.push({
+      pathname: "/(tabs)/(home)/profileAsView",
+      params: {
+        userId: id,
+        userRole: role,
+        origin: "privateRequest",
+      },
+    });
+  };
   const fetchRequests = async () => {
     setLoading(true);
     try {
@@ -158,13 +165,6 @@ const PrivateRequests = () => {
     }
   };
 
-  /*  const fetch_request_message = async (requestId: number) => {
-    try {
-      const response = apiClient.get(`/work/job-request/${requestId}/messages`);
-      const result = (await response).data.messages;
-    } catch (err: any) {}
-  }; */
-
   const fetchRequestsDetails = async (requestId: number) => {
     try {
       const userData = await AsyncStorage.getItem("user");
@@ -183,7 +183,6 @@ const PrivateRequests = () => {
         params,
       });
       const result = response.data.request;
-      console.log(result);
 
       // Update the specific request rather than appending to the array
       setRequests((prev) => {
@@ -356,8 +355,8 @@ const PrivateRequests = () => {
 
       // First submit the rating
       await apiClient.post(`/work/job-request/${tempRequest.id}/complete`, {
-         workerId : tempRequest.workerId,
-         clientId: tempRequest.clientId,
+        workerId : tempRequest.workerId,
+        clientId: tempRequest.clientId,
         rating: rating,
         review: ratingComment,
       });
@@ -388,55 +387,6 @@ const PrivateRequests = () => {
   const handleConfirmCompletion = async (request: ClientPrivateRequest) => {
     setTempRequest(request);
     setRatingModalVisible(true);
-  };
-
-  // Handle rejecting completion
-  const handleRejectCompletion = async (id: number) => {
-    try {
-      await apiClient.put(`/work/job-request/${id}/state`, {
-        state: RequestStatus.ACCEPTED,
-      });
-
-      // Update local state
-      setRequests(
-        requests.map((request) =>
-          request.id === id
-            ? { ...request, status: RequestStatus.ACCEPTED }
-            : request
-        )
-      );
-
-      Alert.alert(
-        "Success",
-        "Completion rejected. Request status set back to accepted."
-      );
-    } catch (err: any) {
-      console.error("Failed to reject completion:", err);
-      Alert.alert("Error", "Failed to reject completion");
-    }
-  };
-
-  // Handle cancelling request
-  const handleCancelRequest = async (id: number) => {
-    try {
-      await apiClient.put(`/work/job-request/${id}/state`, {
-        state: RequestStatus.CANCELLED,
-      });
-
-      // Update local state
-      setRequests(
-        requests.map((request) =>
-          request.id === id
-            ? { ...request, status: RequestStatus.CANCELLED }
-            : request
-        )
-      );
-
-      Alert.alert("Success", "Request cancelled successfully");
-    } catch (err: any) {
-      console.error("Failed to cancel request:", err);
-      Alert.alert("Error", "Failed to cancel request");
-    }
   };
 
   useEffect(() => {
@@ -486,18 +436,22 @@ const PrivateRequests = () => {
       >
         <View className="flex-row justify-between items-center">
           <View className="flex-row items-center flex-1">
-            <Image
-              source={
-                item.worker_profile_image
-                  ? { uri: item.worker_profile_image }
-                  : defaultProfileImage
-              }
-              className="w-12 h-12 rounded-full mr-3"
-            />
+            <TouchableOpacity onPress={() => navigateToProfile(29, 1)}>
+              <Image
+                source={
+                  item.worker_profile_image
+                    ? { uri: item.worker_profile_image }
+                    : defaultProfileImage
+                }
+                className="w-12 h-12 rounded-full mr-3"
+              />
+            </TouchableOpacity>
             <View className="flex-1">
-              <Text className="font-medium">
-                {item.worker_username || "Worker"}
-              </Text>
+              <TouchableOpacity onPress={() => navigateToProfile(29, 1)}>
+                <Text className="font-medium">
+                  {item.worker_username || "Worker"}
+                </Text>
+              </TouchableOpacity>
               <Text numberOfLines={1} className="text-gray-500">
                 {truncateText(item.description, 40)}
               </Text>
@@ -531,18 +485,28 @@ const PrivateRequests = () => {
       >
         <View className="flex-row justify-between items-center">
           <View className="flex-row items-center flex-1">
-            <Image
-              source={
-                item.client_profile_image
-                  ? { uri: item.client_profile_image }
-                  : defaultProfileImage
-              }
-              className="w-12 h-12 rounded-full mr-3"
-            />
+            <TouchableOpacity
+              onPress={() => {
+                navigateToProfile(item.client_id, 1);
+              }}
+            >
+              <Image
+                source={
+                  item.client_profile_image
+                    ? { uri: item.client_profile_image }
+                    : defaultProfileImage
+                }
+                className="w-12 h-12 rounded-full mr-3"
+              />
+            </TouchableOpacity>
             <View className="flex-1">
-              <Text className="font-medium">
-                {item.client_username || "Client"}
-              </Text>
+              <TouchableOpacity
+                onPress={() => navigateToProfile(item.client_id, 1)}
+              >
+                <Text className="font-medium">
+                  {item.client_username || "Client"}
+                </Text>
+              </TouchableOpacity>
               <Text numberOfLines={1} className="text-gray-500">
                 {truncateText(item.description, 40)}
               </Text>
@@ -702,7 +666,7 @@ const PrivateRequests = () => {
             className="bg-red-500 w-full items-center justify-center py-3 mt-3 rounded"
             onPress={() => handleDeleteRequest(item.id)}
           >
-            <Text className="text-base text-white">Delete Request</Text>
+            <Text className="text-base text-white">Cancel Request</Text>
           </TouchableOpacity>
         )}
 
@@ -715,29 +679,6 @@ const PrivateRequests = () => {
               <Text className="text-base text-white">Declare Completed</Text>
             </TouchableOpacity>
           )}
-
-        {/* Client verification section - when job is marked as completed by worker */}
-        {item.status === RequestStatus.PENDING_CLIENT_VERIFICATION && (
-          <View className="mt-3">
-            <Text className="text-base text-blue-600 mb-2">
-              Worker has marked this job as completed.
-            </Text>
-            <View className="flex-row">
-              <TouchableOpacity
-                className="bg-green-500 w-1/2 justify-center items-center py-2 mr-1 rounded-l"
-                onPress={() => console.log('first')}
-              >
-                <Text className="text-base text-white">Confirm Completion</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className="bg-red-500 w-1/2 justify-center items-center py-2 ml-1 rounded-r"
-                onPress={() => handleRejectCompletion(item.id)}
-              >
-                <Text className="text-base text-white">Reject Completion</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
       </View>
     );
   };
@@ -751,7 +692,12 @@ const PrivateRequests = () => {
           className="mb-3"
         >
           <View className="flex-row justify-between items-center">
-            <View className="flex-row items-center">
+            <TouchableOpacity
+              className="flex-row items-center"
+              onPress={() => {
+                navigateToProfile(item.client_id, 1);
+              }}
+            >
               <Image
                 source={
                   item.client_profile_image
@@ -764,9 +710,8 @@ const PrivateRequests = () => {
                 <Text className="font-medium">
                   {item.client_username || "Client"}
                 </Text>
-                
               </View>
-            </View>
+            </TouchableOpacity>
             <View className="flex-row items-center">
               {getStatusIcon(item.status)}
               <Text className="ml-1 text-gray-600 text-sm capitalize">
@@ -783,16 +728,16 @@ const PrivateRequests = () => {
         </TouchableOpacity>
 
         <View className="flex-row justify-end mb-3">
-          <TouchableOpacity className="mr-2">
-            <Ionicons name="call" size={30} color="#000" />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <MaterialCommunityIcons
-              name="message-text-outline"
-              size={30}
-              color="#000"
-            />
-          </TouchableOpacity>
+          {item.status === "Accepted" && (
+            <TouchableOpacity
+              className="mr-4"
+              onPress={() => {
+                handelcall(item.client_phone_number);
+              }}
+            >
+              <Ionicons name="call" size={32} color="#000" />
+            </TouchableOpacity>
+          )}
         </View>
 
         <View className="pl-2">
@@ -816,9 +761,6 @@ const PrivateRequests = () => {
           <Text className="text-base mb-1">
             <Text className="font-bold">About Service: </Text>
             <Text className="text-green-500">{item.description}</Text>
-          </Text>
-          <Text className="text-base mb-1">
-            <Text className="text-green-500">{item.payment_method}</Text>
           </Text>
         </View>
 
@@ -881,16 +823,6 @@ const PrivateRequests = () => {
             </TouchableOpacity>
           </View>
         )}
-
-        {/* For PENDING_CLIENT_VERIFICATION requests - Worker sees waiting status */}
-        {item.status === RequestStatus.PENDING_CLIENT_VERIFICATION && (
-          <View className="bg-yellow-100 border border-yellow-400 items-center justify-center py-3 mt-3 rounded">
-            <Text className="text-base text-yellow-800">
-              Waiting for client confirmation
-            </Text>
-          </View>
-        )}
-
         {/* For COMPLETED requests - Worker sees completed status */}
         {item.status === RequestStatus.COMPLETED && (
           <View className="bg-green-100 border border-green-400 items-center justify-center py-3 mt-3 rounded">
