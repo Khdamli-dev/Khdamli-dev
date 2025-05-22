@@ -32,13 +32,13 @@ const setPersonalInfo = async (req: Request, res: Response) => {
     
     // check if user exist
     if (rowCount == 0) {
-      res.status(400).json({ message: "user doesn't exist" });
+      res.status(400).json({ message: "user doesn't exist"  , success : false});
       return;
     }
     res.status(200).json({ message: 'User information added successfully' ,success : true});
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: 'internal server error' });
+    res.status(500).json({ message: 'internal server error' , success : false});
   }
 };
 

@@ -370,11 +370,13 @@ const HomeScreen = () => {
     try {
       const userData = await AsyncStorage.getItem("user");
       if (userData) {
+        
         const user: any = JSON.parse(userData);
         const newComment = {
           workerId: user.id, // Using timestamp as a temporary ID
           comment: commentText,
         };
+        console.log(user.role)
         const response = await apiClient.post(
           `/work/job-request/${postId}/comment`,
           newComment

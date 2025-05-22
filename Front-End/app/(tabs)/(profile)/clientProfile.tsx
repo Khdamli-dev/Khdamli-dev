@@ -9,6 +9,7 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Calendar,
   MapPin,
@@ -19,14 +20,17 @@ import {
   CreditCard,
   MessageSquare,
 } from "lucide-react-native";
+import CONFIG from "../../../config";
 import { LinearGradient } from "expo-linear-gradient";
+import { useFonts, Itim_400Regular } from "@expo-google-fonts/itim";
+import { useRoute } from "@react-navigation/native";
 import { Video, ResizeMode } from "expo-av";
+import axios from "axios";
 import { router, useLocalSearchParams } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import apiClient from "@/api/appClient";
 import { AntDesign } from "@expo/vector-icons";
-import Dashboard from "@/Component/ProfileComponents/Dashboard";
-import Reviews from "@/Component/ProfileComponents/Reviews";
+
 const { width } = Dimensions.get("window");
 
 interface ProfileItemProps {
@@ -52,8 +56,7 @@ const styles = StyleSheet.create({
 });
 
 const UserProfileView = () => {
-  const { status, requestId, userId, userRole, origin } =
-    useLocalSearchParams();
+  const { userId, userRole } = useLocalSearchParams();
   const [role, setRole] = useState(1); // 1 Client 2 worker
   const [user, setUser] = useState<{
     fullName: string | null;
@@ -187,17 +190,6 @@ const UserProfileView = () => {
       params: { type: "2" },
     });
   };
-   const handleNavigatetoclientprofiele = (clientId: string) => {
-      console.log(`Navigate to client: ${clientId}`);
-      router.push({
-            pathname: "/profileAsView",
-            params: {
-              userId: clientId,
-              userRole: 1,
-            },
-          });
-      // Navigate to client profile
-    };
   return (
     <ScrollView>
       {/* Profile Header - Without Edit Buttons */}
@@ -210,39 +202,7 @@ const UserProfileView = () => {
         style={{ borderBottomLeftRadius: 50, borderBottomRightRadius: 50 }}
       >
         <TouchableOpacity
-          onPress={() => {
-            switch (origin) {
-              case "home": {
-                router.back();
-                break;
-              }
-              case "publicRequest": {
-                router.back();
-                router.replace(
-                  "/(tabs)/(requests)/(clientrequest)/ClientRequest"
-                );
-                break;
-              }
-              case "privateRequest": {
-                router.back();
-                router.replace("/(tabs)/(requests)/(clientrequest)/Private");
-                break;
-              }
-              case "workerComments": {
-                router.back();
-                router.replace({
-                  pathname: "/(tabs)/(requests)/(comment)/WorkerComments",
-                  params: { requestId, status, workerId: userId },
-                });
-                break;
-              }
-
-              default: {
-                router.back();
-                break;
-              }
-            }
-          }}
+          onPress={() => router.back()}
           className="justify-end w-full"
         >
           <AntDesign name="left" size={50} color="#F8A100" />
@@ -310,13 +270,6 @@ const UserProfileView = () => {
       {/* Worker-specific sections */}
       {user.accountType === "worker" && (
         <>
-          <Dashboard
-            workerId={Array.isArray(userId) ? userId[0] : userId} // Pass the userId to the Dashboard component
-            onStatPress={(statType) => {
-              console.log(`Pressed ${statType} stat`);
-              // Navigate to detailed stats screen
-            }}
-          />
           {/* Bio Section */}
           <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
             <Text
@@ -466,22 +419,6 @@ const UserProfileView = () => {
             />
           </View>
         )}
-      {/* Reviews Section - Worker only */}
-      {user.accountType === "worker" && (
-        <>
-          <Reviews
-            workerId={Array.isArray(userId) ? userId[0] : userId}
-            onClientPress={(clientId) => {
-              handleNavigatetoclientprofiele(clientId);
-              // Navigate to client profile
-            }}
-            onViewAllPress={() => {
-              console.log("View all reviews");
-              // Navigate to all reviews screen
-            }}
-          />
-        </>
-      )}
     </ScrollView>
   );
 };
