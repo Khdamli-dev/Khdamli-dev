@@ -45,8 +45,8 @@ const changeToWorkerRole = async (req: Request, res: Response) => {
     await pool.query(
       `
         INSERT INTO worker(id, registration_date, active, transport,
-        sent_requests, accepted_requests, completed_requests, nbr_media)
-        VALUES($1, $2, $3, $4, $5, $5, $5, $5)
+        sent_requests, completed_requests, review_count, review_sum, nbr_media)
+        VALUES($1, $2, $3, $4, $5, $5, $5, $5, $5)
         `,
       [userId, isoFormDate, true, false, 0],
     );
