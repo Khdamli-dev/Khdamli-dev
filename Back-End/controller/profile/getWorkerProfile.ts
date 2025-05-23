@@ -40,6 +40,7 @@ const getWorkerProfile = async (req: Request, res: Response) => {
       return;
     }
 
+
     // Fetch worker personal and professional info
     const workerData = await pool.query(
       `
@@ -73,6 +74,10 @@ const getWorkerProfile = async (req: Request, res: Response) => {
       `,
       [workerId]
     );
+    if (!workerData.rowCount){
+      res.status(404).json({ message: "User not found", worker: null, success: false });
+      return;
+    }
 
     // Fetch categories and pricing
     const categoriesData = await pool.query(
