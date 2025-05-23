@@ -9,6 +9,8 @@ import {
   FlatList,
   Dimensions,
 } from "react-native";
+import refreshAccessToken from "@/api/refreshAccessToken";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Trash,
@@ -83,7 +85,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     type: "image" | "video";
     uri: string;
   };
-
+  const [image, setImage] = useState<string | null>(null);
   const [user, setUser] = useState<{
     fullName: string | null;
     registration_date: string | null;
@@ -98,8 +100,9 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     paymentMethod: string[] | null;
     category: { name: string; price: number; unity: string }[] | null;
     gallery: MediaItem[] | null;
-    sentRequests : number | null;
-    completedRequests : number | null;
+    sentRequests: number | null;
+    completedRequests: number | null;
+
   }>({
     fullName: null,
     registration_date: null,
@@ -114,8 +117,9 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     paymentMethod: null,
     category: null,
     gallery: null,
-    sentRequests : null,
-    completedRequests : null
+    sentRequests: null,
+    completedRequests: null,
+
   });
   const [userId, setUserId] = useState<string>("");
   useEffect(() => {
@@ -133,6 +137,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           role === 1 ? `/users/client/` : role === 2 ? `/users/worker/` : null;
         if (endpoint) {
           const response = await apiClient.get(`${endpoint}${id}`);
+          console.log(response);
           const newUserData =
             role === 1
               ? {
@@ -161,12 +166,18 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                   gallery: response.data.worker.media,
                   sentRequests : response.data.worker.activity.sent_requests,
                   completedRequests : response.data.worker.activity.completed_requests
+
                 };
           setUser((prev) => ({ ...prev, ...newUserData }));
         } else {
           console.log("Unknown role");
         }
-      } catch (error) {
+      } catch (error: any) {
+        if (error.response?.status === 401) {
+          if (await refreshAccessToken()) {
+            await fetchUser();
+          }
+        }
         console.error("Failed to fetch user data", error);
       }
     };
@@ -216,12 +227,45 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     }));
   };
 
-  const updateProfileImage = (newImage: string) => {
+  const updateProfileImage = async (newImage: string) => {
     setUser((prevUser) => ({
       ...prevUser,
       image: newImage,
     }));
-    console.log(newImage);
+    setImage(newImage);
+    console.log("the url of this photo is ===" + newImage);
+    const userData = await AsyncStorage.getItem("user");
+    const user: any = JSON.parse(userData as any);
+    if (!user) {
+      return;
+    }
+
+    const { id } = user;
+
+    // Create FormData object
+    const formData = new FormData();
+
+    // Append the image to the FormData object
+    formData.append("profile_image", {
+      uri: newImage,
+      type: "image/jpeg", // or the correct mime type of your image
+      name: "profile_image.jpg", // or a suitable name for the image file
+    } as any);
+
+    try {
+      const response = await apiClient.put(
+        `/users/${id}/profile-picture`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "form-data",
+          },
+        }
+      );
+      console.log(response.data);
+    } catch (error: any) {
+      console.error("Error updating profile image:", error.response.data);
+    }
   };
   // const [fontsLoaded] = useFonts({ Itim_400Regular });
   // if (!fontsLoaded) return <Text>Loading...</Text>;
@@ -388,12 +432,12 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         />
         <ProfileItem
           label="Region"
-          value={user.region}
+          value={user.region ?? "The Region not selected "}
           Icon={(props) => <Globe {...props} />}
         />
         <ProfileItem
           label="City"
-          value={user.city}
+          value={user.city ?? "The City not selected"}
           Icon={(props) => <MapPin {...props} />}
         />
       </View>
@@ -406,12 +450,12 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         />
         <ProfileItem
           label="Age"
-          value={`${user.age} Years`}
+          value={user.age ? `${user.age} Years` : "The age is not selected"}
           Icon={(props) => <Clock {...props} />}
         />
         <ProfileItem
           label="Gender"
-          value={user.gender}
+          value={user.gender ?? "The Gender is not selected"}
           Icon={(props) => <User {...props} />}
         />
         {user.accountType === "worker" && (

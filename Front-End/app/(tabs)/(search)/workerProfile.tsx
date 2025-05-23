@@ -57,7 +57,10 @@ const styles = StyleSheet.create({
 });
 
 const UserProfileView = () => {
-  const { userId, userRole } = useLocalSearchParams();
+
+  const { status, requestId, userId, userRole, origin } =
+    useLocalSearchParams();
+
   const [role, setRole] = useState(1); // 1 Client 2 worker
   const [user, setUser] = useState<{
     fullName: string | null;
@@ -73,6 +76,9 @@ const UserProfileView = () => {
     paymentMethod: string[] | null;
     category: any[] | null;
     gallery: any[] | null;
+    sentRequests: number | null;
+    completedRequests: number | null;
+
   }>({
     fullName: null,
     registration_date: null,
@@ -87,6 +93,8 @@ const UserProfileView = () => {
     paymentMethod: null,
     category: null,
     gallery: null,
+    sentRequests: null,
+    completedRequests: null,
   });
 
   useEffect(() => {
@@ -127,6 +135,9 @@ const UserProfileView = () => {
             paymentMethod: null,
             category: null,
             gallery: null,
+            sentRequests: null,
+            completedRequests: null,
+
           };
 
           setUser(clientData);
@@ -146,6 +157,8 @@ const UserProfileView = () => {
             category: response.data.worker.categories,
             paymentMethod: response.data.worker.payment_methods,
             gallery: response.data.worker.media,
+            sentRequests: response.data.worker.activity.sent_requests,
+            completedRequests: response.data.worker.activity.completed_requests,
           };
 
           setUser(workerData);
@@ -191,6 +204,7 @@ const UserProfileView = () => {
       params: { type: "2" },
     });
   };
+
    const handleNavigatetoclientprofiele = (clientId: string) => {
       console.log(`Navigate to client: ${clientId}`);
       router.push({
@@ -202,6 +216,7 @@ const UserProfileView = () => {
           });
       // Navigate to client profile
     };
+
   return (
     <ScrollView>
       {/* Profile Header - Without Edit Buttons */}
@@ -214,7 +229,9 @@ const UserProfileView = () => {
         style={{ borderBottomLeftRadius: 50, borderBottomRightRadius: 50 }}
       >
         <TouchableOpacity
+
           onPress={() => router.back()}
+
           className="justify-end w-full"
         >
           <AntDesign name="left" size={50} color="#F8A100" />
@@ -284,10 +301,12 @@ const UserProfileView = () => {
         <>
           <Dashboard
             workerId={Array.isArray(userId) ? userId[0] : userId} // Pass the userId to the Dashboard component
-            onStatPress={(statType) => {
-              console.log(`Pressed ${statType} stat`);
-              // Navigate to detailed stats screen
+
+            sent_requests={user.sentRequests || 0}
+            completed_requests={user.completedRequests || 0}
+
             }}
+
           />
           {/* Bio Section */}
           <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
