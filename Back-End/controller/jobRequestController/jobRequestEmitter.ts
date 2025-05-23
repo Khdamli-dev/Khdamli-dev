@@ -2,7 +2,6 @@ import { Server } from 'socket.io';
 import { getIo } from '../../config/websocket';
 import JobRequest from '../../interface/jobRequest';
 import dotenv from 'dotenv';
-import pool from '../../database/dbConnection';
 
 dotenv.config();
 
@@ -33,25 +32,29 @@ export const acceptWorkerOnPublicRequest = async (
     );
 };
 
-export const changeRequestStatus = async (
+export const changeRequestStatus = (
   request: JobRequest,
-): Promise<void> => {
-  const io: Server = getIo();
-  const { type } = request;
-  // determine the destination
-  const privateRequestId: string | undefined = process.env.PRIVATE_REQUEST_ID;
-  if (privateRequestId && type === +privateRequestId) {
-    if (type === +privateRequestId) {
-      // worker change private request status, so destination => client
-      const status = await pool.query(
-        `
-      SELECT name FROM request_status
-      WHERE id = $1
-      `,
-        [request.id],
-      );
+): void => {
+  // determine request status
+  const getRequestStatus = (statusId : number) : string | null => {
+    const onholdRequestStatusId: string | undefined = process.env.ON_HOLD_REQUEST_ID;
+    const acceptedRequestStatusId: string | undefined = process.env.ACCEPTED_REQUEST_ID;
+    if (onholdRequestStatusId && acceptedRequestStatusId){
+      switch (statusId){
+        case +onholdRequestStatusId : return "On Hold";
+        case +acceptedRequestStatusId : return "Accepted";
+        default : return "Rejected";
+      }
+    }
+    return null;
+  }
 
-      const client: number = request.client;
+  const io: Server = getIo();
+  const privateRequestId: string | undefined = process.env.PRIVATE_REQUEST_ID;
+  if (privateRequestId) {
+    const client: number = request.client;
+    const status: string | null = getRequestStatus(request.status);
+    if (status){
       io.to(client.toString()).emit('change-request-status', {
         requestId: request.id,
         status,
