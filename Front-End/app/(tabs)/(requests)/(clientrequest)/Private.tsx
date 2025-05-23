@@ -15,7 +15,6 @@ import {
 } from "react-native";
 import React, { useState, useRef, useEffect } from "react";
 import {
-  MaterialCommunityIcons,
   Ionicons,
   MaterialIcons,
 } from "@expo/vector-icons";
@@ -26,7 +25,7 @@ import refreshAccessToken from "@/api/refreshAccessToken";
 import {
   WorkerPrivateRequest,
   ClientPrivateRequest,
-} from '../../../../Interfaces/Requestsinterfaces';
+} from "../../../../Interfaces/Requestsinterfaces";
 import { ResizeMode, Video } from "expo-av";
 import { getSocket } from "@/api/socket";
 import { useNotifications } from "@/context/NotificationContext";
@@ -344,7 +343,6 @@ const PrivateRequests = () => {
     }
   };
 
-  
   // Reting
   const handleRatingSubmit = async () => {
     try {
@@ -355,7 +353,7 @@ const PrivateRequests = () => {
 
       // First submit the rating
       await apiClient.post(`/work/job-request/${tempRequest.id}/complete`, {
-        workerId : tempRequest.workerId,
+        workerId: tempRequest.workerId,
         clientId: tempRequest.clientId,
         rating: rating,
         review: ratingComment,
@@ -376,7 +374,7 @@ const PrivateRequests = () => {
         if (await refreshAccessToken()) {
           await handleRatingSubmit();
         } else {
-         console.log(err)
+          console.log(err);
         }
       }
       console.error("Failed to submit rating:", err);
@@ -436,7 +434,9 @@ const PrivateRequests = () => {
       >
         <View className="flex-row justify-between items-center">
           <View className="flex-row items-center flex-1">
-            <TouchableOpacity onPress={() => navigateToProfile(29, 1)}>
+            <TouchableOpacity
+              onPress={() => navigateToProfile(item.workerId, 2)}
+            >
               <Image
                 source={
                   item.worker_profile_image
@@ -540,7 +540,12 @@ const PrivateRequests = () => {
           className="mb-3"
         >
           <View className="flex-row justify-between items-center">
-            <View className="flex-row items-center">
+            <TouchableOpacity
+              className="flex-row items-center"
+              onPress={() => {
+                navigateToProfile(item.workerId, 2);
+              }}
+            >
               <Image
                 source={
                   item.worker_profile_image
@@ -553,11 +558,8 @@ const PrivateRequests = () => {
                 <Text className="font-medium">
                   {item.worker_username || "Worker"}
                 </Text>
-                <Text numberOfLines={1} className="text-gray-500">
-                  {truncateText(item.description, 40)}
-                </Text>
               </View>
-            </View>
+            </TouchableOpacity>
             <View className="flex-row items-center">
               {getStatusIcon(item.status)}
               <Text className="ml-1 text-gray-600 text-sm capitalize">
@@ -573,17 +575,19 @@ const PrivateRequests = () => {
           </View>
         </TouchableOpacity>
 
-        <View className="flex-row justify-end mb-3">
-          <TouchableOpacity className="mr-2">
-            <Ionicons name="call" size={30} color="#000" />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <MaterialCommunityIcons
-              name="message-text-outline"
-              size={30}
-              color="#000"
-            />
-          </TouchableOpacity>
+        <View className="flex-row mb-3 justify-end">
+          <View className="items-center ">
+            {item.status == "Accepted" && (
+              <TouchableOpacity
+                className="mr-4"
+                onPress={() => {
+                  handelcall(item.worker_phone_number);
+                }}
+              >
+                <Ionicons name="call" size={32} color="#000" />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         <View>

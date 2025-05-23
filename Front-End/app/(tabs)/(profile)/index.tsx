@@ -248,15 +248,15 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const handleNavigatetoclientprofiele = (clientId: string) => {
     console.log(`Navigate to client: ${clientId}`);
     router.push({
-          pathname: "/clientProfile",
-          params: {
-            userId: clientId,
-            userRole: 1,
-          },
-        });
+      pathname: "/clientProfile",
+      params: {
+        userId: clientId,
+        userRole: 1,
+      },
+    });
     // Navigate to client profile
   };
- 
+
   return (
     <ScrollView>
       <LinearGradient
