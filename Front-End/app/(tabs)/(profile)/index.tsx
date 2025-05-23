@@ -98,6 +98,8 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     paymentMethod: string[] | null;
     category: { name: string; price: number; unity: string }[] | null;
     gallery: MediaItem[] | null;
+    sentRequests : number | null;
+    completedRequests : number | null;
   }>({
     fullName: null,
     registration_date: null,
@@ -112,6 +114,8 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     paymentMethod: null,
     category: null,
     gallery: null,
+    sentRequests : null,
+    completedRequests : null
   });
   const [userId, setUserId] = useState<string>("");
   useEffect(() => {
@@ -155,8 +159,9 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                   category: response.data.worker.categories,
                   paymentMethod: response.data.worker.payment_methods,
                   gallery: response.data.worker.media,
+                  sentRequests : response.data.worker.activity.sent_requests,
+                  completedRequests : response.data.worker.activity.completed_requests
                 };
-
           setUser((prev) => ({ ...prev, ...newUserData }));
         } else {
           console.log("Unknown role");
@@ -326,10 +331,8 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         <>
           <Dashboard
             workerId={userId} // Pass the userId to the Dashboard component
-            onStatPress={(statType) => {
-              console.log(`Pressed ${statType} stat`);
-              // Navigate to detailed stats screen
-            }}
+            sent_requests={user.sentRequests || 0}
+            completed_requests={user.completedRequests || 0}
           />
           <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
             <Text

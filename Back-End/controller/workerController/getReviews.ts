@@ -11,14 +11,17 @@ const getReviews = async (req: Request, res: Response) => {
     return;
   }
   try {
-    const { rows } = await pool.query(`
+    const { rows } = await pool.query(
+      `
         SELECT 
         r.client_id AS clientId, r.review, r.rating,
         u.username AS clientName, u.profile_image AS clientProfileImage
         FROM review r
         LEFT JOIN "user" u ON u.id = r.client_id
         WHERE r.worker_id = $1
-        `, [worker]);
+        `,
+      [worker],
+    );
 
     res.status(200).json({
       message: 'select worker reviews with success',

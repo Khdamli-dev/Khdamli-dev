@@ -111,7 +111,7 @@ const HomeScreen = () => {
       setError(null);
     } catch (error) {
       console.error("Error searching:", error);
-      setError("فشل في البحث. يرجى المحاولة مرة أخرى.");
+      setError("search faild");
       setSearchResults([]);
     } finally {
       setIsLoading(false);
@@ -350,7 +350,7 @@ const HomeScreen = () => {
                   paddingBottom: 20,
                 }}
                 showsVerticalScrollIndicator={false}
-              />{" "}
+              />
             </View>
           </>
         )}
