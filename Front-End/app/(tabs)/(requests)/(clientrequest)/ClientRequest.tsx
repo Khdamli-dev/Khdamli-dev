@@ -159,17 +159,23 @@ const PublicRequest = () => {
 
   useEffect(() => {
     const handler = (data: { id: number; status: string }) => {
+      console.log('Public request status update:', data);
+      
       setRequests((prev) =>
         prev.map((request) =>
-          request.id === data.id ? { ...request, status: data.status } : request,
-        ),
+          request.id === data.id 
+            ? { ...request, status: data.status } 
+            : request
+        )
       );
     };
-  
+
+    // Add listener
     eventEmitter.on('change-public-request-status', handler);
-  
+
+    // Cleanup function
     return () => {
-      eventEmitter.off('change-public-request-status', handler); // Clean up
+      eventEmitter.off('change-public-request-status', handler);
     };
   }, []);
 
