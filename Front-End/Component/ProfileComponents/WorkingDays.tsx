@@ -8,6 +8,7 @@ import TimePicker from "./TimePicker";
 import apiClient from "@/api/appClient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import refreshAccessToken from "@/api/refreshAccessToken";
+import { router } from "expo-router";
 const formatTime = (time: Date | string | undefined | null): string => {
   if (!time) return "--:--";
 
@@ -90,7 +91,14 @@ const WorkingDays = ({
             );
           }
         }
-      } catch (error) {
+      } catch (error:any) {
+        if (error.response?.status === 401) {
+                  if (await refreshAccessToken()) {
+                    await fetchUser();
+                  } else {
+                    router.push("/(auth)");
+                  }
+                }
         console.error("Error fetching user data:", error);
       }
     };

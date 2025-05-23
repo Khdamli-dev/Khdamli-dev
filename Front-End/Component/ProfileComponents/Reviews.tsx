@@ -313,12 +313,7 @@ const Reviews: React.FC<ReviewsProps> = ({
           >
             No reviews yet
           </Text>
-          <Text
-            className="text-gray-400 text-[14px] mt-1 text-center"
-            style={{ fontFamily: 'Itim_400Regular' }}
-          >
-            Complete your first job to get reviews
-          </Text>
+          
         </View>
       </View>
     );

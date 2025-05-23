@@ -29,6 +29,7 @@ import DatePicker from "@/Component/date";
 import MediaUploader, { MediaItem } from "@/Component/mediaUploader";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import apiClient from "@/api/appClient";
+import refreshAccessToken from "@/api/refreshAccessToken";
 
 interface JobRequest {
 
@@ -197,6 +198,13 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
 
       console.log("✅ Media uploaded successfully:", response.data);
     } catch (error: any) {
+      if (error.response?.status === 401) {
+                if (await refreshAccessToken()) {
+                  await uploadSelectedMedia(requestId);
+                } else {
+                  router.push("/(auth)");
+                }
+              }
       console.log(error);
     }
   };
@@ -260,7 +268,14 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
         console.log("No user data found in AsyncStorage");
         setError("User data not found. Please log in again.");
       }
-    } catch (error : any) {
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        if (await refreshAccessToken()) {
+          await handleSubmit();
+        } else {
+          router.push("/(auth)");
+        }
+      }
       console.error("Error submitting job request:", error.response.data.message);
       setError("There was an error submitting your request. Please try again.");
     }

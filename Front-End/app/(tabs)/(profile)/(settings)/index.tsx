@@ -24,6 +24,7 @@ import {
   Trash2,
 } from "lucide-react-native";
 import { ScrollView } from "react-native";
+import refreshAccessToken from "@/api/refreshAccessToken";
 
 declare module "lucide-react-native" {
   export interface LucideProps {
@@ -119,8 +120,16 @@ const Setting = () => {
           Alert.alert("Success", "Your account has been deleted.");
           router.replace("/(auth)");
         }
-      } catch (error) {
+      } catch (error :any) {
+        if (error.response?.status === 401) {
+                  if (await refreshAccessToken()) {
+                    await handledelete();
+                  } else {
+                    router.push("/(auth)");
+                  }
+                }
         Alert.alert("Error", "Server is busy, please try again later.");
+        
       }
     } else {
       console.log("No user data found in AsyncStorage " + userData);

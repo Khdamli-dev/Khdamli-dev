@@ -7,7 +7,7 @@ const Header: React.FC = () => {
   const router = useRouter();
   return (
     <View className="flex-row items-center justify-center py-10 pb-5 px-5 mt-9">
-      <TouchableOpacity onPress={() => router.push("/(tabs)/(settings)")}>
+      <TouchableOpacity onPress={() => router.push("/(tabs)/(profile)/(settings)")}>
         <ArrowLeft size={38} color="black" />
       </TouchableOpacity>
 

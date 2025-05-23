@@ -30,6 +30,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import apiClient from "@/api/appClient";
 import { AntDesign } from "@expo/vector-icons";
+import refreshAccessToken from "@/api/refreshAccessToken";
 
 const { width } = Dimensions.get("window");
 
@@ -149,7 +150,14 @@ const UserProfileView = () => {
 
           setUser(workerData);
         }
-      } catch (error) {
+      } catch (error:any) {
+        if (error.response?.status === 401) {
+                  if (await refreshAccessToken()) {
+                    await fetchUserData();
+                  } else {
+                    router.push("/(auth)");
+                  }
+                }
         console.error("Failed to fetch user data", error);
       }
     };

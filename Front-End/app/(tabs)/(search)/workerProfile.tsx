@@ -32,6 +32,7 @@ import apiClient from "@/api/appClient";
 import { AntDesign } from "@expo/vector-icons";
 import Dashboard from "@/Component/ProfileComponents/Dashboard";
 import Reviews from "@/Component/ProfileComponents/Reviews";
+import refreshAccessToken from "@/api/refreshAccessToken";
 const { width } = Dimensions.get("window");
 
 interface ProfileItemProps {
@@ -57,8 +58,7 @@ const styles = StyleSheet.create({
 });
 
 const UserProfileView = () => {
-
-  const { status, requestId, userId, userRole, origin } =
+  const {  userId, userRole } =
     useLocalSearchParams();
 
   const [role, setRole] = useState(1); // 1 Client 2 worker
@@ -78,7 +78,6 @@ const UserProfileView = () => {
     gallery: any[] | null;
     sentRequests: number | null;
     completedRequests: number | null;
-
   }>({
     fullName: null,
     registration_date: null,
@@ -98,20 +97,13 @@ const UserProfileView = () => {
   });
 
   useEffect(() => {
-    const fetchUserRole = async () => {
-      const userData = await AsyncStorage.getItem("user");
-      if (userData) {
-        const user = JSON.parse(userData);
-        setRole(user.role);
-      }
-    };
-    fetchUserRole();
+  
     const fetchUserData = async () => {
       try {
         if (!userId || !userRole) {
           return;
         }
-
+        setRole(Number(userRole));
         const endpoint =
           Number(userRole) === 1
             ? `/users/client/${userId}`
@@ -137,7 +129,6 @@ const UserProfileView = () => {
             gallery: null,
             sentRequests: null,
             completedRequests: null,
-
           };
 
           setUser(clientData);
@@ -163,7 +154,14 @@ const UserProfileView = () => {
 
           setUser(workerData);
         }
-      } catch (error:any) {
+      } catch (error: any) {
+        if (error.response?.status === 401) {
+                  if (await refreshAccessToken()) {
+                    await fetchUserData();
+                  } else {
+                    router.push("/(auth)");
+                  }
+                }
         console.error("Failed to fetch user data", error.response?.data);
       }
     };
@@ -205,17 +203,17 @@ const UserProfileView = () => {
     });
   };
 
-   const handleNavigatetoclientprofiele = (clientId: string) => {
-      console.log(`Navigate to client: ${clientId}`);
-      router.push({
-            pathname: "/workerProfile",
-            params: {
-              userId: clientId,
-              userRole: 1,
-            },
-          });
-      // Navigate to client profile
-    };
+  const handleNavigatetoclientprofiele = (clientId: string) => {
+    console.log(`Navigate to client: ${clientId}`);
+    router.push({
+      pathname: "/workerProfile",
+      params: {
+        userId: clientId,
+        userRole: 1,
+      },
+    });
+    // Navigate to client profile
+  };
 
   return (
     <ScrollView>
@@ -229,9 +227,7 @@ const UserProfileView = () => {
         style={{ borderBottomLeftRadius: 50, borderBottomRightRadius: 50 }}
       >
         <TouchableOpacity
-
           onPress={() => router.back()}
-
           className="justify-end w-full"
         >
           <AntDesign name="left" size={50} color="#F8A100" />
@@ -301,12 +297,8 @@ const UserProfileView = () => {
         <>
           <Dashboard
             workerId={Array.isArray(userId) ? userId[0] : userId} // Pass the userId to the Dashboard component
-
             sent_requests={user.sentRequests || 0}
             completed_requests={user.completedRequests || 0}
-
-            }}
-
           />
           {/* Bio Section */}
           <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">

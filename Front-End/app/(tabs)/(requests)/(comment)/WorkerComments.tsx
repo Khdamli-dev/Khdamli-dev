@@ -17,6 +17,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import apiClient from "@/api/appClient";
 import { handelcall } from "../SomeStandarFunctions";
 import { Ionicons } from "@expo/vector-icons";
+import refreshAccessToken from "@/api/refreshAccessToken";
 
 // Updated interface to match backend response from getRequestMessages
 interface WorkerComment {
@@ -128,7 +129,14 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
       } else {
         console.error("Error in API response:", response.data.message);
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        if (await refreshAccessToken()) {
+          await fetchWorkerComments(requestId, pageNum);
+        } else {
+          router.push("/(auth)");
+        }
+      }
       console.error("Error fetching worker comments:", error);
     } finally {
       setLoading(false);
@@ -155,7 +163,14 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
 
       // Optional: You might want to update the UI to reflect that a worker has been accepted
       // For example, disabling other worker's accept buttons or showing a success message
-    } catch (error) {
+    } catch (error :any) {
+      if (error.response?.status === 401) {
+        if (await refreshAccessToken()) {
+          await handleAccept(workerId);
+        } else {
+          router.push("/(auth)");
+        }
+      }
       console.error("Error accepting request:", error);
       Alert.alert(
         "Error",
@@ -182,7 +197,14 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
         newSet.delete(workerId);
         return newSet;
       });
-    } catch (error) {
+    } catch (error:any) {
+      if (error.response?.status === 401) {
+        if (await refreshAccessToken()) {
+          await handleReject(workerId);
+        } else {
+          router.push("/(auth)");
+        }
+      }
       console.error("Error rejecting request:", error);
       Alert.alert(
         "Error",
@@ -198,17 +220,17 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
   }, [requestId]);
 
   const navigateToProfile = (id: number, role: number) => {
-      router.push({
-        pathname: "/(tabs)/(home)/profileAsView",
-        params: {
-          status,
-          requestId,
-          userId: id,
-          userRole: role,
-          origin: "workerComments",
-        },
-      });
-    };
+    router.push({
+      pathname: "/(tabs)/(home)/profileAsView",
+      params: {
+        status,
+        requestId,
+        userId: id,
+        userRole: role,
+        origin: "workerComments",
+      },
+    });
+  };
 
   const toggleCommentExpansion = (workerId: number) => {
     setExpandedCommentIds((prev) => {
@@ -288,10 +310,11 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
                 <View className="bg-white rounded-lg shadow-sm overflow-hidden">
                   {/* Header with user info */}
                   <View className=" flex-row p-4 border-b border-gray-100">
-                    <TouchableOpacity className=" mr-3"
-                    onPress={() => {
-                      navigateToProfile(item.worker_id, 2);
-                    }}
+                    <TouchableOpacity
+                      className=" mr-3"
+                      onPress={() => {
+                        navigateToProfile(item.worker_id, 2);
+                      }}
                     >
                       {item.profile_image ? (
                         <Image
@@ -308,9 +331,9 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
                     </TouchableOpacity>
                     <View className="flex-1 justify-center">
                       <TouchableOpacity
-                      onPress={() => {
-                        navigateToProfile(item.worker_id, 2);
-                      }}
+                        onPress={() => {
+                          navigateToProfile(item.worker_id, 2);
+                        }}
                       >
                         <Text className="text-lg font-semibold">
                           {item.username}

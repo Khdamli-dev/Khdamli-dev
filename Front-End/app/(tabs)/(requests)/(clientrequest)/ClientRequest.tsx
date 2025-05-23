@@ -144,7 +144,7 @@ const PublicRequest = () => {
             profile_image: user.profile_image || "",
           });
         }
-      } catch (error) {
+      } catch (error:any) {
         console.error("Error getting user info:", error);
       }
     };
