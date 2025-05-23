@@ -39,6 +39,10 @@ const updateProfile = async (req: Request, res: Response) => {
     const middleware = checkRole([workerRoleId]);
     middleware(req, res, () => updateWorkerInfo(req, res));
   }
+  res.status(200).json({
+    message : 'updated successfully',
+    success : true
+  })
 };
 
 export default updateProfile;

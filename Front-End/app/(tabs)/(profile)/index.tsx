@@ -55,7 +55,8 @@ interface ProfileItemProps {
 }
 
 const pickProfileImage = async (
-  updateProfileImage: (newImage: string) => void
+  updateProfileImage: (newImage: string) => void,
+  userId: string
 ) => {
   const permissionResult =
     await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -76,7 +77,32 @@ const pickProfileImage = async (
   });
 
   if (!result.canceled && result.assets?.[0]?.uri) {
-    updateProfileImage(result.assets[0].uri);
+    const uri = result.assets[0].uri;
+    updateProfileImage(uri);
+
+    // Prepare FormData
+    const formData = new FormData();
+    formData.append("file", {
+      uri,
+      type: "image/jpeg",
+      name: "profile_image.jpg",
+    } as any);
+
+    try {
+      const response = await apiClient.put(
+        `/users/${userId}/profile-picture`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      console.log("Image uploaded:", response.data);
+    } catch (error: any) {
+      console.error("Error uploading profile image:", error?.response?.data || error);
+      Alert.alert("Upload Failed", "Could not upload the profile image.");
+    }
   }
 };
 
@@ -131,7 +157,6 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         if (!user) {
           return;
         }
-
         const { id, role } = user;
         const endpoint =
           role === 1 ? `/users/client/` : role === 2 ? `/users/worker/` : null;
@@ -178,7 +203,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
             await fetchUser();
           }
         }
-        console.error("Failed to fetch user data", error);
+        console.error("Failed to fetch user data", error.response.data);
       }
     };
 
@@ -356,7 +381,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
             <TouchableOpacity
               className="absolute bottom-0 right-0 bg-[#BD7D06] rounded-full p-[6px] border-[1.5px] border-white"
               onPress={() => {
-                pickProfileImage(updateProfileImage);
+                pickProfileImage(updateProfileImage, userId);
               }}
             >
               <Pencil size={20} color="white" />

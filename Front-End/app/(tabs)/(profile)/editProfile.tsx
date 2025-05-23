@@ -96,7 +96,7 @@ const EditProfileScreen = ({ navigation }: ProfileScreenProps) => {
   });
 
   const [workingDays, setWorkingDays] = useState<
-    { name: string; begin: string; end: string }[]
+    { day : number,name: string; begin: string; end: string }[]
   >([]);
   type AddressInfo = {
     region: number | null;
@@ -228,7 +228,6 @@ const EditProfileScreen = ({ navigation }: ProfileScreenProps) => {
 
       // Get changed address info and add to changes object if not empty
       const changedAddressInfo = getChangedAddressInfo();
-      console.log("Changed address info:", changedAddressInfo);
       if (
         Object.keys(changedAddressInfo).length > 0 &&
         changedAddressInfo.region != null
@@ -246,22 +245,22 @@ const EditProfileScreen = ({ navigation }: ProfileScreenProps) => {
 
         if (!user) return;
 
-        const { id, role } = user;
+        const { id } = user;
         const endpoint = `/users/${id}`;
 
         if (endpoint) {
           console.log("Changes to be sent:", personalInfo);
           // Make API call to update profile
-          const response = await apiClient.put(endpoint, {
-            personalInfo: {
-              address: personalInfo.region ? personalInfo : null,
-            },
+          const payload: any = {
             workerInfo: {
               workingHours: workingDays,
               categories: userInfo.subCategories,
               bio: userInfo.bio,
             },
-          });
+            ...(personalInfo.region ? { address: personalInfo } : {}),
+          };
+          console.log(payload);
+          const response = await apiClient.put(endpoint, payload);
           // if (response.status === 200 || response.status === 201) {
           console.log("Successfully updated profile with changes:", changes);
           // Navigate back after successful update

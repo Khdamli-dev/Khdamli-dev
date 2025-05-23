@@ -33,7 +33,6 @@ const getWorkersByName = async (req: Request, res: Response) => {
         w.active,
         w.transport,
         w.sent_requests,
-        w.accepted_requests,
         w.completed_requests,
         w.nbr_media
       FROM "user" u

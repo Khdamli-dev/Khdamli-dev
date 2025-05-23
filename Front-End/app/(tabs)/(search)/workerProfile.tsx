@@ -305,8 +305,6 @@ const UserProfileView = () => {
             sent_requests={user.sentRequests || 0}
             completed_requests={user.completedRequests || 0}
 
-            }}
-
           />
           {/* Bio Section */}
           <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">

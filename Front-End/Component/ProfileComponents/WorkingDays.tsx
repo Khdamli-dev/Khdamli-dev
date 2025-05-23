@@ -45,7 +45,7 @@ const formatTime = (time: Date | string | undefined | null): string => {
 const WorkingDays = ({
   onChange,
 }: {
-  onChange: (days: { name: string; begin: string; end: string }[]) => void;
+  onChange: (days: { day : number ;name: string; begin: string; end: string }[]) => void;
 }) => {
   type Day = {
     name: string;
@@ -112,12 +112,24 @@ const WorkingDays = ({
     type: "begin" | "end";
   } | null>(null);
 
+  // Map day names to numbers (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+  const dayNameToNumber: Record<string, number> = {
+    sunday: 1,
+    monday: 2,
+    tuesday: 3,
+    wednesday: 4,
+    thursday: 5,
+    friday: 6,
+    saturday: 7,
+  };
+
   const updateDays = (newDays: Day[]) => {
     setDays(newDays);
     const selectedDays = newDays
       .filter((day) => day.isEnabled)
       .map((day) => ({
-        name: day.name,
+        name : day.name,
+        day: dayNameToNumber[day.name], // Use number instead of name
         begin: day.begin ? formatTime(day.begin) : "08:00",
         end: day.end ? formatTime(day.end) : "16:00",
       }));
