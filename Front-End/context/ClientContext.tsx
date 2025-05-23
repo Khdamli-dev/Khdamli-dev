@@ -1,14 +1,8 @@
 // src/providers/WebSocketProvider.tsx
-import React, { createContext, useContext, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 import eventEmitter from './EventBus';
 import { getSocket } from '@/api/socket';
 import { Socket } from 'socket.io-client';
-import {
-  ClientPrivateRequest,
-  ClientPublicRequest,
-  WorkerPrivateRequest,
-  WorkerPublicRequest,
-} from '@/Interfaces/Requestsinterfaces';
 
 type ClientContextType = {
   socket: Socket | null;
@@ -31,6 +25,7 @@ export const ClientProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         // Ensure socket is connected
         socket.on('change-request-status', (data) => {
+          console.log("status changed");
           if ((data.type = 1))
             eventEmitter.emit('change-public-request-status', data);
           else eventEmitter.emit('change-private-request-status', data);
