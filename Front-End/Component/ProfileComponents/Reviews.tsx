@@ -1,28 +1,36 @@
-import React, { useEffect, useState } from "react";
-import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  Image, 
-  FlatList, 
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  FlatList,
   Dimensions,
   Modal,
   ScrollView,
-  SafeAreaView 
-} from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { Star, MessageCircle, ChevronRight, X, ArrowLeft } from "lucide-react-native";
+  SafeAreaView,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import {
+  Star,
+  MessageCircle,
+  ChevronRight,
+  X,
+  ArrowLeft,
+} from 'lucide-react-native';
+import apiClient from '@/api/appClient';
+import refreshAccessToken from '@/api/refreshAccessToken';
+import { router } from 'expo-router';
 // import apiClient from "@/api/appClient";
 
-const { width, height } = Dimensions.get("window");
+const { width, height } = Dimensions.get('window');
 
 interface Review {
-  clientId: string;
+  clientid: string;
   review: string;
   rating: number;
-  clientName: string;
-  clientProfileImage: string;
- 
+  clientname: string;
+  clientprofileimage: string;
 }
 
 interface ReviewsProps {
@@ -32,11 +40,11 @@ interface ReviewsProps {
   showAll?: boolean;
 }
 
-const Reviews: React.FC<ReviewsProps> = ({ 
+const Reviews: React.FC<ReviewsProps> = ({
   workerId,
-  onClientPress, 
+  onClientPress,
   onViewAllPress,
-  showAll = false 
+  showAll = false,
 }) => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,70 +58,21 @@ const Reviews: React.FC<ReviewsProps> = ({
   const fetchReviews = async () => {
     try {
       setLoading(true);
-      
+
       // Uncomment and modify this when backend is ready:
-      /*
-      const response = await apiClient.get(`/workers/${workerId}/reviews`);
+
+      const response = await apiClient.get(`/work/worker/${workerId}/reviews`);
       setReviews(response.data.reviews);
-      */
-      
-      // Fake data for testing - Remove when API is implemented
-      setTimeout(() => {
-        setReviews([
-          {
-            clientId: "1",
-            review: "Excellent work! Very professional and completed the job on time. Highly recommended for anyone looking for quality service.",
-            rating: 5,
-            clientName: "Ahmed Hassan",
-            clientProfileImage: "https://randomuser.me/api/portraits/men/1.jpg",
-           
-          },
-          {
-            clientId: "2", 
-            review: "Good service, but could improve communication. Overall satisfied with the results.",
-            rating: 4,
-            clientName: "Sara Mohamed",
-            clientProfileImage: "https://randomuser.me/api/portraits/women/2.jpg",
-           
-          },
-          {
-            clientId: "3",
-            review: "Amazing experience! Will definitely hire again. Very skilled and reliable worker.",
-            rating: 5,
-            clientName: "Omar Ali",
-            clientProfileImage: "https://randomuser.me/api/portraits/men/3.jpg",
-           
-          },
-          {
-            clientId: "4",
-            review: "Professional and efficient. Completed the project exactly as requested.",
-            rating: 4,
-            clientName: "Fatima Nour",
-            clientProfileImage: "https://randomuser.me/api/portraits/women/4.jpg",
-          
-          },
-          {
-            clientId: "5",
-            review: "Outstanding quality of work. Delivered ahead of schedule and exceeded expectations.",
-            rating: 5,
-            clientName: "Youssef Mahmoud",
-            clientProfileImage: "https://randomuser.me/api/portraits/men/5.jpg",
-           
-          },
-          {
-            clientId: "6",
-            review: "Very satisfied with the service. Professional approach and great communication throughout the project.",
-            rating: 4,
-            clientName: "Mona Salah",
-            clientProfileImage: "https://randomuser.me/api/portraits/women/6.jpg",
-            
-          }
-        ]);
-        setLoading(false);
-      }, 1200);
-      
-    } catch (error) {
-      console.error("Failed to fetch reviews:", error);
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        if (await refreshAccessToken()) {
+          await fetchReviews();
+        } else {
+          router.push('/(auth)');
+        }
+        console.error('Failed to fetch reviews:', error.response.data);
+      }
+    } finally {
       setLoading(false);
     }
   };
@@ -122,17 +81,20 @@ const Reviews: React.FC<ReviewsProps> = ({
   const hasMoreReviews = reviews.length > 3 && !showAll;
 
   // Calculate average rating
-  const averageRating = reviews.length > 0 
-    ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
-    : 0;
+  const [averageRating, setAverageRating] = useState<number>(0);
+  useEffect(() => {
+    let sum : number = 0;
+    reviews.forEach(e => sum += +e.rating);
+    setAverageRating(sum / reviews.length);
+  }, [reviews]);
 
   const renderStars = (rating: number, size: number = 16) => {
     return Array.from({ length: 5 }, (_, index) => (
       <Star
         key={index}
         size={size}
-        color={index < Math.floor(rating) ? "#FFD700" : "#E5E5E5"}
-        fill={index < Math.floor(rating) ? "#FFD700" : "#E5E5E5"}
+        color={index < Math.floor(rating) ? '#FFD700' : '#E5E5E5'}
+        fill={index < Math.floor(rating) ? '#FFD700' : '#E5E5E5'}
       />
     ));
   };
@@ -154,12 +116,12 @@ const Reviews: React.FC<ReviewsProps> = ({
           <MessageCircle size={24} color="#BD7D06" />
           <Text
             className="text-center text-[#BD7D06] ml-2 text-[22px] font-bold"
-            style={{ fontFamily: "Itim_400Regular" }}
+            style={{ fontFamily: 'Itim_400Regular' }}
           >
             Reviews
           </Text>
         </View>
-        
+
         <View className="bg-gray-200 rounded-[15px] p-4 items-center mb-5">
           <View className="w-32 h-6 bg-gray-300 rounded mb-2" />
           <View className="w-16 h-8 bg-gray-300 rounded" />
@@ -181,7 +143,13 @@ const Reviews: React.FC<ReviewsProps> = ({
     );
   }
 
-  const renderReviewItem = ({ item, isModal = false }: { item: Review, isModal?: boolean }) => (
+  const renderReviewItem = ({
+    item,
+    isModal = false,
+  }: {
+    item: Review;
+    isModal?: boolean;
+  }) => (
     <View className={`mb-4 last:mb-0 ${isModal ? 'mx-4' : ''}`}>
       <LinearGradient
         colors={['#FFFFFF', '#F8F9FA']}
@@ -192,15 +160,20 @@ const Reviews: React.FC<ReviewsProps> = ({
         <View className="flex-row items-start">
           {/* Client Profile */}
           <TouchableOpacity
-            onPress={() => isModal ? handleClientPress(item.clientId) : onClientPress?.(item.clientId)}
+            onPress={() =>
+              isModal
+                ? handleClientPress(item.clientid)
+                : onClientPress?.(item.clientid)
+            }
             activeOpacity={0.7}
             className="mr-3"
           >
             <View className="relative">
               <Image
                 source={{
-                  uri: item.clientProfileImage || 
-                       "https://cdn-icons-png.flaticon.com/512/149/149071.png"
+                  uri:
+                    item.clientprofileimage ||
+                    'https://cdn-icons-png.flaticon.com/512/149/149071.png',
                 }}
                 className="w-12 h-12 rounded-full border-2 border-gray-200"
               />
@@ -214,24 +187,28 @@ const Reviews: React.FC<ReviewsProps> = ({
             {/* Client Name & Rating */}
             <View className="flex-row items-center justify-between mb-2">
               <TouchableOpacity
-                onPress={() => isModal ? handleClientPress(item.clientId) : onClientPress?.(item.clientId)}
+                onPress={() =>
+                  isModal
+                    ? handleClientPress(item.clientid)
+                    : onClientPress?.(item.clientid)
+                }
                 activeOpacity={0.7}
               >
                 <Text
                   className="text-[16px] font-bold text-gray-800"
-                  style={{ fontFamily: "Itim_400Regular" }}
+                  style={{ fontFamily: 'Itim_400Regular' }}
                 >
-                  {item.clientName}
+                  {item.clientname}
                 </Text>
               </TouchableOpacity>
-              
+
               <View className="flex-row items-center">
                 {renderStars(item.rating)}
                 <Text
                   className="ml-2 text-[14px] font-semibold text-[#BD7D06]"
-                  style={{ fontFamily: "Itim_400Regular" }}
+                  style={{ fontFamily: 'Itim_400Regular' }}
                 >
-                  {item.rating.toFixed(1)}
+                  {item.rating}
                 </Text>
               </View>
             </View>
@@ -239,14 +216,13 @@ const Reviews: React.FC<ReviewsProps> = ({
             {/* Review Text */}
             <Text
               className="text-gray-700 text-[14px] leading-5 mb-2"
-              style={{ fontFamily: "Itim_400Regular" }}
+              style={{ fontFamily: 'Itim_400Regular' }}
               numberOfLines={isModal ? undefined : 3}
             >
               {item.review}
             </Text>
 
             {/* Date (if available) */}
-            
           </View>
         </View>
       </LinearGradient>
@@ -271,14 +247,14 @@ const Reviews: React.FC<ReviewsProps> = ({
           >
             <ArrowLeft size={24} color="#BD7D06" />
           </TouchableOpacity>
-          
+
           <Text
             className="text-[20px] font-bold text-[#BD7D06]"
-            style={{ fontFamily: "Itim_400Regular" }}
+            style={{ fontFamily: 'Itim_400Regular' }}
           >
             All Reviews ({reviews.length})
           </Text>
-          
+
           <View className="w-8" />
         </View>
 
@@ -290,13 +266,13 @@ const Reviews: React.FC<ReviewsProps> = ({
             </View>
             <Text
               className="text-[28px] font-bold text-[#BD7D06]"
-              style={{ fontFamily: "Itim_400Regular" }}
+              style={{ fontFamily: 'Itim_400Regular' }}
             >
               {averageRating.toFixed(1)}
             </Text>
             <Text
               className="text-gray-600 text-[16px]"
-              style={{ fontFamily: "Itim_400Regular" }}
+              style={{ fontFamily: 'Itim_400Regular' }}
             >
               Average Rating from {reviews.length} reviews
             </Text>
@@ -307,7 +283,7 @@ const Reviews: React.FC<ReviewsProps> = ({
         <FlatList
           data={reviews}
           renderItem={({ item }) => renderReviewItem({ item, isModal: true })}
-          keyExtractor={(item, index) => `modal-${item.clientId}-${index}`}
+          keyExtractor={(item, index) => `modal-${item.clientid}-${index}`}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingVertical: 16 }}
           ItemSeparatorComponent={() => <View className="h-2" />}
@@ -323,23 +299,23 @@ const Reviews: React.FC<ReviewsProps> = ({
           <MessageCircle size={24} color="#BD7D06" />
           <Text
             className="text-center text-[#BD7D06] ml-2 text-[22px] font-bold"
-            style={{ fontFamily: "Itim_400Regular" }}
+            style={{ fontFamily: 'Itim_400Regular' }}
           >
             Reviews
           </Text>
         </View>
-        
+
         <View className="items-center py-8">
           <MessageCircle size={48} color="#E5E5E5" />
           <Text
             className="text-gray-500 text-[16px] mt-3 text-center"
-            style={{ fontFamily: "Itim_400Regular" }}
+            style={{ fontFamily: 'Itim_400Regular' }}
           >
             No reviews yet
           </Text>
           <Text
             className="text-gray-400 text-[14px] mt-1 text-center"
-            style={{ fontFamily: "Itim_400Regular" }}
+            style={{ fontFamily: 'Itim_400Regular' }}
           >
             Complete your first job to get reviews
           </Text>
@@ -357,7 +333,7 @@ const Reviews: React.FC<ReviewsProps> = ({
             <MessageCircle size={24} color="#BD7D06" />
             <Text
               className="text-center text-[#BD7D06] ml-2 text-[22px] font-bold"
-              style={{ fontFamily: "Itim_400Regular" }}
+              style={{ fontFamily: 'Itim_400Regular' }}
             >
               Reviews ({reviews.length})
             </Text>
@@ -370,13 +346,13 @@ const Reviews: React.FC<ReviewsProps> = ({
             </View>
             <Text
               className="text-[24px] font-bold text-[#BD7D06]"
-              style={{ fontFamily: "Itim_400Regular" }}
+              style={{ fontFamily: 'Itim_400Regular' }}
             >
               {averageRating.toFixed(1)}
             </Text>
             <Text
               className="text-gray-600 text-[14px]"
-              style={{ fontFamily: "Itim_400Regular" }}
+              style={{ fontFamily: 'Itim_400Regular' }}
             >
               Average Rating
             </Text>
@@ -387,7 +363,7 @@ const Reviews: React.FC<ReviewsProps> = ({
         <FlatList
           data={displayedReviews}
           renderItem={({ item }) => renderReviewItem({ item })}
-          keyExtractor={(item, index) => `${item.clientId}-${index}`}
+          keyExtractor={(item, index) => `${item.clientid}-${index}`}
           scrollEnabled={false}
           showsVerticalScrollIndicator={false}
         />
@@ -407,7 +383,7 @@ const Reviews: React.FC<ReviewsProps> = ({
             >
               <Text
                 className="text-white text-[16px] font-bold mr-2"
-                style={{ fontFamily: "Itim_400Regular" }}
+                style={{ fontFamily: 'Itim_400Regular' }}
               >
                 View All Reviews ({reviews.length})
               </Text>

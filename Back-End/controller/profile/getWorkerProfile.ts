@@ -6,7 +6,11 @@ const getWorkerProfile = async (req: Request, res: Response) => {
     // Get worker ID from path param
     const workerId = parseInt(req.params.id);
     if (isNaN(workerId)) {
-      res.status(400).json({ message: "Invalid or missing worker ID", worker: null, success: false });
+      res.status(400).json({
+        message: "Invalid or missing worker ID",
+        worker: null,
+        success: false,
+      });
       return;
     }
 
@@ -21,14 +25,21 @@ const getWorkerProfile = async (req: Request, res: Response) => {
     );
 
     if (!userCheck.rows.length) {
-      res.status(404).json({ message: "User not found", worker: null, success: false });
+      res
+        .status(404)
+        .json({ message: "User not found", worker: null, success: false });
       return;
     }
 
     if (userCheck.rows[0].role !== 2) {
-      res.status(403).json({ message: "User is not a worker", worker: null, success: false });
+      res.status(403).json({
+        message: "User is not a worker",
+        worker: null,
+        success: false,
+      });
       return;
     }
+
 
     // Fetch worker personal and professional info
     const workerData = await pool.query(
@@ -48,8 +59,9 @@ const getWorkerProfile = async (req: Request, res: Response) => {
         w.transport,
         w.registration_date AS worker_registration_date,
         w.sent_requests,
-        w.accepted_requests,
         w.completed_requests,
+        w.review_count,
+        w.review_sum,
         w.nbr_media
       FROM "user" u
       LEFT JOIN sex s ON u.sex = s.id
@@ -62,6 +74,10 @@ const getWorkerProfile = async (req: Request, res: Response) => {
       `,
       [workerId]
     );
+    if (!workerData.rowCount){
+      res.status(404).json({ message: "User not found", worker: null, success: false });
+      return;
+    }
 
     // Fetch categories and pricing
     const categoriesData = await pool.query(
@@ -129,43 +145,45 @@ const getWorkerProfile = async (req: Request, res: Response) => {
       location: {
         city: workerData.rows[0].city,
         region: workerData.rows[0].region,
-        country: workerData.rows[0].country
+        country: workerData.rows[0].country,
       },
       bio: workerData.rows[0].bio,
       active: workerData.rows[0].active,
       transport: workerData.rows[0].transport,
       worker_registration_date: workerData.rows[0].worker_registration_date,
-      categories: categoriesData.rows.map(row => ({
+      categories: categoriesData.rows.map((row) => ({
         name: row.name,
         price: row.price,
-        unity: row.unity
+        unity: row.unity,
       })),
-      availability: availabilityData.rows.map(row => ({
+      availability: availabilityData.rows.map((row) => ({
         day: row.day,
         begin: row.begin,
-        end: row.end
+        end: row.end,
       })),
       activity: {
         sent_requests: workerData.rows[0].sent_requests || 0,
         accepted_requests: workerData.rows[0].accepted_requests || 0,
-        completed_requests: workerData.rows[0].completed_requests || 0
+        completed_requests: workerData.rows[0].completed_requests || 0,
       },
-      media: mediaData.rows.map(row => ({
+      media: mediaData.rows.map((row) => ({
         type: row.type,
-        url: row.url
+        url: row.url,
       })),
-      payment_methods: paymentData.rows.map(row => row.name)
+      payment_methods: paymentData.rows.map((row) => row.name),
     };
 
     // Send response
     res.status(200).json({
       message: "Worker profile fetched successfully",
       worker,
-      success: true
+      success: true,
     });
   } catch (error) {
     console.error("Error fetching worker profile:", error);
-    res.status(500).json({ message: "Internal server error", worker: null, success: false });
+    res
+      .status(500)
+      .json({ message: "Internal server error", worker: null, success: false });
   }
 };
 

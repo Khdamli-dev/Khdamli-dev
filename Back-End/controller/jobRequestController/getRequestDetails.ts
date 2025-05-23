@@ -71,6 +71,7 @@ const getRequestDetails = async (req: Request, res: Response) => {
         uc.username AS client_username,
         uc.phone_number AS client_phone_number,
         uc.profile_image AS client_profile_image,
+        uw.phone_number AS worker_phone_number,
         uw.username AS worker_username,
         uw.profile_image AS worker_profile_image
       FROM request r
@@ -130,11 +131,15 @@ const getRequestDetails = async (req: Request, res: Response) => {
         commentDate = commentData.rows[0].created_at.toISOString();
       }
 
-      const onholdRequestId : string | undefined = process.env.ON_HOLD_REQUEST_ID;
-      if (!onholdRequestId){
+      const onholdRequestId: string | undefined =
+        process.env.ON_HOLD_REQUEST_ID;
+      if (!onholdRequestId) {
         throw new Error("missing envirement variables");
       }
-      if (requestRow.worker_id == workerId && requestRow.status_id == onholdRequestId){
+      if (
+        requestRow.worker_id == workerId &&
+        requestRow.status_id == onholdRequestId
+      ) {
         requestRow.status = "verification pending";
       }
     }
@@ -163,6 +168,7 @@ const getRequestDetails = async (req: Request, res: Response) => {
       } else {
         // private
         response.sent_date = requestRow.sent_time.toISOString();
+        response.worker_phone_number = requestRow.worker_phone_number;
         response.worker_username = requestRow.worker_username;
         response.worker_profile_image = requestRow.worker_profile_image;
       }
@@ -170,6 +176,7 @@ const getRequestDetails = async (req: Request, res: Response) => {
       // role === "worker"
       if (request_type === "public") {
         response.client_id = requestRow.client_id;
+        response.client_phone_number = requestRow.client_phone_number;
         response.client_username = requestRow.client_username;
         response.client_profile_image = requestRow.client_profile_image;
         response.worker_comment = workerComment;
