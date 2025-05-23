@@ -102,6 +102,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     gallery: MediaItem[] | null;
     sentRequests: number | null;
     completedRequests: number | null;
+
   }>({
     fullName: null,
     registration_date: null,
@@ -118,6 +119,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     gallery: null,
     sentRequests: null,
     completedRequests: null,
+
   });
   const [userId, setUserId] = useState<string>("");
   useEffect(() => {
@@ -162,9 +164,9 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                   category: response.data.worker.categories,
                   paymentMethod: response.data.worker.payment_methods,
                   gallery: response.data.worker.media,
-                  sentRequests: response.data.worker.activity.sent_requests,
-                  completedRequests:
-                    response.data.worker.activity.completed_requests,
+                  sentRequests : response.data.worker.activity.sent_requests,
+                  completedRequests : response.data.worker.activity.completed_requests
+
                 };
           setUser((prev) => ({ ...prev, ...newUserData }));
         } else {
