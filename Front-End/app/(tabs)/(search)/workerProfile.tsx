@@ -57,7 +57,9 @@ const styles = StyleSheet.create({
 });
 
 const UserProfileView = () => {
-  const { userId, userRole } = useLocalSearchParams();
+  const { status, requestId, userId, userRole, origin } =
+    useLocalSearchParams();
+
   const [role, setRole] = useState(1); // 1 Client 2 worker
   const [user, setUser] = useState<{
     fullName: string | null;
@@ -73,6 +75,8 @@ const UserProfileView = () => {
     paymentMethod: string[] | null;
     category: any[] | null;
     gallery: any[] | null;
+    sentRequests: number | null;
+    completedRequests: number | null;
   }>({
     fullName: null,
     registration_date: null,
@@ -87,6 +91,8 @@ const UserProfileView = () => {
     paymentMethod: null,
     category: null,
     gallery: null,
+    sentRequests: null,
+    completedRequests: null,
   });
 
   useEffect(() => {
@@ -127,6 +133,8 @@ const UserProfileView = () => {
             paymentMethod: null,
             category: null,
             gallery: null,
+            sentRequests: null,
+            completedRequests: null,
           };
 
           setUser(clientData);
@@ -146,11 +154,13 @@ const UserProfileView = () => {
             category: response.data.worker.categories,
             paymentMethod: response.data.worker.payment_methods,
             gallery: response.data.worker.media,
+            sentRequests: response.data.worker.activity.sent_requests,
+            completedRequests: response.data.worker.activity.completed_requests,
           };
 
           setUser(workerData);
         }
-      } catch (error:any) {
+      } catch (error: any) {
         console.error("Failed to fetch user data", error.response?.data);
       }
     };
@@ -191,17 +201,19 @@ const UserProfileView = () => {
       params: { type: "2" },
     });
   };
-   const handleNavigatetoclientprofiele = (clientId: string) => {
-      console.log(`Navigate to client: ${clientId}`);
-      router.push({
-            pathname: "/workerProfile",
-            params: {
-              userId: clientId,
-              userRole: 1,
-            },
-          });
-      // Navigate to client profile
-    };
+
+  const handleNavigatetoclientprofiele = (clientId: string) => {
+    console.log(`Navigate to client: ${clientId}`);
+    router.push({
+      pathname: "/workerProfile",
+      params: {
+        userId: clientId,
+        userRole: 1,
+      },
+    });
+    // Navigate to client profile
+  };
+
   return (
     <ScrollView>
       {/* Profile Header - Without Edit Buttons */}
@@ -284,10 +296,8 @@ const UserProfileView = () => {
         <>
           <Dashboard
             workerId={Array.isArray(userId) ? userId[0] : userId} // Pass the userId to the Dashboard component
-            onStatPress={(statType) => {
-              console.log(`Pressed ${statType} stat`);
-              // Navigate to detailed stats screen
-            }}
+            sent_requests={user.sentRequests || 0}
+            completed_requests={user.completedRequests || 0}
           />
           {/* Bio Section */}
           <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
@@ -301,7 +311,7 @@ const UserProfileView = () => {
               className="text-center mt-2 text-[16px]"
               style={{ fontFamily: "Itim_400Regular" }}
             >
-              {user.bio}
+              {user.bio ? user.bio : "The bio is not entered"}
             </Text>
           </View>
 
@@ -313,26 +323,35 @@ const UserProfileView = () => {
             >
               Working Days
             </Text>
-            {user.workingDays?.map((item, index) => (
-              <View
-                key={index}
-                className="flex-row justify-between py-2 border-b border-gray-200"
+            {user.workingDays && user.workingDays.length > 0 ? (
+              user.workingDays.map((item, index) => (
+                <View
+                  key={index}
+                  className="flex-row justify-between py-2 border-b border-gray-200"
+                >
+                  <Text className="text-[16px] font-semibold">{item.day}</Text>
+                  <Text
+                    className="mr-2 text-[#BD7D06]"
+                    style={{ fontFamily: "Itim_400Regular" }}
+                  >
+                    From {formatTime(item.begin)}
+                  </Text>
+                  <Text
+                    className="mr-2 text-[#BD7D06]"
+                    style={{ fontFamily: "Itim_400Regular" }}
+                  >
+                    To {formatTime(item.end)}
+                  </Text>
+                </View>
+              ))
+            ) : (
+              <Text
+                className="text-center mt-2 text-[16px]"
+                style={{ fontFamily: "Itim_400Regular" }}
               >
-                <Text className="text-[16px] font-semibold">{item.day}</Text>
-                <Text
-                  className="mr-2 text-[#BD7D06]"
-                  style={{ fontFamily: "Itim_400Regular" }}
-                >
-                  From {formatTime(item.begin)}
-                </Text>
-                <Text
-                  className="mr-2 text-[#BD7D06]"
-                  style={{ fontFamily: "Itim_400Regular" }}
-                >
-                  To {formatTime(item.end)}
-                </Text>
-              </View>
-            ))}
+                No working days entered
+              </Text>
+            )}
           </View>
         </>
       )}

@@ -102,19 +102,16 @@ export default function SignUp() {
       password,
     };
     try {
-      const response = await apiClient.post(
-        `/auth/signup/`,
-        {
-          credentials
-        }
-      );
+      const response = await axios.post(`${CONFIG.API_URL}/auth/signup`, {
+        credentials,
+      });
+
       if (response?.status === 201) {
         const user = response.data.user;
         await AsyncStorage.setItem("user", JSON.stringify(user));
         router.replace("/OtherInformation");
       }
     } catch (error: any) {
-
       if (error.response?.status === 400 && error.response.data) {
         setUsernameError(
           !error.response.data.username ? "Username is already used" : ""
@@ -130,6 +127,7 @@ export default function SignUp() {
         setEmailError("");
         setPhoneNumberError("");
         alert("Server is busy, please try again later");
+        console.log(error);
       }
     }
   };

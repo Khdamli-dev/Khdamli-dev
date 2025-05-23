@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -6,10 +6,10 @@ import {
   TouchableOpacity,
   ScrollView,
   Animated,
-} from 'react-native';
-import apiClient from '@/api/appClient';
-import refreshAccessToken from '@/api/refreshAccessToken';
-import { router } from 'expo-router';
+} from "react-native";
+import apiClient from "@/api/appClient";
+import refreshAccessToken from "@/api/refreshAccessToken";
+import { router } from "expo-router";
 
 interface Wilaya {
   name: string;
@@ -28,7 +28,7 @@ const WilayaDropdown: React.FC<WilayaDropdownProps> = ({
   const [wilayas, setWilayas] = useState<Wilaya[]>([]);
   const [filteredWilayas, setFilteredWilayas] = useState<Wilaya[]>([]);
 
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const rotateAnim = useState(new Animated.Value(0))[0];
 
   const fetchRegions = async () => {
@@ -38,12 +38,11 @@ const WilayaDropdown: React.FC<WilayaDropdownProps> = ({
       setFilteredWilayas(response.data.regions);
     } catch (error: any) {
       if (error.response?.status === 401) {
-        if (await refreshAccessToken()){
+        if (await refreshAccessToken()) {
           await fetchRegions();
-        }  
-        else{
+        } else {
           // need to login
-          router.push('/(auth)');
+          router.push("/(auth)");
         }
       }
     }
@@ -55,13 +54,13 @@ const WilayaDropdown: React.FC<WilayaDropdownProps> = ({
 
   const handleSearch = (text: string) => {
     setSearch(text);
-    if (text === '') {
+    if (text === "") {
       setFilteredWilayas(wilayas);
     } else {
       setFilteredWilayas(
         wilayas.filter((item) =>
-          item.name.toLowerCase().includes(text.toLowerCase()),
-        ),
+          item.name.toLowerCase().includes(text.toLowerCase())
+        )
       );
     }
   };
