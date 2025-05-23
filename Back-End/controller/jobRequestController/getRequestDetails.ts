@@ -39,7 +39,7 @@ const getRequestDetails = async (req: Request, res: Response) => {
 
     // Validate worker_id for worker's public request
     let workerId: number | undefined;
-    if (role === "worker" && request_type === "public") {
+    if (role=="worker" && request_type === "public") {
       workerId = parseInt(worker_id || "");
       if (isNaN(workerId)) {
         res.status(400).json({
@@ -137,7 +137,19 @@ const getRequestDetails = async (req: Request, res: Response) => {
         throw new Error("missing envirement variables");
       }
       if (
-        requestRow.worker_id == workerId &&
+        requestRow.worker_id ==workerId &&
+        requestRow.status_id == onholdRequestId
+      ) {
+        requestRow.status = "verification pending";
+      }
+    } else if (role === "client" && request_type === "public") {
+      const onholdRequestId: string | undefined =
+        process.env.ON_HOLD_REQUEST_ID;
+      if (!onholdRequestId) {
+        throw new Error("missing envirement variables");
+      }
+      if (
+        requestRow.worker_id  &&
         requestRow.status_id == onholdRequestId
       ) {
         requestRow.status = "verification pending";

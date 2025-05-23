@@ -65,24 +65,8 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
   const [expandedCommentIds, setExpandedCommentIds] = useState<Set<number>>(
     new Set()
   );
-  const [waiting_agrement_worker, setWaitingAgrementWorker] = useState<
-    Set<number>
-  >(new Set());
+  const [isWaitingAgreement, setisWaitingAgreement] = useState(0);
   const [total, setTotal] = useState<number>(0);
-
-  const loadWaitingAgreementWorkers = async () => {
-    try {
-      const stored = await AsyncStorage.getItem(
-        `waiting_agreement_${requestId}`
-      );
-      if (stored) {
-        const workerIds = JSON.parse(stored) as number[];
-        setWaitingAgrementWorker(new Set(workerIds));
-      }
-    } catch (error) {
-      console.error("Error loading waiting agreement workers:", error);
-    }
-  };
 
   // Save waiting agreement workers to storage
   const saveWaitingAgreementWorkers = async (workers: Set<number>) => {
@@ -141,20 +125,12 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
       await apiClient.put(
         `/work/job-request/${requestId}/select-worker/${workerId}`
       );
-      setWaitingAgrementWorker((prev) => {
-        const newSet = new Set(prev);
-        newSet.add(workerId);
-        saveWaitingAgreementWorkers(newSet);
-        return newSet;
-      });
+      setisWaitingAgreement(workerId);
       setExpandedCommentIds(() => {
         const newSet = new Set<number>();
         newSet.add(workerId);
         return newSet;
       });
-
-      // Optional: You might want to update the UI to reflect that a worker has been accepted
-      // For example, disabling other worker's accept buttons or showing a success message
     } catch (error) {
       console.error("Error accepting request:", error);
       Alert.alert(
@@ -166,12 +142,11 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
 
   const handleReject = async (workerId: number) => {
     try {
-      // Update the request status to rejected (status 3)
-      await apiClient.put(`/work/job-request/status/${requestId}`, {
-        status: 2,
-      });
+      await apiClient.delete(
+        `/work/job-request/${requestId}/worker/${workerId}`
+      );
 
-      // Remove the rejected worker comment from the list
+      // Remove the rejected or canceled worker comment from the list
       setWorkerCommentsArray((prev) =>
         prev.filter((comment) => comment.worker_id !== workerId)
       );
@@ -182,8 +157,8 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
         newSet.delete(workerId);
         return newSet;
       });
-    } catch (error) {
-      console.error("Error rejecting request:", error);
+    } catch (error: any) {
+      console.error("Error rejecting request:", error.response.data);
       Alert.alert(
         "Error",
         "Failed to reject the work request. Please try again."
@@ -191,24 +166,18 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
     }
   };
 
-  useEffect(() => {
-    if (requestId) {
-      loadWaitingAgreementWorkers();
-    }
-  }, [requestId]);
-
   const navigateToProfile = (id: number, role: number) => {
-      router.push({
-        pathname: "/(tabs)/(home)/profileAsView",
-        params: {
-          status,
-          requestId,
-          userId: id,
-          userRole: role,
-          origin: "workerComments",
-        },
-      });
-    };
+    router.push({
+      pathname: "/(tabs)/(home)/profileAsView",
+      params: {
+        status,
+        requestId,
+        userId: id,
+        userRole: role,
+        origin: "workerComments",
+      },
+    });
+  };
 
   const toggleCommentExpansion = (workerId: number) => {
     setExpandedCommentIds((prev) => {
@@ -278,20 +247,17 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
             ) : null
           }
           renderItem={({ item }: { item: WorkerComment }) => {
-            console.log("Item:", requestStatus);
             const isExpanded = expandedCommentIds.has(item.worker_id);
-            const isWaitingAgreement = waiting_agrement_worker.has(
-              item.worker_id
-            );
             return (
               <View className="mb-4">
                 <View className="bg-white rounded-lg shadow-sm overflow-hidden">
                   {/* Header with user info */}
                   <View className=" flex-row p-4 border-b border-gray-100">
-                    <TouchableOpacity className=" mr-3"
-                    onPress={() => {
-                      navigateToProfile(item.worker_id, 2);
-                    }}
+                    <TouchableOpacity
+                      className=" mr-3"
+                      onPress={() => {
+                        navigateToProfile(item.worker_id, 2);
+                      }}
                     >
                       {item.profile_image ? (
                         <Image
@@ -308,9 +274,9 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
                     </TouchableOpacity>
                     <View className="flex-1 justify-center">
                       <TouchableOpacity
-                      onPress={() => {
-                        navigateToProfile(item.worker_id, 2);
-                      }}
+                        onPress={() => {
+                          navigateToProfile(item.worker_id, 2);
+                        }}
                       >
                         <Text className="text-lg font-semibold">
                           {item.username}
@@ -365,24 +331,40 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
                   </TouchableOpacity>
 
                   {/* Action buttons - only shown when expanded */}
-                  {isExpanded && requestStatus === "On Hold" && (
+                  {isExpanded && (
                     <View className="flex-col w-full">
-                      <TouchableOpacity
-                        onPress={() => handleAccept(item.worker_id)}
-                        className={`${isWaitingAgreement ? "bg-blue-700" : "bg-specialGreen"} py-3 items-center`}
-                      >
-                        <Text className="text-white font-bold">
-                          {isWaitingAgreement
-                            ? "Waiting for Agreement of worker"
-                            : "Accept Worker"}
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        className="bg-red-500 py-3 items-center"
-                        onPress={() => handleReject(item.worker_id)}
-                      >
-                        <Text className="text-white font-bold">Reject</Text>
-                      </TouchableOpacity>
+                      {!(
+                        (isWaitingAgreement == item.worker_id ||
+                          status == "verification pending") &&
+                        item.worker_id == workerIdNumber
+                      ) ? (
+                        <TouchableOpacity
+                          onPress={() => {
+                            handleAccept(item.worker_id);
+                          }}
+                          className="bg-specialGreen py-3 items-center"
+                        >
+                          <Text className="text-white font-bold">
+                            Accept Worker
+                          </Text>
+                        </TouchableOpacity>
+                      ) : (
+                        <View>
+                          <View className="bg-gray-200 py-3 items-center">
+                            <Text className="text-white font-bold">
+                              Waiting for agreement
+                            </Text>
+                          </View>
+                          <TouchableOpacity
+                            className="bg-red-900 py-3 items-center"
+                            onPress={() => handleReject(item.worker_id)}
+                          >
+                            <Text className="text-white font-bold">
+                              Cansele
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
                     </View>
                   )}
                 </View>

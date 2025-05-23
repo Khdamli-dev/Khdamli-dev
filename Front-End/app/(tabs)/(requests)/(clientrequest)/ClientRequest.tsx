@@ -47,6 +47,7 @@ enum RequestStatus {
   ON_HOLD = "On Hold",
   COMPLETED = "Completed",
   CANCELLED = "Cancelled",
+  VERIFICATION_PENDING = "verification pending",
 }
 
 // Define media types
@@ -551,31 +552,31 @@ const PublicRequest = () => {
           <View className="pl-2">
             <Text className="text-base mb-1">
               <Text className="font-bold">Date Request: </Text>
-              <Text className="text-green-500">
+              <Text className="text-specialGreen">
                 {formatDateTime(item.sent_date)}
               </Text>
             </Text>
             <Text className="text-base mb-1">
               <Text className="font-bold">Work time: </Text>
-              <Text className="text-green-500">
+              <Text className="text-specialGreen">
                 {formatDateTime(item.work_date)}
               </Text>
             </Text>
             <Text className="text-base mb-1">
               <Text className="font-bold">Address: </Text>
-              <Text className="text-green-500">
+              <Text className="text-specialGreen">
                 {item.location?.city}, {item.location?.region},{" "}
                 {item.location?.country}
               </Text>
             </Text>
             <Text className="text-base mb-1">
               <Text className="font-bold">Category: </Text>
-              <Text className="text-green-500">{item.category}</Text>
+              <Text className="text-specialGreen">{item.category}</Text>
             </Text>
             <Text className="text-base mb-2">
               <Text className="font-bold">About Service: </Text>
             </Text>
-            <Text className="text-green-500 mb-3 pl-1">{item.description}</Text>
+            <Text className="text-specialGreen mb-3 pl-1">{item.description}</Text>
           </View>
         </View>
 
@@ -636,7 +637,7 @@ const PublicRequest = () => {
               onPress={() =>
                 handleSelectRequest(item.id, item.status, item.workerId)
               }
-              className="bg-green-500 w-1/2 justify-center items-center py-2 rounded-l mr-2"
+              className="bg-specialGreen w-1/2 justify-center items-center py-2 rounded-l mr-2"
             >
               <Text className="text-base text-white">Comments</Text>
             </TouchableOpacity>
@@ -662,8 +663,7 @@ const PublicRequest = () => {
 
         {/* Client verification section - when job is marked as completed by worker */}
 
-        {item.status === RequestStatus.ACCEPTED &&
-          userRole === UserRole.CLIENT && (
+        {item.status === RequestStatus.ACCEPTED &&(
             <TouchableOpacity
               className="bg-green-500 w-full items-center justify-center py-3 mt-3 rounded"
               onPress={() => handleConfirmCompletion(item)}
@@ -987,33 +987,33 @@ const PublicRequest = () => {
         <View className="pl-2">
           <Text className="text-base mb-1">
             <Text className="font-bold">Request Date:</Text>
-            <Text className="text-green-500">{item.post_date}</Text>
+            <Text className="text-specialGreen">{item.post_date}</Text>
           </Text>
           <Text className="text-base mb-1">
             <Text className="font-bold">Work Address: </Text>
-            <Text className="text-green-500">
+            <Text className="text-specialGreen">
               {item.location?.city}, {item.location?.region},{" "}
               {item.location?.country}
             </Text>
           </Text>
           <Text className="text-base mb-2">
             <Text className="font-bold text-black">Category:</Text>
-            <Text className="text-green-500">{item.category}</Text>
+            <Text className="text-specialGreen">{item.category}</Text>
           </Text>
           <Text className="text-base mb-2">
             <Text className="font-bold text-black">About Service: </Text>
-            <Text className="text-green-500">{item.description}</Text>
+            <Text className="text-specialGreen">{item.description}</Text>
           </Text>
           {item.worker_comment && (
             <Text className="text-base mb-2">
               <Text className="font-bold text-black">Your Comment: </Text>
-              <Text className="text-green-500">{item.worker_comment}</Text>
+              <Text className="text-specialGreen">{item.worker_comment}</Text>
             </Text>
           )}
           {item.comment_date && (
             <Text className="text-base mb-2">
               <Text className="font-bold text-black">Comment Date: </Text>
-              <Text className="text-green-500">
+              <Text className="text-specialGreen">
                 {formatDateTime(item.comment_date)}
               </Text>
             </Text>
