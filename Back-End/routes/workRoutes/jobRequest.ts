@@ -35,7 +35,7 @@ request.put("/:requestId", checkRole([clientRoleId]), modifyRequest);
 
 request.put("/media/:requestId", checkRole([clientRoleId]), uploadMedia);
 
-request.put("/status/:requestId", updateRequestStatus);
+request.put("/status/:requestId", checkRole([workerRoleId]), updateRequestStatus);
 
 // this route is used to select worker in public request
 request.put("/:requestId/select-worker/:workerId", checkRole([clientRoleId]), selectWorker);

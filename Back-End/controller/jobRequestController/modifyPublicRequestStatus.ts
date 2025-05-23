@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import pool from '../../database/dbConnection';
+import { changeRequestStatus } from './jobRequestEmitter';
 
 const modifyPublicRequestStatus = async (req: Request, res: Response) => {
   const requestId: number = +req.params.requestId;
@@ -25,14 +26,20 @@ const modifyPublicRequestStatus = async (req: Request, res: Response) => {
     const query: string = status === +acceptedRequestStatusId ?
      `UPDATE request
       SET status = $2
-      WHERE id = $1` : 
+      WHERE id = $1
+      RETURNING *` : 
       `UPDATE request
       SET worker = NULL
-      WHERE id = $1`;
+      WHERE id = $1
+      RETURNING *`;
     const values : Number[] = status === +acceptedRequestStatusId ?
      [requestId, status] : [requestId];
 
-    await pool.query(query, values);
+    const { rows } = await pool.query(query, values);
+
+    // send the status to client to make it real time
+    changeRequestStatus(rows[0]);
+
     res.status(200).json({
       message : "worker update request status of public request that he choosen on it",
       success : true
