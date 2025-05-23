@@ -34,6 +34,7 @@ import { ResizeMode, Video } from "expo-av"; // Import for video playback
 import { formatDateTime, handelcall } from "../SomeStandarFunctions";
 import { useNotifications } from "@/context/NotificationContext";
 import { Rating } from "react-native-ratings";
+import eventEmitter from "@/context/EventBus";
 
 // Define the UserRole enum
 enum UserRole {
@@ -355,6 +356,22 @@ const PublicRequest = () => {
     setSelectedMedia(initialIndex);
     setMediaModalVisible(true);
   };
+
+  useEffect(() => {
+    const handler = (data: { id: number; status: string }) => {
+      setRequests((prev) =>
+        prev.map((request) =>
+          request.id === data.id ? { ...request, status: data.status } : request,
+        ),
+      );
+    };
+  
+    eventEmitter.on('change-public-request-status', handler);
+  
+    return () => {
+      eventEmitter.off('change-public-request-status', handler); // Clean up
+    };
+  }, []);
 
   // Get status icon based on request status
   const getStatusIcon = (status: string | undefined) => {

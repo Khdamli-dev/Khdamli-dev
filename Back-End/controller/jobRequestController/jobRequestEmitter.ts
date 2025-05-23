@@ -32,33 +32,34 @@ export const acceptWorkerOnPublicRequest = async (
     );
 };
 
-export const changeRequestStatus = (
-  request: JobRequest,
-): void => {
+export const changeRequestStatus = (request: JobRequest): void => {
   // determine request status
-  const getRequestStatus = (statusId : number) : string | null => {
-    const onholdRequestStatusId: string | undefined = process.env.ON_HOLD_REQUEST_ID;
-    const acceptedRequestStatusId: string | undefined = process.env.ACCEPTED_REQUEST_ID;
-    if (onholdRequestStatusId && acceptedRequestStatusId){
-      switch (statusId){
-        case +onholdRequestStatusId : return "On Hold";
-        case +acceptedRequestStatusId : return "Accepted";
-        default : return "Rejected";
+  const getRequestStatus = (statusId: number): string | null => {
+    const onholdRequestStatusId: string | undefined =
+      process.env.ON_HOLD_REQUEST_ID;
+    const acceptedRequestStatusId: string | undefined =
+      process.env.ACCEPTED_REQUEST_ID;
+    if (onholdRequestStatusId && acceptedRequestStatusId) {
+      switch (statusId) {
+        case +onholdRequestStatusId:
+          return 'On Hold';
+        case +acceptedRequestStatusId:
+          return 'Accepted';
+        default:
+          return 'Rejected';
       }
     }
     return null;
-  }
+  };
 
   const io: Server = getIo();
-  const privateRequestId: string | undefined = process.env.PRIVATE_REQUEST_ID;
-  if (privateRequestId) {
-    const client: number = request.client;
-    const status: string | null = getRequestStatus(request.status);
-    if (status){
-      io.to(client.toString()).emit('change-request-status', {
-        requestId: request.id,
-        status,
-      });
-    }
+  const client: number = request.client;
+  const status: string | null = getRequestStatus(request.status);
+  if (status) {
+    io.to(client.toString()).emit('change-request-status', {
+      requestId: request.id,
+      status,
+      type : request.type
+    });
   }
 };

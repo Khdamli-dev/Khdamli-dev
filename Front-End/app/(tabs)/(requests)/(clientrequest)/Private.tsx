@@ -31,6 +31,7 @@ import { getSocket } from "@/api/socket";
 import { useNotifications } from "@/context/NotificationContext";
 import { Rating } from "react-native-ratings";
 import { formatDateTime, handelcall } from "../SomeStandarFunctions";
+import eventEmitter from "@/context/EventBus";
 
 //import { realTimePrivateRequestStatus, realTimeRequests } from '@/api/realTime';
 
@@ -116,6 +117,22 @@ const PrivateRequests = () => {
       }, 50);
     }
   }, [mediaModalVisible, selectedMedia, windowWidth]);
+
+  useEffect(() => {
+      const handler = (data: { id: number; status: string }) => {
+        setRequests((prev) =>
+          prev.map((request) =>
+            request.id === data.id ? { ...request, status: data.status } : request,
+          ),
+        );
+      };
+    
+      eventEmitter.on('change-private-request-status', handler);
+    
+      return () => {
+        eventEmitter.off('change-private-request-status', handler); // Clean up
+      };
+    }, []);
 
   const toggleExpandRequest = (id: number) => {
     setExpandedRequestId(expandedRequestId === id ? null : id);
