@@ -3,30 +3,35 @@ import {
   View,
   Text,
   Image,
-  TouchableOpacity,
   ScrollView,
-  FlatList,
   Dimensions,
+  FlatList,
   StyleSheet,
+  TouchableOpacity,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Calendar,
-  Clock,
   MapPin,
+  Clock,
+  Globe,
+  User,
   Briefcase,
   CreditCard,
-  User,
-  Globe,
   MessageSquare,
 } from "lucide-react-native";
-import { Video, ResizeMode } from "expo-av";
+import CONFIG from "../../../config";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFonts, Itim_400Regular } from "@expo-google-fonts/itim";
+import { useRoute } from "@react-navigation/native";
+import { Video, ResizeMode } from "expo-av";
+import axios from "axios";
 import { router, useLocalSearchParams } from "expo-router";
-import { AntDesign } from "@expo/vector-icons";
-import apiClient from "@/api/appClient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import apiClient from "@/api/appClient";
+import { AntDesign } from "@expo/vector-icons";
+import Dashboard from "@/Component/ProfileComponents/Dashboard";
+import Reviews from "@/Component/ProfileComponents/Reviews";
 const { width } = Dimensions.get("window");
 
 interface ProfileItemProps {
@@ -35,13 +40,25 @@ interface ProfileItemProps {
   Icon?: React.ComponentType<{ size: number; color: string }>;
 }
 
-const UserProfileScreen: React.FC = () => {
-  type MediaItem = {
-    type: "image" | "video";
-    uri: string;
-  };
-  const { workerId } = useLocalSearchParams();
-  const[role, setRole] = useState<1 | 2 | null>(null);
+const styles = StyleSheet.create({
+  requestButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#BD7D06",
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  requestButtonText: {
+    color: "white",
+    fontFamily: "Itim_400Regular",
+    fontSize: 16,
+  },
+});
+
+const UserProfileView = () => {
+  const { userId, userRole } = useLocalSearchParams();
+  const [role, setRole] = useState(1); // 1 Client 2 worker
   const [user, setUser] = useState<{
     fullName: string | null;
     registration_date: string | null;
@@ -50,12 +67,12 @@ const UserProfileScreen: React.FC = () => {
     region: string | null;
     city: string | null;
     accountType: string | null;
-    workingDays: { day: string; begin: string; end: string }[] | null;
+    workingDays: any[] | null;
     age: number | null;
     gender: string | null;
     paymentMethod: string[] | null;
-    category: { name: string; price: number; unity: string }[] | null;
-    gallery: MediaItem[] | null;
+    category: any[] | null;
+    gallery: any[] | null;
   }>({
     fullName: null,
     registration_date: null,
@@ -71,19 +88,51 @@ const UserProfileScreen: React.FC = () => {
     category: null,
     gallery: null,
   });
-  useEffect(() => {
-    //Commented out as requested
-    const fetchUser = async () => {
-      try {
-        // Use the workerId prop passed to the component instead of getting from AsyncStorage
-        if (workerId) {
-          // Worker profile endpoint using the worker ID parameter
-          const endpoint = `/users/worker/${workerId}`;
 
-          
-          const response = await apiClient.get(endpoint);
-          
-          const newUserData = {
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      const userData = await AsyncStorage.getItem("user");
+      if (userData) {
+        const user = JSON.parse(userData);
+        setRole(user.role);
+      }
+    };
+    fetchUserRole();
+    const fetchUserData = async () => {
+      try {
+        if (!userId || !userRole) {
+          return;
+        }
+
+        const endpoint =
+          Number(userRole) === 1
+            ? `/users/client/${userId}`
+            : `/users/worker/${userId}`;
+
+        const response = await apiClient.get(`${endpoint}`);
+
+        if (Number(userRole) === 1) {
+          // Client data
+          const clientData = {
+            fullName: response.data.client.username,
+            image: response.data.client.profile_image,
+            registration_date: response.data.client.registration_date,
+            age: response.data.client.age,
+            gender: response.data.client.sex,
+            region: response.data.client.location.region,
+            city: response.data.client.location.city,
+            accountType: "client",
+            bio: null,
+            workingDays: null,
+            paymentMethod: null,
+            category: null,
+            gallery: null,
+          };
+
+          setUser(clientData);
+        } else {
+          // Worker data
+          const workerData = {
             fullName: response.data.worker.username,
             image: response.data.worker.profile_image,
             registration_date: response.data.worker.registration_date,
@@ -99,41 +148,24 @@ const UserProfileScreen: React.FC = () => {
             gallery: response.data.worker.media,
           };
 
-          setUser((prev) => ({ ...prev, ...newUserData }));
-        } else {
-          console.log("No worker ID provided");
+          setUser(workerData);
         }
-      } catch (error) {
-        console.error("Failed to fetch worker data", error);
+      } catch (error:any) {
+        console.error("Failed to fetch user data", error.response?.data);
       }
     };
-     const fetchUserRole = async () => {
-           const userData = await AsyncStorage.getItem('user');
-           if (userData) {
-             const user = JSON.parse(userData);
-             setRole(user.role);
-           }
-         };
-        fetchUserRole();
-    fetchUser();
-   
-  }, [workerId]); // Add workerId as a dependency to refetch when it changes
 
-  const formatTime = (timeString: any) => {
+    fetchUserData();
+  }, [userId, userRole]);
+
+  const formatTime = (timeString: string | null) => {
     if (!timeString) return "";
+    // Handle various formats, returning just HH:MM
     return timeString.split(":").slice(0, 2).join(":");
   };
 
-  const handleSendPrivateRequest = () => {
-    router.push({
-      pathname: "/(tabs)/(search)/requeste",
-      params: { workerId},
-    });
-  };
-
-  const [fontsLoaded] = useFonts({ Itim_400Regular });
-
-  const ProfileItem: React.FC<ProfileItemProps> = ({ label, value, Icon }) => (
+  // Profile item component - read-only version
+  const ProfileItem = ({ label, value, Icon }: ProfileItemProps) => (
     <View className="flex-row justify-between items-center py-4 px-[10px] mb-[3px]">
       <Text
         className="font-bold text-[16px]"
@@ -146,86 +178,118 @@ const UserProfileScreen: React.FC = () => {
           className="mr-[8px] text-[#BD7D06] font-semibold"
           style={{ fontFamily: "Itim_400Regular" }}
         >
-          {value}
+          {value || "Unknown"}
+          {label === "Age" && value ? " Years" : null}
         </Text>
         {Icon && <Icon size={20} color="#BD7D06" />}
       </View>
     </View>
   );
-
+  const handleSendPrivateRequest = () => {
+    router.push({
+      pathname: "/(tabs)/(home)/createRequest",
+      params: { type: "2" },
+    });
+  };
+   const handleNavigatetoclientprofiele = (clientId: string) => {
+      console.log(`Navigate to client: ${clientId}`);
+      router.push({
+            pathname: "/workerProfile",
+            params: {
+              userId: clientId,
+              userRole: 1,
+            },
+          });
+      // Navigate to client profile
+    };
   return (
-    <ScrollView
-      className="flex-1 bg-white"
-      contentContainerStyle={{ paddingBottom: 32, paddingTop: 16 }}
-    >
+    <ScrollView>
+      {/* Profile Header - Without Edit Buttons */}
       <LinearGradient
         colors={["#5EB4A2", "#2B524A"]}
         start={{ x: 0, y: 1 }}
         end={{ x: 1, y: 0 }}
         locations={[0.22, 1]}
-        className="relative items-center pt-2 justify-center pb-[35px] pl-0 mb-[10px]"
+        className="relative items-center p-[35px]  mb-[10px]"
         style={{ borderBottomLeftRadius: 50, borderBottomRightRadius: 50 }}
       >
-        <View className="w-full mb-1 items-start justify-start ">
-          <TouchableOpacity onPress={() => router.back()}>
-            <AntDesign name="left" size={50} color="white" />
-          </TouchableOpacity>
-        </View>
-        <View
-          className="absolute rounded-[15px] w-[120px] h-[80px] top-[70px] right-[-30px]"
-          style={{
-            backgroundColor: "rgba(255, 255, 255, 0.1)",
-            transform: [{ rotate: "-30deg" }],
-            borderRadius: 15,
-            overflow: "hidden",
-          }}
-        />
-        <View
-          className="absolute rounded-[15px] w-[110px] h-[80px] bottom-[20px] left-[-20px]"
-          style={{
-            backgroundColor: "rgba(255, 255, 255, 0.1)",
-            transform: [{ rotate: "-30deg" }],
-            borderRadius: 15,
-            overflow: "hidden",
-          }}
-        />
-
-        <View className="relative">
-          <Image
-            source={{
-              uri:
-                user.image ??
-                "https://cdn-icons-png.flaticon.com/512/149/149071.png",
-            }}
-            className="w-[130px] h-[130px] rounded-full border-[3px] border-white"
-          />
-        </View>
-
-        <Text
-          className="text-white text-[27px] mb-1.5 mt-2.5"
-          style={{ fontFamily: "Itim_400Regular" }}
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="justify-end w-full"
         >
-          {user.fullName}
-        </Text>
-        {role === 1 && (
-          <>
-            <TouchableOpacity
-              onPress={handleSendPrivateRequest}
-              style={styles.requestButton}
-            >
-              <MessageSquare
-                size={20}
-                color="white"
-                style={{ marginRight: 8 }}
-              />
-              <Text style={styles.requestButtonText}>Send Private Request</Text>
-            </TouchableOpacity>
-          </>
-        )}
+          <AntDesign name="left" size={50} color="#F8A100" />
+        </TouchableOpacity>
+        <>
+          {/* Decorative elements */}
+          <View
+            className="absolute rounded-[15px] w-[120px] h-[80px] top-[70px] right-[-30px]"
+            style={{
+              backgroundColor: "rgba(255, 255, 255, 0.1)",
+              transform: [{ rotate: "-30deg" }],
+              borderRadius: 15,
+              overflow: "hidden",
+            }}
+          />
+          <View
+            className="absolute rounded-[15px] w-[110px] h-[80px] bottom-[20px] left-[-20px]"
+            style={{
+              backgroundColor: "rgba(255, 255, 255, 0.1)",
+              transform: [{ rotate: "-30deg" }],
+              borderRadius: 15,
+              overflow: "hidden",
+            }}
+          />
+
+          {/* Profile Image - Without Edit Button */}
+          <View className="relative">
+            <Image
+              source={{
+                uri:
+                  user.image ??
+                  "https://cdn-icons-png.flaticon.com/512/149/149071.png",
+              }}
+              className="w-[130px] h-[130px] rounded-full border-[3px] border-white"
+            />
+          </View>
+
+          {/* User Name */}
+          <Text
+            className="text-white text-[27px] mb-1.5 mt-2.5"
+            style={{ fontFamily: "Itim_400Regular" }}
+          >
+            {user.fullName}
+          </Text>
+          {user.accountType === "worker" && role === 1 && (
+            <>
+              <TouchableOpacity
+                onPress={handleSendPrivateRequest}
+                style={styles.requestButton}
+              >
+                <MessageSquare
+                  size={20}
+                  color="white"
+                  style={{ marginRight: 8 }}
+                />
+                <Text style={styles.requestButtonText}>
+                  Send Private Request
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </>
       </LinearGradient>
 
+      {/* Worker-specific sections */}
       {user.accountType === "worker" && (
         <>
+          <Dashboard
+            workerId={Array.isArray(userId) ? userId[0] : userId} // Pass the userId to the Dashboard component
+            onStatPress={(statType) => {
+              console.log(`Pressed ${statType} stat`);
+              // Navigate to detailed stats screen
+            }}
+          />
+          {/* Bio Section */}
           <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
             <Text
               className="text-center text-[#BD7D06] mb-2.5"
@@ -240,6 +304,8 @@ const UserProfileScreen: React.FC = () => {
               {user.bio}
             </Text>
           </View>
+
+          {/* Working Days Section */}
           <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
             <Text
               className="text-center text-[#BD7D06] mb-2.5"
@@ -271,6 +337,7 @@ const UserProfileScreen: React.FC = () => {
         </>
       )}
 
+      {/* Location Information Card */}
       <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
         <ProfileItem
           label="Registration Date"
@@ -291,15 +358,16 @@ const UserProfileScreen: React.FC = () => {
         />
       </View>
 
+      {/* Personal Information Card */}
       <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
         <ProfileItem
           label="Account Type"
-          value={user.accountType}
+          value={user.accountType === "worker" ? "Worker" : "Client"}
           Icon={(props) => <User {...props} />}
         />
         <ProfileItem
           label="Age"
-          value={`${user.age} Years`}
+          value={user.age}
           Icon={(props) => <Clock {...props} />}
         />
         <ProfileItem
@@ -307,6 +375,8 @@ const UserProfileScreen: React.FC = () => {
           value={user.gender}
           Icon={(props) => <User {...props} />}
         />
+
+        {/* Worker-specific information */}
         {user.accountType === "worker" && (
           <>
             {user.category?.map((cat, index) => (
@@ -329,6 +399,7 @@ const UserProfileScreen: React.FC = () => {
         )}
       </View>
 
+      {/* Gallery - Worker only */}
       {user.accountType === "worker" &&
         user.gallery &&
         user.gallery.length > 0 && (
@@ -337,12 +408,13 @@ const UserProfileScreen: React.FC = () => {
               className="text-center text-[#BD7D06] mb-2.5 text-[20px]"
               style={{ fontFamily: "Itim_400Regular" }}
             >
-              Gallery
+              Portfolio
             </Text>
+
             <FlatList
               data={user.gallery}
               renderItem={({ item }) => (
-                <View className="relative items-center justify-center my-2">
+                <View className="mx-4">
                   {item.type === "image" ? (
                     <Image
                       source={{ uri: item.uri }}
@@ -366,26 +438,24 @@ const UserProfileScreen: React.FC = () => {
             />
           </View>
         )}
+      {/* Reviews Section - Worker only */}
+      {user.accountType === "worker" && (
+        <>
+          <Reviews
+            workerId={Array.isArray(userId) ? userId[0] : userId}
+            onClientPress={(clientId) => {
+              handleNavigatetoclientprofiele(clientId);
+              // Navigate to client profile
+            }}
+            onViewAllPress={() => {
+              console.log("View all reviews");
+              // Navigate to all reviews screen
+            }}
+          />
+        </>
+      )}
     </ScrollView>
   );
 };
 
-const styles = StyleSheet.create({
-  requestButton: {
-    backgroundColor: "#BD7D06",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 25,
-    marginTop: 10,
-  },
-  requestButtonText: {
-    color: "white",
-    fontFamily: "Itim_400Regular",
-    fontSize: 16,
-  },
-});
-
-export default UserProfileScreen;
+export default UserProfileView;

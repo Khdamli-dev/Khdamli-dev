@@ -126,7 +126,7 @@ const ServiceProvidersScreen = () => {
   const handleWorkerPress = (worker: Worker) => {
     router.push({
       pathname: "./workerProfile",
-      params: { workerId: worker.id },
+      params: { userId: worker.id, userRole: role },
     });
   };
 

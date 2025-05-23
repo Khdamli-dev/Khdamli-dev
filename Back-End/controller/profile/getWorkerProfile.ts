@@ -59,6 +59,8 @@ const getWorkerProfile = async (req: Request, res: Response) => {
         w.registration_date AS worker_registration_date,
         w.sent_requests,
         w.completed_requests,
+        w.review_count,
+        w.review_sum,
         w.nbr_media
       FROM "user" u
       LEFT JOIN sex s ON u.sex = s.id

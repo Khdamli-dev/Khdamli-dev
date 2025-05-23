@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import pool from "../../database/dbConnection";
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 
 dotenv.config();
 
@@ -13,20 +13,26 @@ const getRequests = async (req: Request, res: Response) => {
     };
     // need just one field
     if (((!client && !worker) || (worker && client)) && !type) {
-      res
-        .status(400)
-        .json({
-          message:
-            "Please provide the type, and either worker or client, not both.",
-        });
+      res.status(400).json({
+        message:
+          "Please provide the type, and either worker or client, not both.",
+      });
       return;
     }
 
-    const onholdRequestStatusId: string | undefined = process.env.ON_HOLD_REQUEST_ID;
+    const onholdRequestStatusId: string | undefined =
+      process.env.ON_HOLD_REQUEST_ID;
+      
     const publicRequestId: string | undefined = process.env.PUBLIC_REQUEST_ID;
-    const acceptedRequestStatusId: string | undefined = process.env.ACCEPTED_REQUEST_ID;
-    if (!onholdRequestStatusId || !publicRequestId || !acceptedRequestStatusId){
-      throw new Error('missing envirement variables');
+    const acceptedRequestStatusId: string | undefined =
+      process.env.ACCEPTED_REQUEST_ID;
+      
+    if (
+      !onholdRequestStatusId ||
+      !publicRequestId ||
+      !acceptedRequestStatusId
+    ) {
+      throw new Error("missing envirement variables");
     }
 
     let query: string;

@@ -84,7 +84,7 @@ const HomeScreen = () => {
       setError(null);
     } catch (error: any) {
       console.error("Error fetching categories:", error.response.data);
-      setError("فشل في تحميل الفئات. يرجى المحاولة مرة أخرى.");
+      setError(" search failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -111,7 +111,7 @@ const HomeScreen = () => {
       setError(null);
     } catch (error) {
       console.error("Error searching:", error);
-      setError("فشل في البحث. يرجى المحاولة مرة أخرى.");
+      setError("search faild");
       setSearchResults([]);
     } finally {
       setIsLoading(false);
@@ -139,7 +139,8 @@ const HomeScreen = () => {
     // Navigate or show details for the selected worker
     router.push({
       pathname: "./workerProfile",
-      params: { workerId: worker.id },
+      params: {  userId: worker.id,
+        userRole: role, },
     });
   };
 
@@ -349,7 +350,7 @@ const HomeScreen = () => {
                   paddingBottom: 20,
                 }}
                 showsVerticalScrollIndicator={false}
-              />{" "}
+              />
             </View>
           </>
         )}

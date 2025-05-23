@@ -80,27 +80,6 @@ CREATE TABLE "role" (
   "name" VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE "permission" (
-  "id" smallserial PRIMARY KEY,
-  "name" VARCHAR(100) NOT NULL
-);
-
-CREATE TABLE "role_permission" (
-  "role" smallint NOT NULL,
-  "permission" smallint NOT NULL,
-  PRIMARY KEY("permission","role"), -- frequent query is to get all roles of one permission
-  CONSTRAINT "FK_role-permission_permission"
-    FOREIGN KEY("permission")
-      REFERENCES "permission"("id")
-      ON DELETE CASCADE 
-      ON UPDATE CASCADE,
-  CONSTRAINT "FK_role-permission_role"
-    FOREIGN KEY("role")
-      REFERENCES "role"("id")
-      ON DELETE RESTRICT
-      ON UPDATE CASCADE
-);
-
 CREATE TYPE sex_enum AS ENUM('male','female');
 
 CREATE TABLE "sex" (
@@ -168,8 +147,9 @@ CREATE TABLE "worker" (
   "active" BOOLEAN NOT NULL,
   "transport" BOOLEAN NOT NULL,
   "sent_requests" smallint NOT NULL,
-  "accepted_requests" smallint NOT NULL,
   "completed_requests" smallint NOT NULL,
+  "review_count" smallint NOT NULL,
+  "review_sum" NUMERIC(1000,1) NOT NULL,
   "nbr_media" smallint NOT NULL,
   CONSTRAINT "FK_worker_user"
     FOREIGN KEY("id")
@@ -178,6 +158,31 @@ CREATE TABLE "worker" (
       ON UPDATE CASCADE
   -- the worker will be added to user table after that he will be added to worker table with same id
 );
+
+-- increment sent_requests and complete requests automatically
+CREATE OR REPLACE FUNCTION increment_requests_stats()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- increment sent requests
+    IF (NEW.type = 2 AND NEW.status = 3) OR (NEW.type = 1 AND NEW.status = 1) THEN
+      UPDATE "worker" SET sent_requests = sent_requests + 1
+      WHERE id = NEW.worker;
+    END IF;
+
+    -- increment completed requests
+    IF (NEW.status = 4) THEN
+      UPDATE "worker" SET completed_requests = completed_requests + 1
+      WHERE id = NEW.worker;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_requests_stats
+AFTER INSERT OR UPDATE ON "request"
+FOR EACH ROW
+EXECUTE FUNCTION increment_requests_stats();
 
 CREATE TABLE "category" (
   "id" SERIAL PRIMARY KEY,
@@ -282,7 +287,7 @@ CREATE TABLE "request_type" (
   "name" VARCHAR(30) NOT NULL
 );
 
-CREATE TABLE review (
+CREATE TABLE "review" (
     id INTEGER PRIMARY KEY,
     rating NUMERIC(2,1) CHECK (rating >= 1.0 AND rating <= 5.0),
     review TEXT,
@@ -298,6 +303,21 @@ CREATE TABLE review (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
+
+-- increment worker review count and sum after insert new review for him
+CREATE OR REPLACE FUNCTION increment_review_count()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE "worker" SET review_count = review_count + 1, review_sum = review_sum + NEW.rating
+    WHERE id = NEW.worker_id;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_review_count
+AFTER INSERT ON "review"
+FOR EACH ROW
+EXECUTE FUNCTION increment_review_count();
 
 CREATE TABLE "request_status" (
   "id" smallserial PRIMARY KEY,
