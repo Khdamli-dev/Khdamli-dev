@@ -234,7 +234,6 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     console.log("the url of this photo is ===" + newImage);
     const userData = await AsyncStorage.getItem("user");
     const user: any = JSON.parse(userData as any);
-
     if (!user) {
       return;
     }
