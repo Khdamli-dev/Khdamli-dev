@@ -12,6 +12,7 @@ import {
   Platform,
   Alert,
   TextInput,
+  TouchableWithoutFeedback,
   Keyboard,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
@@ -34,6 +35,8 @@ import { ResizeMode, Video } from "expo-av"; // Import for video playback
 import { formatDateTime, handelcall } from "../SomeStandarFunctions";
 import { useNotifications } from "@/context/NotificationContext";
 import { Rating } from "react-native-ratings";
+import { getSocket } from "@/api/socket";
+import eventEmitter from "@/context/EventBus";
 
 // Define the UserRole enum
 enum UserRole {
@@ -151,6 +154,22 @@ const PublicRequest = () => {
     };
 
     getUserInfo();
+  }, []);
+
+  useEffect(() => {
+    const handler = (data: { id: number; status: string }) => {
+      setRequests((prev) =>
+        prev.map((request) =>
+          request.id === data.id ? { ...request, status: data.status } : request
+        )
+      );
+    };
+
+    eventEmitter.on("change-public-request-status", handler);
+
+    return () => {
+      eventEmitter.off("change-public-request-status", handler); // Clean up
+    };
   }, []);
 
   useEffect(() => {
@@ -333,7 +352,7 @@ const PublicRequest = () => {
   const handleSelectRequest = (
     id: number,
     status: string,
-    workerId?: number
+    workerId: number
   ) => {
     router.push({
       pathname: "/WorkerComments",
@@ -366,7 +385,8 @@ const PublicRequest = () => {
         return (
           <MaterialIcons name="hourglass-empty" size={24} color="orange" />
         );
-
+      case RequestStatus.VERIFICATION_PENDING:
+        return <MaterialIcons name="pending-actions" size={24} color="blue" />;
       case RequestStatus.COMPLETED:
         return <MaterialIcons name="verified" size={24} color="blue" />;
       default:
@@ -530,6 +550,9 @@ const PublicRequest = () => {
                 <Text className="font-medium">
                   {userData.username || "Your Request"}
                 </Text>
+                <Text numberOfLines={1} className="text-gray-500">
+                  {truncateText(item.description, 40)}
+                </Text>
               </View>
             </View>
             <View className="flex-row items-center">
@@ -546,6 +569,7 @@ const PublicRequest = () => {
             </View>
           </View>
         </TouchableOpacity>
+
         <View>
           <Text className="text-lg font-medium mb-2">Request Details:</Text>
 
@@ -576,7 +600,9 @@ const PublicRequest = () => {
             <Text className="text-base mb-2">
               <Text className="font-bold">About Service: </Text>
             </Text>
-            <Text className="text-specialGreen mb-3 pl-1">{item.description}</Text>
+            <Text className="text-specialGreen mb-3 pl-1">
+              {item.description}
+            </Text>
           </View>
         </View>
 
@@ -651,7 +677,8 @@ const PublicRequest = () => {
               <Text className="text-base text-white">Worker comment</Text>
             </TouchableOpacity>
           )}
-          {item.status === RequestStatus.ON_HOLD && (
+          {(item.status === RequestStatus.ON_HOLD ||
+            item.status === RequestStatus.VERIFICATION_PENDING) && (
             <TouchableOpacity
               className="bg-red-500 w-1/2 justify-center items-center py-2 rounded-r"
               onPress={() => deleteRequest(item.id)}
@@ -663,14 +690,14 @@ const PublicRequest = () => {
 
         {/* Client verification section - when job is marked as completed by worker */}
 
-        {item.status === RequestStatus.ACCEPTED &&(
-            <TouchableOpacity
-              className="bg-green-500 w-full items-center justify-center py-3 mt-3 rounded"
-              onPress={() => handleConfirmCompletion(item)}
-            >
-              <Text className="text-base text-white">Declare Completed</Text>
-            </TouchableOpacity>
-          )}
+        {item.status === RequestStatus.ACCEPTED && (
+          <TouchableOpacity
+            className="bg-green-500 w-full items-center justify-center py-3 mt-3 rounded"
+            onPress={() => handleConfirmCompletion(item)}
+          >
+            <Text className="text-base text-white">Declare Completed</Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   };
@@ -921,7 +948,7 @@ const PublicRequest = () => {
         case 2:
           return RequestStatus.ON_HOLD;
         default:
-          return RequestStatus.ON_HOLD;
+          return RequestStatus.VERIFICATION_PENDING;
       }
     };
 
@@ -1072,28 +1099,27 @@ const PublicRequest = () => {
         </View>
 
         {/* For PENDING_WORKER_VERIFICATION requests */}
-        {item.status !== RequestStatus.COMPLETED &&
-          item.status === RequestStatus.ACCEPTED && (
-            <View className="flex-row justify-between mt-4 px-2">
-              <TouchableOpacity
-                className="flex-1 bg-green-600 items-center justify-center py-3 rounded-lg shadow mr-2"
-                onPress={async () => await modifyRequestStatus(1)}
-              >
-                <Text className="text-base font-medium text-white">
-                  Confirm Work
-                </Text>
-              </TouchableOpacity>
+        {item.status === RequestStatus.VERIFICATION_PENDING && (
+          <View className="flex-row justify-between mt-4 px-2">
+            <TouchableOpacity
+              className="flex-1 bg-green-600 items-center justify-center py-3 rounded-lg shadow mr-2"
+              onPress={async () => await modifyRequestStatus(1)}
+            >
+              <Text className="text-base font-medium text-white">
+                Confirm Work
+              </Text>
+            </TouchableOpacity>
 
-              <TouchableOpacity
-                className="flex-1 bg-red-500 items-center justify-center py-3 rounded-lg shadow"
-                onPress={async () => await modifyRequestStatus(2)}
-              >
-                <Text className="text-base font-medium text-white">
-                  Cancel Work
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
+            <TouchableOpacity
+              className="flex-1 bg-red-500 items-center justify-center py-3 rounded-lg shadow"
+              onPress={async () => await modifyRequestStatus(2)}
+            >
+              <Text className="text-base font-medium text-white">
+                Cancel Work
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* For COMPLETED requests - Worker sees completed status */}
         {item.status === RequestStatus.COMPLETED && (
@@ -1105,15 +1131,12 @@ const PublicRequest = () => {
         )}
 
         {/* ONLY show Edit Comment button for worker */}
-        {item.status != RequestStatus.ACCEPTED &&
-          item.status != RequestStatus.COMPLETED && (
-            <TouchableOpacity
-              className="bg-blue-500 items-center justify-center py-3 mt-3 rounded"
-              onPress={() => handleEditComment(item.id, item.worker_comment)}
-            >
-              <Text className="text-base text-white">Edit Comment</Text>
-            </TouchableOpacity>
-          )}
+        <TouchableOpacity
+          className="bg-blue-500 items-center justify-center py-3 mt-3 rounded"
+          onPress={() => handleEditComment(item.id, item.worker_comment)}
+        >
+          <Text className="text-base text-white">Edit Comment</Text>
+        </TouchableOpacity>
       </View>
     );
   };

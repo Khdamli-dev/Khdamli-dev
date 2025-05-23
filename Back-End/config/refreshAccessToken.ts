@@ -1,9 +1,9 @@
-import dotenv from 'dotenv';
-import jwt from 'jsonwebtoken';
-import { Request, Response } from 'express';
-import makeJwtToken from '../utils/authentication/makeJwtToken';
-import { JwtToken, JwtUserPayload } from '../interface/jwtToken';
-import pool from '../database/dbConnection';
+import dotenv from "dotenv";
+import jwt from "jsonwebtoken";
+import { Request, Response } from "express";
+import makeJwtToken from "../utils/authentication/makeJwtToken";
+import { JwtToken, JwtUserPayload } from "../interface/jwtToken";
+import pool from "../database/dbConnection";
 
 dotenv.config();
 
@@ -12,18 +12,18 @@ const refreshAccessToken = (req: Request, res: Response) => {
     process.env.Refresh_Token_Secret;
   if (!refreshTokenSecret) {
     res.status(500).json({
-      message: 'internal error',
+      message: "internal error",
       success: false,
     });
     return;
   }
 
-  const refreshHeader = req.headers['x-refresh-token'] as string;
+  const refreshHeader = req.headers["x-refresh-token"] as string;
   const refreshToken: string =
-    req.cookies?.refreshToken || refreshHeader?.split(' ')[1];
+    req.cookies?.refreshToken || refreshHeader?.split(" ")[1];
   if (!refreshToken) {
     res.status(403).json({
-      message: 'you are forbidden, dont have refresh token',
+      message: "you are forbidden, dont have refresh token",
       success: false,
     });
     return;
@@ -33,7 +33,7 @@ const refreshAccessToken = (req: Request, res: Response) => {
   jwt.verify(refreshToken, refreshTokenSecret, async (err, decode) => {
     if (err) {
       res.status(403).json({
-        message: 'you are forbidden, fake refresh token',
+        message: "you are forbidden, fake refresh token",
         success: false,
       });
       return;
@@ -51,26 +51,26 @@ const refreshAccessToken = (req: Request, res: Response) => {
         `,
       [userId]
     );
-    if (!user.length){
+    if (!user.length) {
       res.status(403).json({
         message: "you are forbidden, don't have account",
         success: false,
       });
       return;
     }
-      
+
     let info: JwtToken = {
       userId,
-      role : String(user[0].role),
-      time: '30m',
-      secret: process.env.Access_Token_Secret || '',
+      role: String(user[0].role),
+      time: "30m",
+      secret: process.env.Access_Token_Secret || "",
     };
     const accessToken = makeJwtToken(info);
     res.status(200).json({
       success: true,
-      message: 'generate new access token with success',
+      message: "generate new access token with success",
       accessToken,
-      user : user[0]
+      user: user[0],
     });
   });
 };

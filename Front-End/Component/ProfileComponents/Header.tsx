@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { ArrowLeft } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
+import { router } from "expo-router";
 interface HeaderProps {
   title: string;
 }
@@ -14,7 +15,7 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
   const navigation = useNavigation<NavigationProp>();
   return (
     <View style={styles.header}>
-      <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
+      <TouchableOpacity onPress={() => router.back()}>
         <ArrowLeft size={38} color="#BD7D06" />
       </TouchableOpacity>
       <Text style={styles.headerText}>{title}</Text>
