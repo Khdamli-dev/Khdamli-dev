@@ -91,7 +91,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
         });
 
         return () => {
-          socket.off('new-request');
+          socket.off('private-request');
+          socket.off('accept-worker-on-public-request');
         };
       } catch (error) {
         console.error('Error setting up notification socket listeners:', error);

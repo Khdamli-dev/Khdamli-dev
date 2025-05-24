@@ -33,8 +33,9 @@ const getWorkersByName = async (req: Request, res: Response) => {
         w.active,
         w.transport,
         w.sent_requests,
-        w.accepted_requests,
         w.completed_requests,
+        w.review_count,
+        w.review_sum,
         w.nbr_media
       FROM "user" u
       JOIN "worker" w ON w.id = u.id

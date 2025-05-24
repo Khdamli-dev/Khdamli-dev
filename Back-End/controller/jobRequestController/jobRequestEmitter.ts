@@ -5,9 +5,9 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-export const sendPrivateRequest = async (
+export const sendPrivateRequest = (
   request: JobRequest,
-): Promise<void> => {
+) : void => {
   const io: Server = getIo();
   const { type, worker } = request;
   // case of public request
@@ -25,11 +25,12 @@ export const acceptWorkerOnPublicRequest = async (
 ): Promise<void> => {
   const io: Server = getIo();
   const { worker } = request;
-  if (worker)
+  if (worker){
     io.to(worker.toString()).emit(
       'accept-worker-on-public-request',
       request.id,
     );
+  }
 };
 
 export const changeRequestStatus = (request: JobRequest): void => {

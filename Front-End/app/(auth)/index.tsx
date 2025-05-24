@@ -22,6 +22,7 @@ import * as SecureStore from "expo-secure-store";
 
 import apiClient from "@/api/appClient";
 import { getSocket, connectSocket } from "@/api/socket";
+import { Socket } from "socket.io-client";
 
 export default function Login() {
   const router = useRouter();
@@ -84,7 +85,6 @@ export default function Login() {
           try {
             console.log("Connecting to socket...");
             const socket = connectSocket();
-
             // Wait a brief moment to ensure connection is established
             setTimeout(() => {
               if (socket.connected) {
@@ -104,7 +104,7 @@ export default function Login() {
           } catch (socketError) {
             console.error("Socket connection error:", socketError);
           }
-
+          
           // go to home page
           router.replace("/(tabs)/(home)");
         }
