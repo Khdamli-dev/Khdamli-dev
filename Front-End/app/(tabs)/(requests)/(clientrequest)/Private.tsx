@@ -15,8 +15,8 @@ import {
 } from "react-native";
 import React, { useState, useRef, useEffect } from "react";
 import {
-  MaterialCommunityIcons,
   Ionicons,
+  MaterialCommunityIcons,
   MaterialIcons,
 } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -26,12 +26,17 @@ import refreshAccessToken from "@/api/refreshAccessToken";
 import {
   WorkerPrivateRequest,
   ClientPrivateRequest,
-} from '../../../../Interfaces/Requestsinterfaces';
+} from "../../../../Interfaces/Requestsinterfaces";
 import { ResizeMode, Video } from "expo-av";
 import { getSocket } from "@/api/socket";
 import { useNotifications } from "@/context/NotificationContext";
 import { Rating } from "react-native-ratings";
-import { formatDateTime, handelcall } from "../SomeStandarFunctions";
+import {
+  formatDateTime,
+  handelcall,
+  handleEmailPress,
+} from "../SomeStandarFunctions";
+import eventEmitter from "@/context/EventBus";
 
 //import { realTimePrivateRequestStatus, realTimeRequests } from '@/api/realTime';
 
@@ -117,6 +122,28 @@ const PrivateRequests = () => {
       }, 50);
     }
   }, [mediaModalVisible, selectedMedia, windowWidth]);
+
+  useEffect(() => {
+    const handler = (data: { id: number; status: string }) => {
+      console.log('Prvate request status update:', data);
+      
+      setRequests((prev) =>
+        prev.map((request) =>
+          request.id === data.id 
+            ? { ...request, status: data.status } 
+            : request
+        )
+      );
+    };
+
+    // Add listener
+    eventEmitter.on('change-private-request-status', handler);
+
+    // Cleanup function
+    return () => {
+      eventEmitter.off('change-private-request-status', handler);
+    };
+  }, []);
 
   const toggleExpandRequest = (id: number) => {
     setExpandedRequestId(expandedRequestId === id ? null : id);
@@ -344,7 +371,6 @@ const PrivateRequests = () => {
     }
   };
 
-  
   // Reting
   const handleRatingSubmit = async () => {
     try {
@@ -355,7 +381,7 @@ const PrivateRequests = () => {
 
       // First submit the rating
       await apiClient.post(`/work/job-request/${tempRequest.id}/complete`, {
-        workerId : tempRequest.workerId,
+        workerId: tempRequest.workerId,
         clientId: tempRequest.clientId,
         rating: rating,
         review: ratingComment,
@@ -376,7 +402,7 @@ const PrivateRequests = () => {
         if (await refreshAccessToken()) {
           await handleRatingSubmit();
         } else {
-         console.log(err)
+          console.log(err);
         }
       }
       console.error("Failed to submit rating:", err);
@@ -436,7 +462,9 @@ const PrivateRequests = () => {
       >
         <View className="flex-row justify-between items-center">
           <View className="flex-row items-center flex-1">
-            <TouchableOpacity onPress={() => navigateToProfile(29, 1)}>
+            <TouchableOpacity
+              onPress={() => navigateToProfile(item.workerId, 2)}
+            >
               <Image
                 source={
                   item.worker_profile_image
@@ -481,7 +509,7 @@ const PrivateRequests = () => {
     return (
       <TouchableOpacity
         onPress={() => toggleExpandRequest(item.id)}
-        className="bg-white mt-2 p-4 mb-4 rounded-lg shadow"
+        className={`${item.status === RequestStatus.ON_HOLD ? 'bg-specialGreen/70' : 'bg-white'} mt-2 p-4 mb-4 rounded-lg shadow`}
       >
         <View className="flex-row justify-between items-center">
           <View className="flex-row items-center flex-1">
@@ -540,7 +568,12 @@ const PrivateRequests = () => {
           className="mb-3"
         >
           <View className="flex-row justify-between items-center">
-            <View className="flex-row items-center">
+            <TouchableOpacity
+              className="flex-row items-center"
+              onPress={() => {
+                navigateToProfile(item.workerId, 2);
+              }}
+            >
               <Image
                 source={
                   item.worker_profile_image
@@ -553,11 +586,8 @@ const PrivateRequests = () => {
                 <Text className="font-medium">
                   {item.worker_username || "Worker"}
                 </Text>
-                <Text numberOfLines={1} className="text-gray-500">
-                  {truncateText(item.description, 40)}
-                </Text>
               </View>
-            </View>
+            </TouchableOpacity>
             <View className="flex-row items-center">
               {getStatusIcon(item.status)}
               <Text className="ml-1 text-gray-600 text-sm capitalize">
@@ -573,17 +603,32 @@ const PrivateRequests = () => {
           </View>
         </TouchableOpacity>
 
-        <View className="flex-row justify-end mb-3">
-          <TouchableOpacity className="mr-2">
-            <Ionicons name="call" size={30} color="#000" />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <MaterialCommunityIcons
-              name="message-text-outline"
-              size={30}
-              color="#000"
-            />
-          </TouchableOpacity>
+        <View className="flex-row mb-3 justify-end">
+          <View className="items-center ">
+            {item.status == "Accepted" && (
+              <View style={{ flexDirection: "row" }}>
+                <TouchableOpacity
+                  className="mr-4"
+                  onPress={() => {
+                    handelcall(item.worker_phone_number);
+                  }}
+                >
+                  <Ionicons name="call" size={32} color="#000" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    handleEmailPress(item.worker_email);
+                  }}
+                >
+                  <MaterialCommunityIcons
+                    name="message-badge-outline"
+                    size={32}
+                    color="#000"
+                  />
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
         </View>
 
         <View>
@@ -729,14 +774,27 @@ const PrivateRequests = () => {
 
         <View className="flex-row justify-end mb-3">
           {item.status === "Accepted" && (
-            <TouchableOpacity
-              className="mr-4"
-              onPress={() => {
-                handelcall(item.client_phone_number);
-              }}
-            >
-              <Ionicons name="call" size={32} color="#000" />
-            </TouchableOpacity>
+            <View style={{ flexDirection: "row" }}>
+              <TouchableOpacity
+                className="mr-4"
+                onPress={() => {
+                  handelcall(item.client_phone_number);
+                }}
+              >
+                <Ionicons name="call" size={32} color="#000" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  handleEmailPress(item.client_email);
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="message-badge-outline"
+                  size={32}
+                  color="#000"
+                />
+              </TouchableOpacity>
+            </View>
           )}
         </View>
 

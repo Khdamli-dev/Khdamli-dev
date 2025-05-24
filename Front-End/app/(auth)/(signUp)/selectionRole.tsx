@@ -12,51 +12,52 @@ import { MaterialCommunityIcons, AntDesign } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import axios, { all } from "axios";
-import CONFIG from "../../../config"
+import CONFIG from "../../../config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, CommonActions } from "@react-navigation/native";
 import apiClient from "@/api/appClient";
-const setUserVerificationStatus = async (isVerified : boolean) => {
+const setUserVerificationStatus = async (isVerified: boolean) => {
   try {
-    await AsyncStorage.setItem('userVerified', isVerified ? 'true' : 'false');
+    await AsyncStorage.setItem("userVerified", isVerified ? "true" : "false");
   } catch (error) {
-    console.error('Error saving verification status:', error);
+    console.error("Error saving verification status:", error);
   }
 };
 
 export default function SelectRole() {
   const { width: screenWidth } = Dimensions.get("window");
   const router = useRouter();
-   const navigation = useNavigation();
+  const navigation = useNavigation();
   // change the role of user if it is worker
- const handleWorkerRole = async () => {
-   try {
-     // Retrieve user data from AsyncStorage
-     const userData = await AsyncStorage.getItem("user");
+  const handleWorkerRole = async () => {
+    try {
+      // Retrieve user data from AsyncStorage
+      const userData = await AsyncStorage.getItem("user");
 
+      if (userData) {
+        const user: any = JSON.parse(userData); // Parse the user data
+        // Make the API request to update the role
+        const response = await apiClient.put(`/users/${user.id}/role/worker`);
 
-     if (userData) {
-       const user: any = JSON.parse(userData); // Parse the user data
-       // Make the API request to update the role
-       const response = await apiClient.put(
-         `/users/${user.id}/role/worker`
-       );
+        if (response.data.success) {
+          router.push("/(auth)/(signUp)/workerInfo");
+        }
+      } else {
+        console.log("No user data found in AsyncStorage");
+      }
+    } catch (error: any) {
+      console.log(error);
+      alert("Server is busy, please try again later");
+    }
+  };
 
-       if (response.data.success) {
-         router.push("/(auth)/(signUp)/workerInfo");
-       }
-     } else {
-       console.log("No user data found in AsyncStorage");
-     }
-   } catch (error: any) {
-     alert("Server is busy, please try again later");
-   }
- };
   //HandleClient --------------------------------------
   const handleClientRole = async () => {
     router.dismissAll();
+    router.replace("/(tabs)/(home)");
+    router.replace("/(tabs)/(home)"); // Navigate to home
     await setUserVerificationStatus(false);
-    router.push('/(auth)/verifyAccount?sendEmail=true') 
+    router.push("/(auth)/verifyAccount?sendEmail=true");
   };
 
   return (
@@ -147,7 +148,7 @@ export default function SelectRole() {
 
             {/* Clients Card */}
             <TouchableOpacity
-              onPress={handleClientRole }
+              onPress={handleClientRole}
               className="bg-white w-96 rounded-2xl shadow-lg p-6 "
             >
               <View className="flex items-center ">

@@ -17,7 +17,7 @@ import modifyPublicRequestStatus from "../../controller/jobRequestController/mod
 import modifyComment from "../../controller/jobRequestController/modifyComment";
 import deleteComment from "../../controller/jobRequestController/deleteComment";
 import markCompleted from "../../controller/jobRequestController/markCompleted";
-
+import deleteWorker from "../../controller/jobRequestController/deleteWorker";
 const request: Router = express.Router();
 
 dotenv.config();
@@ -35,11 +35,12 @@ request.put("/:requestId", checkRole([clientRoleId]), modifyRequest);
 
 request.put("/media/:requestId", checkRole([clientRoleId]), uploadMedia);
 
-request.put("/status/:requestId", updateRequestStatus);
+request.put("/status/:requestId", checkRole([workerRoleId]), updateRequestStatus);
 
 // this route is used to select worker in public request
 request.put("/:requestId/select-worker/:workerId", checkRole([clientRoleId]), selectWorker);
 
+request.delete("/:requestId/worker/:workerId", checkRole([clientRoleId]), deleteWorker);
 // this route is used to make a comment on public request
 request.post("/:requestId/comment", checkRole([workerRoleId]), createComment);
 

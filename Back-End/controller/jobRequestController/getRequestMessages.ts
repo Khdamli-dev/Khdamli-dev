@@ -86,6 +86,8 @@ const getRequestMessages = async (req: Request, res: Response) => {
         prm.worker AS worker_id,
         prm.message,
         prm.created_at,
+        u.email,
+        u.phone_number,
         u.username,
         u.profile_image,
         c.name AS city,
@@ -119,7 +121,7 @@ const getRequestMessages = async (req: Request, res: Response) => {
       params.push(category);
     }
 
-    query += ` GROUP BY prm.worker, prm.message, prm.created_at, u.username, u.profile_image, c.name, r.name, co.name`;
+    query += ` GROUP BY prm.worker, prm.message, prm.created_at, u.email,u.phone_number, u.username, u.profile_image, c.name, r.name, co.name`;
 
     // Add sorting
     let paramIndex = params.length + 1;
@@ -146,6 +148,8 @@ const getRequestMessages = async (req: Request, res: Response) => {
     // Format response
     const messages = messagesData.rows.map((row) => ({
       worker_id: row.worker_id,
+      email: row.email,
+      phone_number: row.phone_number,
       username: row.username,
       profile_image: row.profile_image,
       location: {

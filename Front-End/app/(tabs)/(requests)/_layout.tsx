@@ -8,7 +8,7 @@ export default function RequestsLayout() {
         name="(comment)"
         options={{
           headerShown: true,
-          title: "Your comment Request", // Change header text
+          title: "Your comments Request", // Change header text
           headerStyle: {
             backgroundColor: "#4C8479", // Change header background color
           },

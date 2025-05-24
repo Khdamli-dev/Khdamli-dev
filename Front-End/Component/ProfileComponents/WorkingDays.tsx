@@ -5,59 +5,133 @@ import { useFonts, Itim_400Regular } from "@expo-google-fonts/itim";
 
 import DayRow from "./DayRow";
 import TimePicker from "./TimePicker";
-type Day = {
-  name: string;
-  isEnabled: boolean;
-  from?: Date;
-  to?: Date;
+import apiClient from "@/api/appClient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import refreshAccessToken from "@/api/refreshAccessToken";
+const formatTime = (time: Date | string | undefined | null): string => {
+  if (!time) return "--:--";
+
+  try {
+    let date: Date;
+    if (typeof time === "string") {
+      const timeString = time.trim();
+      if (timeString.match(/^\d{1,2}:\d{1,2}$/)) {
+        const [hours, minutes] = timeString
+          .split(":")
+          .map((num) => parseInt(num));
+        date = new Date(2000, 0, 1, hours, minutes);
+      } else {
+        date = new Date(`2000-01-01T${timeString}`);
+      }
+    } else {
+      date = time;
+    }
+
+    if (isNaN(date.getTime())) {
+      console.log("Invalid date:", time);
+      return "--:--";
+    }
+
+    // التأكد من تنسيق الوقت بشكل صحيح
+    const hours = date.getHours().toString().padStart(2, "0");
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+
+    return `${hours}:${minutes}`;
+  } catch (error) {
+    console.error("Error formatting time:", error);
+    return "--:--";
+  }
 };
 const WorkingDays = ({
   onChange,
 }: {
-  onChange: (days: { name: string; from: string; to: string }[]) => void;
+  onChange: (days: { day : number ;name: string; begin: string; end: string }[]) => void;
 }) => {
   type Day = {
     name: string;
     isEnabled: boolean;
-    from?: Date;
-    to?: Date;
+    begin?: Date;
+    end?: Date;
   };
 
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const userData = await AsyncStorage.getItem("user");
+        const user: any = JSON.parse(userData as any);
+
+        if (!user) return;
+
+        const { id, role } = user;
+        const endpoint = role === 2 ? `/users/worker/` : null;
+        if (endpoint) {
+          const response = await apiClient.get(`${endpoint}${id}`);
+          if (response.data.worker.availability) {
+            const availableDays = response.data.worker.availability;
+            console.log("Available days from API:", availableDays);
+
+            setDays((prevDays) =>
+              prevDays.map((day) => {
+                const matchingDay = availableDays.find(
+                  (availableDay: any) => availableDay.day === day.name
+                );
+
+                return {
+                  ...day,
+                  isEnabled: !!matchingDay,
+                  begin: matchingDay
+                    ? new Date(`2000-01-01T${matchingDay.begin}`)
+                    : undefined,
+                  end: matchingDay
+                    ? new Date(`2000-01-01T${matchingDay.end}`)
+                    : undefined,
+                };
+              })
+            );
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
+    fetchUser();
+  }, []);
   const [days, setDays] = useState<Day[]>([
-    { name: "Sunday", isEnabled: false },
-    { name: "Monday", isEnabled: false },
-    { name: "Tuesday", isEnabled: false },
-    { name: "Wednesday", isEnabled: false },
-    { name: "Thursday", isEnabled: false },
-    { name: "Friday", isEnabled: false },
-    { name: "Saturday", isEnabled: false },
+    { name: "sunday", isEnabled: false },
+    { name: "monday", isEnabled: false },
+    { name: "tuesday", isEnabled: false },
+    { name: "wednesday", isEnabled: false },
+    { name: "thursday", isEnabled: false },
+    { name: "friday", isEnabled: false },
+    { name: "saturday", isEnabled: false },
   ]);
 
   const [showPicker, setShowPicker] = useState<{
     index: number;
-    type: "from" | "to";
+    type: "begin" | "end";
   } | null>(null);
+
+  // Map day names to numbers (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+  const dayNameToNumber: Record<string, number> = {
+    sunday: 1,
+    monday: 2,
+    tuesday: 3,
+    wednesday: 4,
+    thursday: 5,
+    friday: 6,
+    saturday: 7,
+  };
 
   const updateDays = (newDays: Day[]) => {
     setDays(newDays);
     const selectedDays = newDays
       .filter((day) => day.isEnabled)
       .map((day) => ({
-        name: day.name,
-        from: day.from
-          ? new Date(day.from).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false,
-            })
-          : "--:--",
-        to: day.to
-          ? new Date(day.to).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false,
-            })
-          : "--:--",
+        name : day.name,
+        day: dayNameToNumber[day.name], // Use number instead of name
+        begin: day.begin ? formatTime(day.begin) : "08:00",
+        end: day.end ? formatTime(day.end) : "16:00",
       }));
 
     onChange(selectedDays);
@@ -75,7 +149,7 @@ const WorkingDays = ({
     event: any,
     selectedDate: Date | undefined,
     index: number,
-    type: "from" | "to"
+    type: "begin" | "end"
   ) => {
     setShowPicker(null);
     if (selectedDate) {
@@ -86,15 +160,6 @@ const WorkingDays = ({
       );
     }
   };
-
-  const formatTime = (time: Date | string | undefined | null): string =>
-    time
-      ? new Date(time).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        })
-      : "--:--";
 
   return (
     <View style={styles.section}>

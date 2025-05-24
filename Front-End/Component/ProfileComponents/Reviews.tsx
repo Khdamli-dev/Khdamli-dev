@@ -10,18 +10,17 @@ import {
   ScrollView,
   SafeAreaView,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import {
   Star,
   MessageCircle,
   ChevronRight,
   X,
   ArrowLeft,
+  MoreHorizontal,
 } from 'lucide-react-native';
 import apiClient from '@/api/appClient';
 import refreshAccessToken from '@/api/refreshAccessToken';
 import { router } from 'expo-router';
-// import apiClient from "@/api/appClient";
 
 const { width, height } = Dimensions.get('window');
 
@@ -54,13 +53,9 @@ const Reviews: React.FC<ReviewsProps> = ({
     fetchReviews();
   }, [workerId]);
 
-  // TODO: Implement API call to fetch reviews
   const fetchReviews = async () => {
     try {
       setLoading(true);
-
-      // Uncomment and modify this when backend is ready:
-
       const response = await apiClient.get(`/work/worker/${workerId}/reviews`);
       setReviews(response.data.reviews);
     } catch (error: any) {
@@ -83,7 +78,7 @@ const Reviews: React.FC<ReviewsProps> = ({
   // Calculate average rating
   const [averageRating, setAverageRating] = useState<number>(0);
   useEffect(() => {
-    let sum : number = 0;
+    let sum: number = 0;
     reviews.forEach(e => sum += +e.rating);
     setAverageRating(sum / reviews.length);
   }, [reviews]);
@@ -93,8 +88,8 @@ const Reviews: React.FC<ReviewsProps> = ({
       <Star
         key={index}
         size={size}
-        color={index < Math.floor(rating) ? '#FFD700' : '#E5E5E5'}
-        fill={index < Math.floor(rating) ? '#FFD700' : '#E5E5E5'}
+        color={index < Math.floor(rating) ? '#22C55E' : '#E5E7EB'}
+        fill={index < Math.floor(rating) ? '#22C55E' : '#E5E7EB'}
       />
     ));
   };
@@ -111,30 +106,94 @@ const Reviews: React.FC<ReviewsProps> = ({
 
   if (loading) {
     return (
-      <View className="bg-white rounded-[25px] overflow-hidden mb-2.5 mx-1.75 p-5 border border-gray-200 shadow-lg">
-        <View className="flex-row items-center justify-center mb-4">
-          <MessageCircle size={24} color="#BD7D06" />
-          <Text
-            className="text-center text-[#BD7D06] ml-2 text-[22px] font-bold"
-            style={{ fontFamily: 'Itim_400Regular' }}
-          >
+      <View style={{
+        backgroundColor: "white",
+        padding: 16,
+      }}>
+        {/* Header */}
+        <View style={{
+          flexDirection: "row",
+          alignItems: "center",
+          paddingBottom: 16,
+          borderBottomWidth: 1,
+          borderBottomColor: "#F3F4F6",
+          marginBottom: 16,
+        }}>
+          <MessageCircle size={20} color="#22C55E" />
+          <Text style={{
+            fontSize: 18,
+            fontWeight: "600",
+            color: "#111827",
+            marginLeft: 8,
+          }}>
             Reviews
           </Text>
         </View>
 
-        <View className="bg-gray-200 rounded-[15px] p-4 items-center mb-5">
-          <View className="w-32 h-6 bg-gray-300 rounded mb-2" />
-          <View className="w-16 h-8 bg-gray-300 rounded" />
+        {/* Loading Skeleton */}
+        <View style={{
+          backgroundColor: "#F9FAFB",
+          borderRadius: 12,
+          padding: 16,
+          alignItems: "center",
+          marginBottom: 16,
+        }}>
+          <View style={{
+            width: 120,
+            height: 20,
+            backgroundColor: "#E5E7EB",
+            borderRadius: 4,
+            marginBottom: 8,
+          }} />
+          <View style={{
+            width: 80,
+            height: 28,
+            backgroundColor: "#E5E7EB",
+            borderRadius: 4,
+          }} />
         </View>
 
         {[1, 2, 3].map((index) => (
-          <View key={index} className="mb-4 bg-gray-100 rounded-[20px] p-4">
-            <View className="flex-row items-start">
-              <View className="w-12 h-12 bg-gray-300 rounded-full mr-3" />
-              <View className="flex-1">
-                <View className="w-24 h-4 bg-gray-300 rounded mb-2" />
-                <View className="w-full h-3 bg-gray-300 rounded mb-1" />
-                <View className="w-3/4 h-3 bg-gray-300 rounded" />
+          <View key={index} style={{
+            backgroundColor: "white",
+            borderRadius: 12,
+            padding: 16,
+            marginBottom: 12,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.05,
+            shadowRadius: 2,
+            elevation: 2,
+          }}>
+            <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
+              <View style={{
+                width: 40,
+                height: 40,
+                backgroundColor: "#E5E7EB",
+                borderRadius: 20,
+                marginRight: 12,
+              }} />
+              <View style={{ flex: 1 }}>
+                <View style={{
+                  width: 100,
+                  height: 16,
+                  backgroundColor: "#E5E7EB",
+                  borderRadius: 4,
+                  marginBottom: 8,
+                }} />
+                <View style={{
+                  width: "100%",
+                  height: 12,
+                  backgroundColor: "#E5E7EB",
+                  borderRadius: 4,
+                  marginBottom: 4,
+                }} />
+                <View style={{
+                  width: "75%",
+                  height: 12,
+                  backgroundColor: "#E5E7EB",
+                  borderRadius: 4,
+                }} />
               </View>
             </View>
           </View>
@@ -150,82 +209,99 @@ const Reviews: React.FC<ReviewsProps> = ({
     item: Review;
     isModal?: boolean;
   }) => (
-    <View className={`mb-4 last:mb-0 ${isModal ? 'mx-4' : ''}`}>
-      <LinearGradient
-        colors={['#FFFFFF', '#F8F9FA']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        className="rounded-[20px] p-4 border border-gray-100 shadow-sm"
-      >
-        <View className="flex-row items-start">
-          {/* Client Profile */}
-          <TouchableOpacity
-            onPress={() =>
-              isModal
-                ? handleClientPress(item.clientid)
-                : onClientPress?.(item.clientid)
-            }
-            activeOpacity={0.7}
-            className="mr-3"
-          >
-            <View className="relative">
-              <Image
-                source={{
-                  uri:
-                    item.clientprofileimage ||
-                    'https://cdn-icons-png.flaticon.com/512/149/149071.png',
-                }}
-                className="w-12 h-12 rounded-full border-2 border-gray-200"
-              />
-              {/* Online indicator (optional) */}
-              <View className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white" />
-            </View>
-          </TouchableOpacity>
+    <View style={{
+      backgroundColor: "white",
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 12,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+      elevation: 2,
+      marginHorizontal: isModal ? 16 : 0,
+    }}>
+      <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
+        {/* Client Profile */}
+        <TouchableOpacity
+          onPress={() =>
+            isModal
+              ? handleClientPress(item.clientid)
+              : onClientPress?.(item.clientid)
+          }
+          activeOpacity={0.7}
+          style={{ marginRight: 12 }}
+        >
+          <Image
+            source={{
+              uri:
+                item.clientprofileimage ||
+                'https://cdn-icons-png.flaticon.com/512/149/149071.png',
+            }}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              borderWidth: 2,
+              borderColor: "#F3F4F6",
+            }}
+          />
+        </TouchableOpacity>
 
-          {/* Review Content */}
-          <View className="flex-1">
-            {/* Client Name & Rating */}
-            <View className="flex-row items-center justify-between mb-2">
-              <TouchableOpacity
-                onPress={() =>
-                  isModal
-                    ? handleClientPress(item.clientid)
-                    : onClientPress?.(item.clientid)
-                }
-                activeOpacity={0.7}
-              >
-                <Text
-                  className="text-[16px] font-bold text-gray-800"
-                  style={{ fontFamily: 'Itim_400Regular' }}
-                >
-                  {item.clientname}
-                </Text>
-              </TouchableOpacity>
-
-              <View className="flex-row items-center">
-                {renderStars(item.rating)}
-                <Text
-                  className="ml-2 text-[14px] font-semibold text-[#BD7D06]"
-                  style={{ fontFamily: 'Itim_400Regular' }}
-                >
-                  {item.rating}
-                </Text>
-              </View>
-            </View>
-
-            {/* Review Text */}
-            <Text
-              className="text-gray-700 text-[14px] leading-5 mb-2"
-              style={{ fontFamily: 'Itim_400Regular' }}
-              numberOfLines={isModal ? undefined : 3}
+        {/* Review Content */}
+        <View style={{ flex: 1 }}>
+          {/* Client Name & Rating */}
+          <View style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 8,
+          }}>
+            <TouchableOpacity
+              onPress={() =>
+                isModal
+                  ? handleClientPress(item.clientid)
+                  : onClientPress?.(item.clientid)
+              }
+              activeOpacity={0.7}
             >
-              {item.review}
-            </Text>
+              <Text style={{
+                fontSize: 16,
+                fontWeight: "600",
+                color: "#111827",
+                fontFamily: 'Itim_400Regular',
+              }}>
+                {item.clientname}
+              </Text>
+            </TouchableOpacity>
 
-            {/* Date (if available) */}
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              {renderStars(item.rating, 14)}
+              <Text style={{
+                marginLeft: 6,
+                fontSize: 14,
+                fontWeight: "600",
+                color: "#22C55E",
+                fontFamily: 'Itim_400Regular',
+              }}>
+                {item.rating}
+              </Text>
+            </View>
           </View>
+
+          {/* Review Text */}
+          <Text style={{
+            color: "#374151",
+            fontSize: 14,
+            lineHeight: 20,
+            fontFamily: 'Itim_400Regular',
+          }}
+            numberOfLines={isModal ? undefined : 3}
+          >
+            {item.review}
+          </Text>
         </View>
-      </LinearGradient>
+      </View>
     </View>
   );
 
@@ -237,44 +313,77 @@ const Reviews: React.FC<ReviewsProps> = ({
       visible={modalVisible}
       onRequestClose={() => setModalVisible(false)}
     >
-      <SafeAreaView className="flex-1 bg-white">
+      <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
         {/* Header */}
-        <View className="flex-row items-center justify-between p-4 border-b border-gray-200 bg-white">
+        <View style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          borderBottomWidth: 1,
+          borderBottomColor: "#F3F4F6",
+        }}>
           <TouchableOpacity
             onPress={() => setModalVisible(false)}
             activeOpacity={0.7}
-            className="p-2"
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              backgroundColor: "#F3F4F6",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
           >
-            <ArrowLeft size={24} color="#BD7D06" />
+            <ArrowLeft size={20} color="#374151" />
           </TouchableOpacity>
 
-          <Text
-            className="text-[20px] font-bold text-[#BD7D06]"
-            style={{ fontFamily: 'Itim_400Regular' }}
-          >
-            All Reviews ({reviews.length})
+          <Text style={{
+            fontSize: 18,
+            fontWeight: "600",
+            color: "#111827",
+          }}>
+            Reviews ({reviews.length})
           </Text>
 
-          <View className="w-8" />
+          <View style={{ width: 40 }} />
         </View>
 
         {/* Overall Rating Section */}
-        <View className="bg-white p-4 border-b border-gray-100">
-          <View className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-[15px] p-4 items-center">
-            <View className="flex-row items-center mb-2">
-              {renderStars(averageRating, 24)}
+        <View style={{
+          backgroundColor: "white",
+          padding: 16,
+          borderBottomWidth: 8,
+          borderBottomColor: "#F9FAFB",
+        }}>
+          <View style={{
+            backgroundColor: "#F0FDF4",
+            borderRadius: 12,
+            padding: 16,
+            alignItems: "center",
+          }}>
+            <View style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginBottom: 8,
+            }}>
+              {renderStars(averageRating, 20)}
             </View>
-            <Text
-              className="text-[28px] font-bold text-[#BD7D06]"
-              style={{ fontFamily: 'Itim_400Regular' }}
-            >
+            <Text style={{
+              fontSize: 28,
+              fontWeight: "700",
+              color: "#22C55E",
+              fontFamily: 'Itim_400Regular',
+            }}>
               {averageRating.toFixed(1)}
             </Text>
-            <Text
-              className="text-gray-600 text-[16px]"
-              style={{ fontFamily: 'Itim_400Regular' }}
-            >
-              Average Rating from {reviews.length} reviews
+            <Text style={{
+              color: "#6B7280",
+              fontSize: 14,
+              fontFamily: 'Itim_400Regular',
+            }}>
+              Average from {reviews.length} reviews
             </Text>
           </View>
         </View>
@@ -286,7 +395,7 @@ const Reviews: React.FC<ReviewsProps> = ({
           keyExtractor={(item, index) => `modal-${item.clientid}-${index}`}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingVertical: 16 }}
-          ItemSeparatorComponent={() => <View className="h-2" />}
+          style={{ backgroundColor: "#F9FAFB" }}
         />
       </SafeAreaView>
     </Modal>
@@ -294,29 +403,49 @@ const Reviews: React.FC<ReviewsProps> = ({
 
   if (reviews.length === 0) {
     return (
-      <View className="bg-white rounded-[25px] overflow-hidden mb-2.5 mx-1.75 p-5 border border-gray-200 shadow-lg">
-        <View className="flex-row items-center justify-center mb-4">
-          <MessageCircle size={24} color="#BD7D06" />
-          <Text
-            className="text-center text-[#BD7D06] ml-2 text-[22px] font-bold"
-            style={{ fontFamily: 'Itim_400Regular' }}
-          >
+      <View style={{ backgroundColor: "white", padding: 16 }}>
+        {/* Header */}
+        <View style={{
+          flexDirection: "row",
+          alignItems: "center",
+          paddingBottom: 16,
+          borderBottomWidth: 1,
+          borderBottomColor: "#F3F4F6",
+          marginBottom: 16,
+        }}>
+          <MessageCircle size={20} color="#22C55E" />
+          <Text style={{
+            fontSize: 18,
+            fontWeight: "600",
+            color: "#111827",
+            marginLeft: 8,
+          }}>
             Reviews
           </Text>
         </View>
 
-        <View className="items-center py-8">
-          <MessageCircle size={48} color="#E5E5E5" />
-          <Text
-            className="text-gray-500 text-[16px] mt-3 text-center"
-            style={{ fontFamily: 'Itim_400Regular' }}
-          >
+        {/* Empty State */}
+        <View style={{
+          alignItems: "center",
+          paddingVertical: 40,
+        }}>
+          <MessageCircle size={60} color="#D1D5DB" />
+          <Text style={{
+            color: "#6B7280",
+            fontSize: 16,
+            marginTop: 16,
+            textAlign: "center",
+            fontFamily: 'Itim_400Regular',
+          }}>
             No reviews yet
           </Text>
-          <Text
-            className="text-gray-400 text-[14px] mt-1 text-center"
-            style={{ fontFamily: 'Itim_400Regular' }}
-          >
+          <Text style={{
+            color: "#9CA3AF",
+            fontSize: 14,
+            marginTop: 8,
+            textAlign: "center",
+            fontFamily: 'Itim_400Regular',
+          }}>
             Complete your first job to get reviews
           </Text>
         </View>
@@ -326,34 +455,57 @@ const Reviews: React.FC<ReviewsProps> = ({
 
   return (
     <>
-      <View className="bg-white rounded-[25px] overflow-hidden mb-2.5 mx-1.75 p-5 border border-gray-200 shadow-lg">
+      <View style={{ backgroundColor: "white", padding: 16 }}>
         {/* Header with Average Rating */}
-        <View className="mb-5">
-          <View className="flex-row items-center justify-center mb-3">
-            <MessageCircle size={24} color="#BD7D06" />
-            <Text
-              className="text-center text-[#BD7D06] ml-2 text-[22px] font-bold"
-              style={{ fontFamily: 'Itim_400Regular' }}
-            >
+        <View style={{ marginBottom: 16 }}>
+          {/* Section Title */}
+          <View style={{
+            flexDirection: "row",
+            alignItems: "center",
+            paddingBottom: 16,
+            borderBottomWidth: 1,
+            borderBottomColor: "#F3F4F6",
+            marginBottom: 16,
+          }}>
+            <MessageCircle size={20} color="#22C55E" />
+            <Text style={{
+              fontSize: 18,
+              fontWeight: "600",
+              color: "#111827",
+              marginLeft: 8,
+            }}>
               Reviews ({reviews.length})
             </Text>
           </View>
 
-          {/* Overall Rating */}
-          <View className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-[15px] p-4 items-center">
-            <View className="flex-row items-center mb-2">
-              {renderStars(averageRating, 20)}
+          {/* Overall Rating Card */}
+          <View style={{
+            backgroundColor: "#F0FDF4",
+            borderRadius: 12,
+            padding: 16,
+            alignItems: "center",
+            marginBottom: 16,
+          }}>
+            <View style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginBottom: 8,
+            }}>
+              {renderStars(averageRating, 18)}
             </View>
-            <Text
-              className="text-[24px] font-bold text-[#BD7D06]"
-              style={{ fontFamily: 'Itim_400Regular' }}
-            >
+            <Text style={{
+              fontSize: 24,
+              fontWeight: "700",
+              color: "#22C55E",
+              fontFamily: 'Itim_400Regular',
+            }}>
               {averageRating.toFixed(1)}
             </Text>
-            <Text
-              className="text-gray-600 text-[14px]"
-              style={{ fontFamily: 'Itim_400Regular' }}
-            >
+            <Text style={{
+              color: "#6B7280",
+              fontSize: 14,
+              fontFamily: 'Itim_400Regular',
+            }}>
               Average Rating
             </Text>
           </View>
@@ -373,22 +525,26 @@ const Reviews: React.FC<ReviewsProps> = ({
           <TouchableOpacity
             onPress={handleViewAllPress}
             activeOpacity={0.7}
-            className="mt-4"
+            style={{
+              backgroundColor: "#22C55E",
+              borderRadius: 12,
+              padding: 16,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              marginTop: 16,
+            }}
           >
-            <LinearGradient
-              colors={['#BD7D06', '#E8A317']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              className="rounded-[15px] p-4 flex-row items-center justify-center"
-            >
-              <Text
-                className="text-white text-[16px] font-bold mr-2"
-                style={{ fontFamily: 'Itim_400Regular' }}
-              >
-                View All Reviews ({reviews.length})
-              </Text>
-              <ChevronRight size={20} color="white" />
-            </LinearGradient>
+            <Text style={{
+              color: "white",
+              fontSize: 16,
+              fontWeight: "600",
+              marginRight: 8,
+              fontFamily: 'Itim_400Regular',
+            }}>
+              View All Reviews ({reviews.length})
+            </Text>
+            <ChevronRight size={20} color="white" />
           </TouchableOpacity>
         )}
       </View>

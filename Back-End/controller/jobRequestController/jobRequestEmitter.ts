@@ -2,13 +2,12 @@ import { Server } from 'socket.io';
 import { getIo } from '../../config/websocket';
 import JobRequest from '../../interface/jobRequest';
 import dotenv from 'dotenv';
-import pool from '../../database/dbConnection';
 
 dotenv.config();
 
-export const sendPrivateRequest = async (
+export const sendPrivateRequest = (
   request: JobRequest,
-): Promise<void> => {
+) : void => {
   const io: Server = getIo();
   const { type, worker } = request;
   // case of public request
@@ -26,36 +25,42 @@ export const acceptWorkerOnPublicRequest = async (
 ): Promise<void> => {
   const io: Server = getIo();
   const { worker } = request;
-  if (worker)
+  if (worker){
     io.to(worker.toString()).emit(
       'accept-worker-on-public-request',
       request.id,
     );
+  }
 };
 
-export const changeRequestStatus = async (
-  request: JobRequest,
-): Promise<void> => {
-  const io: Server = getIo();
-  const { type } = request;
-  // determine the destination
-  const privateRequestId: string | undefined = process.env.PRIVATE_REQUEST_ID;
-  if (privateRequestId && type === +privateRequestId) {
-    if (type === +privateRequestId) {
-      // worker change private request status, so destination => client
-      const status = await pool.query(
-        `
-      SELECT name FROM request_status
-      WHERE id = $1
-      `,
-        [request.id],
-      );
-
-      const client: number = request.client;
-      io.to(client.toString()).emit('change-request-status', {
-        requestId: request.id,
-        status,
-      });
+export const changeRequestStatus = (request: JobRequest): void => {
+  // determine request status
+  const getRequestStatus = (statusId: number): string | null => {
+    const onholdRequestStatusId: string | undefined =
+      process.env.ON_HOLD_REQUEST_ID;
+    const acceptedRequestStatusId: string | undefined =
+      process.env.ACCEPTED_REQUEST_ID;
+    if (onholdRequestStatusId && acceptedRequestStatusId) {
+      switch (statusId) {
+        case +onholdRequestStatusId:
+          return 'On Hold';
+        case +acceptedRequestStatusId:
+          return 'Accepted';
+        default:
+          return 'Rejected';
+      }
     }
+    return null;
+  };
+
+  const io: Server = getIo();
+  const client: number = request.client;
+  const status: string | null = getRequestStatus(request.status);
+  if (status) {
+    io.to(client.toString()).emit('change-request-status', {
+      requestId: request.id,
+      status,
+      type : request.type
+    });
   }
 };
