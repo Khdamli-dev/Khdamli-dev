@@ -5,9 +5,9 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-export const sendPrivateRequest = async (
+export const sendPrivateRequest = (
   request: JobRequest,
-): Promise<void> => {
+) : void => {
   const io: Server = getIo();
   const { type, worker } = request;
   // case of public request
@@ -55,8 +55,8 @@ export const changeRequestStatus = (request: JobRequest): void => {
   const io: Server = getIo();
   const client: number = request.client;
   const status: string | null = getRequestStatus(request.status);
-  console.log(status);
   if (status) {
+    console.log(client);
     io.to(client.toString()).emit('change-request-status', {
       requestId: request.id,
       status,
