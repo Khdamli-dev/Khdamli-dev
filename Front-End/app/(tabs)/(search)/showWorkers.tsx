@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import apiClient from "@/api/appClient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import refreshAccessToken from "@/api/refreshAccessToken";
 
 interface Worker {
   id: number;
@@ -38,7 +39,7 @@ const ServiceProvidersScreen = () => {
 
   const { subcategory }: { subcategory: string } = useLocalSearchParams();
   const branch = JSON.parse(subcategory);
-  const[role, setRole] = useState(1);// 2 for worker, 1 for client
+  const [role, setRole] = useState(1); // 2 for worker, 1 for client
   const [subCategory, setSubCategory] = useState<SubCategory | null>(null);
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [filteredWorkers, setFilteredWorkers] = useState<Worker[]>([]);
@@ -48,7 +49,7 @@ const ServiceProvidersScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
 
-  //Fetch User Role 
+  //Fetch User Role
   useEffect(() => {
     const fetchUserRole = async () => {
       try {
@@ -63,7 +64,6 @@ const ServiceProvidersScreen = () => {
     fetchUserRole();
   }, []);
   useEffect(() => {
-
     fetchWorkers();
   }, [branch.id]);
 
@@ -77,7 +77,7 @@ const ServiceProvidersScreen = () => {
       setIsLoading(true);
       const userData = await AsyncStorage.getItem("user");
       const user = JSON.parse(userData || "");
-  
+
       // Then fetch workers for this subcategory
       const workersResponse = await apiClient.get(`/work/worker/${user.id}/`, {
         params: { category: branch.id, page: 0 },
@@ -86,7 +86,14 @@ const ServiceProvidersScreen = () => {
       setWorkers(workersResponse.data.workers);
       setFilteredWorkers(workersResponse.data.workers);
       setError(null);
-    } catch (error) {
+    } catch (error:any) {
+      if (error.response?.status === 401) {
+              if (await refreshAccessToken()) {
+                await fetchWorkers();
+              } else {
+                router.push("/(auth)");
+              }
+            }
       console.error("Error fetching workers:", error);
       setError("Failed to load workers. Please try again.");
     } finally {
@@ -126,7 +133,7 @@ const ServiceProvidersScreen = () => {
   const handleWorkerPress = (worker: Worker) => {
     router.push({
       pathname: "./workerProfile",
-      params: { userId: worker.id, userRole: role },
+      params: { userId: worker.id, userRole: 2 },
     });
   };
 
@@ -200,9 +207,7 @@ const ServiceProvidersScreen = () => {
               activeOpacity={0.7}
             >
               <EvilIcons name="envelope" size={24} color="white" />
-              <Text className="text-white font-medium ml-1">
-                Send Request
-              </Text>
+              <Text className="text-white font-medium ml-1">Send Request</Text>
             </TouchableOpacity>
           )}
         </View>

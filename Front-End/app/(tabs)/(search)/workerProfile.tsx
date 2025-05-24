@@ -32,6 +32,7 @@ import apiClient from "@/api/appClient";
 import { AntDesign } from "@expo/vector-icons";
 import Dashboard from "@/Component/ProfileComponents/Dashboard";
 import Reviews from "@/Component/ProfileComponents/Reviews";
+import refreshAccessToken from "@/api/refreshAccessToken";
 const { width } = Dimensions.get("window");
 
 interface ProfileItemProps {
@@ -57,7 +58,11 @@ const styles = StyleSheet.create({
 });
 
 const UserProfileView = () => {
+<<<<<<< HEAD
+  const {  userId, userRole } =
+=======
   const { status, requestId, userId, userRole, origin } =
+>>>>>>> origin/main
     useLocalSearchParams();
 
   const [role, setRole] = useState(1); // 1 Client 2 worker
@@ -96,20 +101,13 @@ const UserProfileView = () => {
   });
 
   useEffect(() => {
-    const fetchUserRole = async () => {
-      const userData = await AsyncStorage.getItem("user");
-      if (userData) {
-        const user = JSON.parse(userData);
-        setRole(user.role);
-      }
-    };
-    fetchUserRole();
+  
     const fetchUserData = async () => {
       try {
         if (!userId || !userRole) {
           return;
         }
-
+        setRole(Number(userRole));
         const endpoint =
           Number(userRole) === 1
             ? `/users/client/${userId}`
@@ -161,6 +159,16 @@ const UserProfileView = () => {
           setUser(workerData);
         }
       } catch (error: any) {
+<<<<<<< HEAD
+        if (error.response?.status === 401) {
+                  if (await refreshAccessToken()) {
+                    await fetchUserData();
+                  } else {
+                    router.push("/(auth)");
+                  }
+                }
+=======
+>>>>>>> origin/main
         console.error("Failed to fetch user data", error.response?.data);
       }
     };

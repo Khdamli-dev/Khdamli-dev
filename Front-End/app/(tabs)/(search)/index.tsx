@@ -1,4 +1,5 @@
 import apiClient from "@/api/appClient";
+import refreshAccessToken from "@/api/refreshAccessToken";
 import { EvilIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
@@ -83,6 +84,13 @@ const HomeScreen = () => {
       setCategories(filteredCategories);
       setError(null);
     } catch (error: any) {
+      if (error.response?.status === 401) {
+        if (await refreshAccessToken()) {
+          await fetchCategories();
+        } else {
+          router.push("/(auth)");
+        }
+      }
       console.error("Error fetching categories:", error.response.data);
       setError(" search failed. Please try again.");
     } finally {
@@ -109,7 +117,14 @@ const HomeScreen = () => {
       // Assuming the API returns data that matches the Worker interface
       setSearchResults(response.data.workers);
       setError(null);
-    } catch (error) {
+    } catch (error : any) {
+      if (error.response?.status === 401) {
+        if (await refreshAccessToken()) {
+          await handleSearch();
+        } else {
+          router.push("/(auth)");
+        }
+      }
       console.error("Error searching:", error);
       setError("search faild");
       setSearchResults([]);
@@ -139,8 +154,7 @@ const HomeScreen = () => {
     // Navigate or show details for the selected worker
     router.push({
       pathname: "./workerProfile",
-      params: {  userId: worker.id,
-        userRole: role, },
+      params: { userId: worker.id, userRole: role },
     });
   };
 

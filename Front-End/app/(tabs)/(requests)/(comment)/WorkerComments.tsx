@@ -19,6 +19,7 @@ import { handelcall, handleEmailPress } from "../SomeStandarFunctions";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { store } from "expo-router/build/global-state/router-store";
 
+
 // Updated interface to match backend response from getRequestMessages
 interface WorkerComment {
   worker_id: number;
@@ -103,7 +104,14 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
       } else {
         console.error("Error in API response:", response.data.message);
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        if (await refreshAccessToken()) {
+          await fetchWorkerComments(requestId, pageNum);
+        } else {
+          router.push("/(auth)");
+        }
+      }
       console.error("Error fetching worker comments:", error);
     } finally {
       setLoading(false);
@@ -123,7 +131,18 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
         newSet.add(workerId);
         return newSet;
       });
-    } catch (error) {
+
+
+      // Optional: You might want to update the UI to reflect that a worker has been accepted
+      // For example, disabling other worker's accept buttons or showing a success message
+    } catch (error :any) {
+      if (error.response?.status === 401) {
+        if (await refreshAccessToken()) {
+          await handleAccept(workerId);
+        } else {
+          router.push("/(auth)");
+        }
+      }
       console.error("Error accepting request:", error);
       Alert.alert(
         "Error",
@@ -137,10 +156,26 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
       await apiClient.delete(
         `/work/job-request/${requestId}/worker/${workerId}`
       );
-      await storeWaitingAgreement(null);
+
+
+      // Remove from expanded set when rejected
+      setExpandedCommentIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(workerId);
+        return newSet;
+      });
+          await storeWaitingAgreement(null);
       setisWaitingAgreement(null);
-    } catch (error: any) {
-      console.error("Error rejecting request:", error.response.data);
+    } catch (error:any) {
+      if (error.response?.status === 401) {
+        if (await refreshAccessToken()) {
+          await handleReject(workerId);
+        } else {
+          router.push("/(auth)");
+        }
+      }
+      console.error("Error rejecting request:", error);
+
       Alert.alert(
         "Error",
         "Failed to reject the work request. Please try again."
@@ -203,6 +238,7 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
     console.log("Fetching waiting agreement on mount");
     fetchAgreement();
   }, [requestId]);
+
 
   const toggleCommentExpansion = (workerId: number) => {
     setExpandedCommentIds((prev) => {

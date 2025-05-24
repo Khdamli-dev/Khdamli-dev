@@ -27,6 +27,7 @@ import apiClient from "@/api/appClient";
 import { AntDesign } from "@expo/vector-icons";
 import Dashboard from "@/Component/ProfileComponents/Dashboard";
 import Reviews from "@/Component/ProfileComponents/Reviews";
+import refreshAccessToken from "@/api/refreshAccessToken";
 const { width } = Dimensions.get("window");
 
 interface ProfileItemProps {
@@ -154,8 +155,15 @@ const UserProfileView = () => {
 
           setUser(workerData);
         }
-      } catch (error) {
+      } catch (error:any) {
         console.error("Failed to fetch user data", error);
+        if (error.response?.status === 401) {
+          if (await refreshAccessToken()) {
+            await fetchUserData();
+          } else {
+            router.push("/(auth)");
+          }
+        }
       }
     };
 
