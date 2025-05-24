@@ -550,9 +550,6 @@ const PublicRequest = () => {
                 <Text className="font-medium">
                   {userData.username || "Your Request"}
                 </Text>
-                <Text numberOfLines={1} className="text-gray-500">
-                  {truncateText(item.description, 40)}
-                </Text>
               </View>
             </View>
             <View className="flex-row items-center">
@@ -1131,12 +1128,14 @@ const PublicRequest = () => {
         )}
 
         {/* ONLY show Edit Comment button for worker */}
-        <TouchableOpacity
-          className="bg-blue-500 items-center justify-center py-3 mt-3 rounded"
-          onPress={() => handleEditComment(item.id, item.worker_comment)}
-        >
-          <Text className="text-base text-white">Edit Comment</Text>
-        </TouchableOpacity>
+        {!(item.status == RequestStatus.ACCEPTED) && (
+          <TouchableOpacity
+            className="bg-blue-500 items-center justify-center py-3 mt-3 rounded"
+            onPress={() => handleEditComment(item.id, item.worker_comment)}
+          >
+            <Text className="text-base text-white">Edit Comment</Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   };

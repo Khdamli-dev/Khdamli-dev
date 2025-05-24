@@ -17,6 +17,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import apiClient from "@/api/appClient";
 import { handelcall } from "../SomeStandarFunctions";
 import { Ionicons } from "@expo/vector-icons";
+import { store } from "expo-router/build/global-state/router-store";
 
 // Updated interface to match backend response from getRequestMessages
 interface WorkerComment {
@@ -65,21 +66,10 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
   const [expandedCommentIds, setExpandedCommentIds] = useState<Set<number>>(
     new Set()
   );
-  const [isWaitingAgreement, setisWaitingAgreement] = useState(0);
+  const [isWaitingAgreement, setisWaitingAgreement] = useState<number | null>(
+    null
+  );
   const [total, setTotal] = useState<number>(0);
-
-  // Save waiting agreement workers to storage
-  const saveWaitingAgreementWorkers = async (workers: Set<number>) => {
-    try {
-      const workersArray = Array.from(workers);
-      await AsyncStorage.setItem(
-        `waiting_agreement_${requestId}`,
-        JSON.stringify(workersArray)
-      );
-    } catch (error) {
-      console.error("Error saving waiting agreement workers:", error);
-    }
-  };
 
   const fetchWorkerComments = async (requestId: number, pageNum: number) => {
     if (loading || !hasMore) return;
@@ -126,6 +116,7 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
         `/work/job-request/${requestId}/select-worker/${workerId}`
       );
       setisWaitingAgreement(workerId);
+      await storeWaitingAgreement(isWaitingAgreement);
       setExpandedCommentIds(() => {
         const newSet = new Set<number>();
         newSet.add(workerId);
@@ -145,18 +136,8 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
       await apiClient.delete(
         `/work/job-request/${requestId}/worker/${workerId}`
       );
-
-      // Remove the rejected or canceled worker comment from the list
-      setWorkerCommentsArray((prev) =>
-        prev.filter((comment) => comment.worker_id !== workerId)
-      );
-
-      // Remove from expanded set when rejected
-      setExpandedCommentIds((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(workerId);
-        return newSet;
-      });
+      setisWaitingAgreement(null);
+      await storeWaitingAgreement(null);
     } catch (error: any) {
       console.error("Error rejecting request:", error.response.data);
       Alert.alert(
@@ -178,6 +159,41 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
       },
     });
   };
+
+  const storeWaitingAgreement = async (waiting_agreement: number | null) => {
+    try {
+      if (waiting_agreement === null) {
+        await AsyncStorage.removeItem(`waiting_agreement_${requestId}`);
+      } else {
+        await AsyncStorage.setItem(
+          `waiting_agreement_${requestId}`,
+          waiting_agreement.toString()
+        );
+      }
+    } catch (error) {
+      console.error("Error storing waiting agreement:", error);
+    }
+  };
+
+  const loadWaitingAgreement = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(
+        `waiting_agreement_${requestId}`
+      );
+      if (stored) {
+        const parsedValue = parseInt(stored);
+        if (!isNaN(parsedValue)) {
+          setisWaitingAgreement(parsedValue);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading waiting agreement:", error);
+    }
+  };
+
+  useEffect(() => {
+    loadWaitingAgreement();
+  }, [requestId]);
 
   const toggleCommentExpansion = (workerId: number) => {
     setExpandedCommentIds((prev) => {
@@ -248,6 +264,7 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
           }
           renderItem={({ item }: { item: WorkerComment }) => {
             const isExpanded = expandedCommentIds.has(item.worker_id);
+            console.log("waiting_agreement", isWaitingAgreement);
             return (
               <View className="mb-4">
                 <View className="bg-white rounded-lg shadow-sm overflow-hidden">
@@ -336,18 +353,22 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
                       {!(
                         (isWaitingAgreement == item.worker_id ||
                           status == "verification pending") &&
-                        item.worker_id == workerIdNumber
+                        (item.worker_id == workerIdNumber ||
+                          item.worker_id == isWaitingAgreement)
                       ) ? (
-                        <TouchableOpacity
-                          onPress={() => {
-                            handleAccept(item.worker_id);
-                          }}
-                          className="bg-specialGreen py-3 items-center"
-                        >
-                          <Text className="text-white font-bold">
-                            Accept Worker
-                          </Text>
-                        </TouchableOpacity>
+                        !isWaitingAgreement &&
+                        !(status == "Accepted") && (
+                          <TouchableOpacity
+                            onPress={() => {
+                              handleAccept(item.worker_id);
+                            }}
+                            className="bg-specialGreen py-3 items-center"
+                          >
+                            <Text className="text-white font-bold">
+                              Accept Worker
+                            </Text>
+                          </TouchableOpacity>
+                        )
                       ) : (
                         <View>
                           <View className="bg-gray-200 py-3 items-center">
