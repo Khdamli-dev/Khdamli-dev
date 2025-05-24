@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import pool from '../../database/dbConnection';
+import produceTokens from '../../utils/authentication/produceTokens';
 
 const changeToWorkerRole = async (req: Request, res: Response) => {
   try {
@@ -38,7 +39,7 @@ const changeToWorkerRole = async (req: Request, res: Response) => {
         `,
       [role, userId],
     );
-
+    const { accessToken, refreshToken } = produceTokens(userId, 2);
     // add this user to worker table
     const now = Date.now();
     const isoFormDate: string = new Date(now).toISOString();
@@ -46,13 +47,14 @@ const changeToWorkerRole = async (req: Request, res: Response) => {
       `
         INSERT INTO worker(id, registration_date, active, transport,
         sent_requests, completed_requests, review_count, review_sum, nbr_media)
-        VALUES($1, $2, $3, $4, $5, $5, $5, $5, $5)
+        VALUES($1, $2, $3, $4, $5, $5, $5, $6, $5)
         `,
-      [userId, isoFormDate, true, false, 0],
+      [userId, isoFormDate, true, false, 0 , 0.0],
     );
 
-    res.status(201).json({ message: 'worker added' , success : true});
+    res.status(201).json({ message: 'worker added' , success : true , accessToken , refreshToken});
   } catch (error) {
+        console.log(error)
     res.status(500).json({ message: 'internal error' });
   }
 };

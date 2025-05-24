@@ -16,6 +16,7 @@ import CONFIG from "../../../config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, CommonActions } from "@react-navigation/native";
 import apiClient from "@/api/appClient";
+import * as SecureStore from 'expo-secure-store';
 const setUserVerificationStatus = async (isVerified: boolean) => {
   try {
     await AsyncStorage.setItem("userVerified", isVerified ? "true" : "false");
@@ -37,16 +38,22 @@ export default function SelectRole() {
       if (userData) {
         const user: any = JSON.parse(userData); // Parse the user data
         // Make the API request to update the role
-        const response = await apiClient.put(`/users/${user.id}/role/worker`);
+        const response = await apiClient.put(`users/${user.id}/role/worker`);
 
         if (response.data.success) {
+                  const {
+                    accessToken,
+                    refreshToken,
+                  }: { accessToken: string; refreshToken: string } = response.data;
+                  await SecureStore.setItemAsync("accessToken", accessToken);
+                  await SecureStore.setItemAsync("refreshToken", refreshToken);
           router.push("/(auth)/(signUp)/workerInfo");
         }
       } else {
         console.log("No user data found in AsyncStorage");
       }
     } catch (error: any) {
-      console.log(error);
+      console.log(error.response.data);
       alert("Server is busy, please try again later");
     }
   };

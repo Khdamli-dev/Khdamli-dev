@@ -22,6 +22,7 @@ import axios from "axios";
 import CONFIG from "@/config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, CommonActions } from "@react-navigation/native";
+import apiClient from "@/api/appClient";
 const setUserVerificationStatus = async (isVerified : boolean) => {
   try {
     await AsyncStorage.setItem('userVerified', isVerified ? 'true' : 'false');
@@ -109,20 +110,19 @@ const handleSubmit = async () => {
       const user: any = JSON.parse(userData); // Parse the user data
 
       // Use the user.id for API requests
-      await axios.post(`${CONFIG.API_URL}/work/categories/${user.id}`, {
+      await apiClient.post(`work/categories/${user.id}`, {
         categories
       });
-      await axios.put(`${CONFIG.API_URL}/work/working-time/${user.id}`, {
+      await apiClient.put(`work/working-time/${user.id}`, {
         workingHours
       });
-      await axios.post(`${CONFIG.API_URL}/work/payment/${user.id}`, {
+      await apiClient.post(`work/payment/${user.id}`, {
         payments: paymentMethod
       });
 
       // Update the role to 2 in the user object and save it back to AsyncStorage
       const updatedUser = { ...user, role: 2 };
       await AsyncStorage.setItem("user", JSON.stringify(updatedUser));
-
       // Navigate to the home page
       router.dismissAll();
       await setUserVerificationStatus(false);
@@ -130,8 +130,9 @@ const handleSubmit = async () => {
     } else {
       console.log("No user data found in AsyncStorage");
     }
-  } catch (error) {
+  } catch (error : any) {
     setErrorSubmit("Error Failed to submit data");
+    console.log(error.response.data)
     setTimeout(() => setErrorSubmit(""), 30000);
   }
 };
