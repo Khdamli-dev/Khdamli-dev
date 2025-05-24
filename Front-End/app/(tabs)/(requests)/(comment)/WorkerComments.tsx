@@ -15,13 +15,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Dispatch, SetStateAction } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import apiClient from "@/api/appClient";
-import { handelcall } from "../SomeStandarFunctions";
-import { Ionicons } from "@expo/vector-icons";
+import { handelcall, handleEmailPress } from "../SomeStandarFunctions";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { store } from "expo-router/build/global-state/router-store";
 
 // Updated interface to match backend response from getRequestMessages
 interface WorkerComment {
   worker_id: number;
+  email: string;
   phone_number: string;
   username: string;
   profile_image: string | null;
@@ -117,6 +118,7 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
       );
       setisWaitingAgreement(workerId);
       await storeWaitingAgreement(isWaitingAgreement);
+      console.log("Waiting agreement stored successfully:");
       setExpandedCommentIds(() => {
         const newSet = new Set<number>();
         newSet.add(workerId);
@@ -167,7 +169,7 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
       } else {
         await AsyncStorage.setItem(
           `waiting_agreement_${requestId}`,
-          waiting_agreement.toString()
+          JSON.stringify(waiting_agreement)
         );
       }
     } catch (error) {
@@ -180,19 +182,26 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
       const stored = await AsyncStorage.getItem(
         `waiting_agreement_${requestId}`
       );
+      console.log("sotred:", stored);
       if (stored) {
         const parsedValue = parseInt(stored);
         if (!isNaN(parsedValue)) {
           setisWaitingAgreement(parsedValue);
         }
+        console.log("Stored waiting agreement: on loadiding", parsedValue);
       }
+      console.log("Waiting agreement loaded successfully:", stored);
     } catch (error) {
       console.error("Error loading waiting agreement:", error);
     }
   };
 
   useEffect(() => {
-    loadWaitingAgreement();
+    const fetchAgreement = async () => {
+      await loadWaitingAgreement();
+    };
+    console.log("Fetching waiting agreement on mount");
+    fetchAgreement();
   }, [requestId]);
 
   const toggleCommentExpansion = (workerId: number) => {
@@ -264,7 +273,6 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
           }
           renderItem={({ item }: { item: WorkerComment }) => {
             const isExpanded = expandedCommentIds.has(item.worker_id);
-            console.log("waiting_agreement", isWaitingAgreement);
             return (
               <View className="mb-4">
                 <View className="bg-white rounded-lg shadow-sm overflow-hidden">
@@ -310,16 +318,29 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
                       )}
                     </View>
                     <View className=" flex-col justify-between py-3">
-                      <View className="items-center ">
+                      <View className="flex-row ">
                         {requestStatus == "Accepted" && (
-                          <TouchableOpacity
-                            className="mr-4"
-                            onPress={() => {
-                              handelcall(item.phone_number);
-                            }}
-                          >
-                            <Ionicons name="call" size={32} color="#000" />
-                          </TouchableOpacity>
+                          <View style={{ flexDirection: "row" }}>
+                            <TouchableOpacity
+                              className="mr-4"
+                              onPress={() => {
+                                handelcall(item.phone_number);
+                              }}
+                            >
+                              <Ionicons name="call" size={32} color="#000" />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              onPress={() => {
+                                handleEmailPress(item.email);
+                              }}
+                            >
+                              <MaterialCommunityIcons
+                                name="message-badge-outline"
+                                size={32}
+                                color="#000"
+                              />
+                            </TouchableOpacity>
+                          </View>
                         )}
                       </View>
                       <Text className="text-xs text-gray-500">

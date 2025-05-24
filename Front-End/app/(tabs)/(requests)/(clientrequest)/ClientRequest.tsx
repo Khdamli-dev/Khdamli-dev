@@ -32,7 +32,11 @@ import apiClient from "@/api/appClient";
 import refreshAccessToken from "@/api/refreshAccessToken";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ResizeMode, Video } from "expo-av"; // Import for video playback
-import { formatDateTime, handelcall } from "../SomeStandarFunctions";
+import {
+  formatDateTime,
+  handelcall,
+  handleEmailPress,
+} from "../SomeStandarFunctions";
 import { useNotifications } from "@/context/NotificationContext";
 import { Rating } from "react-native-ratings";
 import { getSocket } from "@/api/socket";
@@ -464,7 +468,7 @@ const PublicRequest = () => {
     return (
       <TouchableOpacity
         onPress={() => toggleExpandRequest(item.id)}
-        className="bg-white mt-2 p-4 mb-4 rounded-lg shadow"
+        className={`${item.status === RequestStatus.VERIFICATION_PENDING ? "bg-specialGreen/70" : "bg-white"} mt-2 p-4 mb-4 rounded-lg shadow`}
       >
         <View className="flex-row justify-between items-center">
           <View className="flex-row items-center flex-1">
@@ -903,7 +907,6 @@ const PublicRequest = () => {
   // Render worker view - using WorkerPublicRequest interface
   const renderWorkerRequest = (item: WorkerPublicRequest) => {
     const isExpanded = expandedRequestId === item.id;
-
     const modifyRequestStatus = async (status: number) => {
       try {
         await apiClient.put(
@@ -996,14 +999,27 @@ const PublicRequest = () => {
         <View className="flex-row mb-3 justify-end">
           <View className="items-center ">
             {item.status == "Accepted" && (
-              <TouchableOpacity
-                className="mr-4"
-                onPress={() => {
-                  handelcall(item.client_phone_number);
-                }}
-              >
-                <Ionicons name="call" size={32} color="#000" />
-              </TouchableOpacity>
+              <View style={{ flexDirection: "row" }}>
+                <TouchableOpacity
+                  className="mr-4"
+                  onPress={() => {
+                    handelcall(item.client_phone_number);
+                  }}
+                >
+                  <Ionicons name="call" size={32} color="#000" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    handleEmailPress(item.client_email);
+                  }}
+                >
+                  <MaterialCommunityIcons
+                    name="message-badge-outline"
+                    size={32}
+                    color="#000"
+                  />
+                </TouchableOpacity>
+              </View>
             )}
           </View>
         </View>

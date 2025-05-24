@@ -39,7 +39,7 @@ const getRequestDetails = async (req: Request, res: Response) => {
 
     // Validate worker_id for worker's public request
     let workerId: number | undefined;
-    if (role=="worker" && request_type === "public") {
+    if (role == "worker" && request_type === "public") {
       workerId = parseInt(worker_id || "");
       if (isNaN(workerId)) {
         res.status(400).json({
@@ -69,8 +69,10 @@ const getRequestDetails = async (req: Request, res: Response) => {
         co.name AS country,
         rs.name AS status,
         uc.username AS client_username,
+        uc.email AS client_email,
         uc.phone_number AS client_phone_number,
         uc.profile_image AS client_profile_image,
+        uw.email AS worker_email,
         uw.phone_number AS worker_phone_number,
         uw.username AS worker_username,
         uw.profile_image AS worker_profile_image
@@ -137,7 +139,7 @@ const getRequestDetails = async (req: Request, res: Response) => {
         throw new Error("missing envirement variables");
       }
       if (
-        requestRow.worker_id ==workerId &&
+        requestRow.worker_id == workerId &&
         requestRow.status_id == onholdRequestId
       ) {
         requestRow.status = "verification pending";
@@ -148,10 +150,7 @@ const getRequestDetails = async (req: Request, res: Response) => {
       if (!onholdRequestId) {
         throw new Error("missing envirement variables");
       }
-      if (
-        requestRow.worker_id  &&
-        requestRow.status_id == onholdRequestId
-      ) {
+      if (requestRow.worker_id && requestRow.status_id == onholdRequestId) {
         requestRow.status = "verification pending";
       }
     }
@@ -180,6 +179,7 @@ const getRequestDetails = async (req: Request, res: Response) => {
       } else {
         // private
         response.sent_date = requestRow.sent_time.toISOString();
+        response.worker_email = requestRow.worker_email;
         response.worker_phone_number = requestRow.worker_phone_number;
         response.worker_username = requestRow.worker_username;
         response.worker_profile_image = requestRow.worker_profile_image;
@@ -188,6 +188,7 @@ const getRequestDetails = async (req: Request, res: Response) => {
       // role === "worker"
       if (request_type === "public") {
         response.client_id = requestRow.client_id;
+        response.client_email = requestRow.client_email;
         response.client_phone_number = requestRow.client_phone_number;
         response.client_username = requestRow.client_username;
         response.client_profile_image = requestRow.client_profile_image;
@@ -197,6 +198,7 @@ const getRequestDetails = async (req: Request, res: Response) => {
       } else {
         // private
         response.client_id = requestRow.client_id;
+        response.client_email = requestRow.client_email;
         response.client_phone_number = requestRow.client_phone_number;
         response.client_username = requestRow.client_username;
         response.client_profile_image = requestRow.client_profile_image;
