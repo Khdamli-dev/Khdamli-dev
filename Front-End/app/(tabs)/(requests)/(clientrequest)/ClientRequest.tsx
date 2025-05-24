@@ -39,7 +39,6 @@ import {
 } from "../SomeStandarFunctions";
 import { useNotifications } from "@/context/NotificationContext";
 import { Rating } from "react-native-ratings";
-import { getSocket } from "@/api/socket";
 import eventEmitter from "@/context/EventBus";
 
 // Define the UserRole enum
