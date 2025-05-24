@@ -153,8 +153,8 @@ export default function TabLayout() {
       <TabsContent />
     </NotificationProvider>
   ) : (
-    <ClientProvider>
+    //<ClientProvider>
       <TabsContent />
-    </ClientProvider>
+    //</ClientProvider>
   );
 }
