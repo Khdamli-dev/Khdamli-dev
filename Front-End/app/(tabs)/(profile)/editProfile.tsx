@@ -142,7 +142,7 @@ const EditProfileScreen = ({ navigation }: ProfileScreenProps) => {
     );
 
     if (
-      userInfo.paymentMethods.length > 0 &&
+      userInfo.paymentMethods?.length > 0 &&
       JSON.stringify(userInfo.paymentMethods.sort()) !==
         JSON.stringify(initialPaymentIds.sort())
     ) {
@@ -164,7 +164,7 @@ const EditProfileScreen = ({ navigation }: ProfileScreenProps) => {
     );
 
     if (
-      userInfo.subCategories.length > 0 &&
+      userInfo.subCategories?.length > 0 &&
       JSON.stringify(userInfo.subCategories.sort()) !==
         JSON.stringify(initialCategoryIds.sort())
     ) {
@@ -217,7 +217,7 @@ const EditProfileScreen = ({ navigation }: ProfileScreenProps) => {
 
       // Get changed user info and add to changes object if not empty
       const changedUserInfo = getChangedUserInfo();
-      if (Object.keys(changedUserInfo).length > 0) {
+      if (Object.keys(changedUserInfo)?.length > 0) {
         changes.userInfo = changedUserInfo;
       }
 
@@ -229,7 +229,7 @@ const EditProfileScreen = ({ navigation }: ProfileScreenProps) => {
       // Get changed address info and add to changes object if not empty
       const changedAddressInfo = getChangedAddressInfo();
       if (
-        Object.keys(changedAddressInfo).length > 0 &&
+        Object.keys(changedAddressInfo)?.length > 0 &&
         changedAddressInfo.region != null
       ) {
         changes.addressInfo = changedAddressInfo;
@@ -238,7 +238,7 @@ const EditProfileScreen = ({ navigation }: ProfileScreenProps) => {
       }
 
       // Only make API request if there are actual changes
-      if (Object.keys(changes).length > 0) {
+      if (Object.keys(changes)?.length > 0) {
         // Retrieve user data for the API call
         const userData = await AsyncStorage.getItem("user");
         const user: any = JSON.parse(userData as any);
@@ -256,11 +256,11 @@ const EditProfileScreen = ({ navigation }: ProfileScreenProps) => {
 
           // Only include workerInfo if any of its fields changed
           if (
-            (changes.userInfo && Object.keys(changes.userInfo).length > 0) ||
-            (changes.workingDays && changes.workingDays.length > 0)
+            (changes.userInfo && Object.keys(changes.userInfo)?.length > 0) ||
+            (changes.workingDays && changes.workingDays?.length > 0)
           ) {
             payload.workerInfo = {};
-            if (changes.workingDays && changes.workingDays.length > 0) {
+            if (changes.workingDays && changes.workingDays?.length > 0) {
               payload.workerInfo.workingHours = changes.workingDays;
             }
             if (changes.userInfo?.categories) {

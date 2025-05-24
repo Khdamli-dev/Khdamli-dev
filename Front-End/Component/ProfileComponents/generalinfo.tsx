@@ -360,7 +360,7 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onInfoChange }) => {
           <Dropdown
             label="Payment Methods"
             prev={
-              prevpay.length > 0
+              prevpay?.length > 0
                 ? prevpay.join(", ")
                 : "Payment Method Not Selected"
             }

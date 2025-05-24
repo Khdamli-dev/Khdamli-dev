@@ -8,6 +8,14 @@ import TimePicker from "./TimePicker";
 import apiClient from "@/api/appClient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import refreshAccessToken from "@/api/refreshAccessToken";
+
+const getCurrentUser = async () => {
+  const userdata = await AsyncStorage.getItem("user") || '';
+  return JSON.parse(userdata);
+}
+
+
+
 const formatTime = (time: Date | string | undefined | null): string => {
   if (!time) return "--:--";
 
@@ -42,11 +50,11 @@ const formatTime = (time: Date | string | undefined | null): string => {
     return "--:--";
   }
 };
-const [isWorker , setIsWorker] =useState(false);
+const [isWorker, setIsWorker] = useState(false);
 const WorkingDays = ({
   onChange,
 }: {
-  onChange: (days: { day : number ;name: string; begin: string; end: string }[]) => void;
+  onChange: (days: { day: number; name: string; begin: string; end: string }[]) => void;
 }) => {
   type Day = {
     name: string;
@@ -58,13 +66,11 @@ const WorkingDays = ({
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const userData = await AsyncStorage.getItem("user");
-        const user: any = JSON.parse(userData as any);
-
+        const user = await getCurrentUser();
         if (!user) return;
 
         const { id, role } = user;
-        if (role ===2) {
+        if (role === 2) {
           setIsWorker(true);
         }
         const endpoint = role === 2 ? `/users/worker/` : null;
@@ -101,16 +107,18 @@ const WorkingDays = ({
 
     fetchUser();
   }, []);
-  const [days, setDays] = useState<Day[]>([
-    { name: "sunday", isEnabled: false },
-    { name: "monday", isEnabled: false },
-    { name: "tuesday", isEnabled: false },
-    { name: "wednesday", isEnabled: false },
-    { name: "thursday", isEnabled: false },
-    { name: "friday", isEnabled: false },
-    { name: "saturday", isEnabled: false },
-  ]);
- 
+  const [days, setDays] = useState<Day[]>(
+    [
+      { name: "sunday", isEnabled: false },
+      { name: "monday", isEnabled: false },
+      { name: "tuesday", isEnabled: false },
+      { name: "wednesday", isEnabled: false },
+      { name: "thursday", isEnabled: false },
+      { name: "friday", isEnabled: false },
+      { name: "saturday", isEnabled: false },
+    ]
+  );
+
   const [showPicker, setShowPicker] = useState<{
     index: number;
     type: "begin" | "end";
@@ -132,7 +140,7 @@ const WorkingDays = ({
     const selectedDays = newDays
       .filter((day) => day.isEnabled)
       .map((day) => ({
-        name : day.name,
+        name: day.name,
         day: dayNameToNumber[day.name], // Use number instead of name
         begin: day.begin ? formatTime(day.begin) : "08:00",
         end: day.end ? formatTime(day.end) : "16:00",
@@ -165,39 +173,37 @@ const WorkingDays = ({
     }
   };
 
-   return (
+  return (
     <>
-    {isWorker && (
-      <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Edit Working Days</Text>
-      <View style={styles.headerRow}>
-        <Text style={styles.ghi}>Days</Text>
-        <Text style={styles.ghi}>From</Text>
-        <Text style={styles.ghi}>To</Text>
-      </View>
+      {isWorker && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Edit Working Days</Text>
+          <View style={styles.headerRow}>
+            <Text style={styles.ghi}>Days</Text>
+            <Text style={styles.ghi}>From</Text>
+            <Text style={styles.ghi}>To</Text>
+          </View>
 
-      {days.map((day, index) => (
-        <DayRow
-          key={day.name}
-          day={day}
-          index={index}
-          toggleDay={toggleDay}
-          setShowPicker={setShowPicker}
-          formatTime={formatTime}
-        />
-      ))}
+          {days.map((day, index) => (
+            <DayRow
+              key={day.name}
+              day={day}
+              index={index}
+              toggleDay={toggleDay}
+              setShowPicker={setShowPicker}
+              formatTime={formatTime}
+            />
+          ))}
 
-      <TimePicker
-        showPicker={showPicker}
-        days={days}
-        handleTimeChange={handleTimeChange}
-      />
-    </View>
-    )}
-    
+          <TimePicker
+            showPicker={showPicker}
+            days={days}
+            handleTimeChange={handleTimeChange}
+          />
+        </View>
+      )}
     </>
-    
-  );  
+  );
 };
 const styles = StyleSheet.create({
   section: {

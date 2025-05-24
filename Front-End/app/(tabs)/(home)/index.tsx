@@ -213,7 +213,7 @@ const HomeScreen = () => {
         if (userData) {
           const user = JSON.parse(userData);
           const response = await apiClient.get(
-            `work/job-request/public/${user.id}`,
+            `/work/job-request/public/${user.id}`,
             {
               params: {
                 role: user.role === 1 ? "client" : "worker",
