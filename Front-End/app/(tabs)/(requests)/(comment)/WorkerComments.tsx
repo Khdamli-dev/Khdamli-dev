@@ -15,12 +15,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Dispatch, SetStateAction } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import apiClient from "@/api/appClient";
-import { handelcall } from "../SomeStandarFunctions";
-import { Ionicons } from "@expo/vector-icons";
+import { handelcall, handleEmailPress } from "../SomeStandarFunctions";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { store } from "expo-router/build/global-state/router-store";
 
 // Updated interface to match backend response from getRequestMessages
 interface WorkerComment {
   worker_id: number;
+  email: string;
   phone_number: string;
   username: string;
   profile_image: string | null;
@@ -65,37 +67,10 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
   const [expandedCommentIds, setExpandedCommentIds] = useState<Set<number>>(
     new Set()
   );
-  const [waiting_agrement_worker, setWaitingAgrementWorker] = useState<
-    Set<number>
-  >(new Set());
+  const [isWaitingAgreement, setisWaitingAgreement] = useState<number | null>(
+    null
+  );
   const [total, setTotal] = useState<number>(0);
-
-  const loadWaitingAgreementWorkers = async () => {
-    try {
-      const stored = await AsyncStorage.getItem(
-        `waiting_agreement_${requestId}`
-      );
-      if (stored) {
-        const workerIds = JSON.parse(stored) as number[];
-        setWaitingAgrementWorker(new Set(workerIds));
-      }
-    } catch (error) {
-      console.error("Error loading waiting agreement workers:", error);
-    }
-  };
-
-  // Save waiting agreement workers to storage
-  const saveWaitingAgreementWorkers = async (workers: Set<number>) => {
-    try {
-      const workersArray = Array.from(workers);
-      await AsyncStorage.setItem(
-        `waiting_agreement_${requestId}`,
-        JSON.stringify(workersArray)
-      );
-    } catch (error) {
-      console.error("Error saving waiting agreement workers:", error);
-    }
-  };
 
   const fetchWorkerComments = async (requestId: number, pageNum: number) => {
     if (loading || !hasMore) return;
@@ -141,20 +116,14 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
       await apiClient.put(
         `/work/job-request/${requestId}/select-worker/${workerId}`
       );
-      setWaitingAgrementWorker((prev) => {
-        const newSet = new Set(prev);
-        newSet.add(workerId);
-        saveWaitingAgreementWorkers(newSet);
-        return newSet;
-      });
+      setisWaitingAgreement(workerId);
+      await storeWaitingAgreement(isWaitingAgreement);
+      console.log("Waiting agreement stored successfully:");
       setExpandedCommentIds(() => {
         const newSet = new Set<number>();
         newSet.add(workerId);
         return newSet;
       });
-
-      // Optional: You might want to update the UI to reflect that a worker has been accepted
-      // For example, disabling other worker's accept buttons or showing a success message
     } catch (error) {
       console.error("Error accepting request:", error);
       Alert.alert(
@@ -166,24 +135,13 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
 
   const handleReject = async (workerId: number) => {
     try {
-      // Update the request status to rejected (status 3)
-      await apiClient.put(`/work/job-request/status/${requestId}`, {
-        status: 2,
-      });
-
-      // Remove the rejected worker comment from the list
-      setWorkerCommentsArray((prev) =>
-        prev.filter((comment) => comment.worker_id !== workerId)
+      await apiClient.delete(
+        `/work/job-request/${requestId}/worker/${workerId}`
       );
-
-      // Remove from expanded set when rejected
-      setExpandedCommentIds((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(workerId);
-        return newSet;
-      });
-    } catch (error) {
-      console.error("Error rejecting request:", error);
+      setisWaitingAgreement(null);
+      await storeWaitingAgreement(null);
+    } catch (error: any) {
+      console.error("Error rejecting request:", error.response.data);
       Alert.alert(
         "Error",
         "Failed to reject the work request. Please try again."
@@ -191,24 +149,60 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
     }
   };
 
-  useEffect(() => {
-    if (requestId) {
-      loadWaitingAgreementWorkers();
-    }
-  }, [requestId]);
-
   const navigateToProfile = (id: number, role: number) => {
-      router.push({
-        pathname: "/(tabs)/(home)/profileAsView",
-        params: {
-          status,
-          requestId,
-          userId: id,
-          userRole: role,
-          origin: "workerComments",
-        },
-      });
+    router.push({
+      pathname: "/(tabs)/(home)/profileAsView",
+      params: {
+        status,
+        requestId,
+        userId: id,
+        userRole: role,
+        origin: "workerComments",
+      },
+    });
+  };
+
+  const storeWaitingAgreement = async (waiting_agreement: number | null) => {
+    try {
+      if (waiting_agreement === null) {
+        await AsyncStorage.removeItem(`waiting_agreement_${requestId}`);
+      } else {
+        await AsyncStorage.setItem(
+          `waiting_agreement_${requestId}`,
+          JSON.stringify(waiting_agreement)
+        );
+      }
+    } catch (error) {
+      console.error("Error storing waiting agreement:", error);
+    }
+  };
+
+  const loadWaitingAgreement = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(
+        `waiting_agreement_${requestId}`
+      );
+      console.log("sotred:", stored);
+      if (stored) {
+        const parsedValue = parseInt(stored);
+        if (!isNaN(parsedValue)) {
+          setisWaitingAgreement(parsedValue);
+        }
+        console.log("Stored waiting agreement: on loadiding", parsedValue);
+      }
+      console.log("Waiting agreement loaded successfully:", stored);
+    } catch (error) {
+      console.error("Error loading waiting agreement:", error);
+    }
+  };
+
+  useEffect(() => {
+    const fetchAgreement = async () => {
+      await loadWaitingAgreement();
     };
+    console.log("Fetching waiting agreement on mount");
+    fetchAgreement();
+  }, [requestId]);
 
   const toggleCommentExpansion = (workerId: number) => {
     setExpandedCommentIds((prev) => {
@@ -278,20 +272,17 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
             ) : null
           }
           renderItem={({ item }: { item: WorkerComment }) => {
-            console.log("Item:", requestStatus);
             const isExpanded = expandedCommentIds.has(item.worker_id);
-            const isWaitingAgreement = waiting_agrement_worker.has(
-              item.worker_id
-            );
             return (
               <View className="mb-4">
                 <View className="bg-white rounded-lg shadow-sm overflow-hidden">
                   {/* Header with user info */}
                   <View className=" flex-row p-4 border-b border-gray-100">
-                    <TouchableOpacity className=" mr-3"
-                    onPress={() => {
-                      navigateToProfile(item.worker_id, 2);
-                    }}
+                    <TouchableOpacity
+                      className=" mr-3"
+                      onPress={() => {
+                        navigateToProfile(item.worker_id, 2);
+                      }}
                     >
                       {item.profile_image ? (
                         <Image
@@ -308,9 +299,9 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
                     </TouchableOpacity>
                     <View className="flex-1 justify-center">
                       <TouchableOpacity
-                      onPress={() => {
-                        navigateToProfile(item.worker_id, 2);
-                      }}
+                        onPress={() => {
+                          navigateToProfile(item.worker_id, 2);
+                        }}
                       >
                         <Text className="text-lg font-semibold">
                           {item.username}
@@ -327,16 +318,29 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
                       )}
                     </View>
                     <View className=" flex-col justify-between py-3">
-                      <View className="items-center ">
+                      <View className="flex-row ">
                         {requestStatus == "Accepted" && (
-                          <TouchableOpacity
-                            className="mr-4"
-                            onPress={() => {
-                              handelcall(item.phone_number);
-                            }}
-                          >
-                            <Ionicons name="call" size={32} color="#000" />
-                          </TouchableOpacity>
+                          <View style={{ flexDirection: "row" }}>
+                            <TouchableOpacity
+                              className="mr-4"
+                              onPress={() => {
+                                handelcall(item.phone_number);
+                              }}
+                            >
+                              <Ionicons name="call" size={32} color="#000" />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              onPress={() => {
+                                handleEmailPress(item.email);
+                              }}
+                            >
+                              <MaterialCommunityIcons
+                                name="message-badge-outline"
+                                size={32}
+                                color="#000"
+                              />
+                            </TouchableOpacity>
+                          </View>
                         )}
                       </View>
                       <Text className="text-xs text-gray-500">
@@ -365,24 +369,44 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
                   </TouchableOpacity>
 
                   {/* Action buttons - only shown when expanded */}
-                  {isExpanded && requestStatus === "On Hold" && (
+                  {isExpanded && (
                     <View className="flex-col w-full">
-                      <TouchableOpacity
-                        onPress={() => handleAccept(item.worker_id)}
-                        className={`${isWaitingAgreement ? "bg-blue-700" : "bg-specialGreen"} py-3 items-center`}
-                      >
-                        <Text className="text-white font-bold">
-                          {isWaitingAgreement
-                            ? "Waiting for Agreement of worker"
-                            : "Accept Worker"}
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        className="bg-red-500 py-3 items-center"
-                        onPress={() => handleReject(item.worker_id)}
-                      >
-                        <Text className="text-white font-bold">Reject</Text>
-                      </TouchableOpacity>
+                      {!(
+                        (isWaitingAgreement == item.worker_id ||
+                          status == "verification pending") &&
+                        (item.worker_id == workerIdNumber ||
+                          item.worker_id == isWaitingAgreement)
+                      ) ? (
+                        !isWaitingAgreement &&
+                        !(status == "Accepted") && (
+                          <TouchableOpacity
+                            onPress={() => {
+                              handleAccept(item.worker_id);
+                            }}
+                            className="bg-specialGreen py-3 items-center"
+                          >
+                            <Text className="text-white font-bold">
+                              Accept Worker
+                            </Text>
+                          </TouchableOpacity>
+                        )
+                      ) : (
+                        <View>
+                          <View className="bg-gray-200 py-3 items-center">
+                            <Text className="text-white font-bold">
+                              Waiting for agreement
+                            </Text>
+                          </View>
+                          <TouchableOpacity
+                            className="bg-red-900 py-3 items-center"
+                            onPress={() => handleReject(item.worker_id)}
+                          >
+                            <Text className="text-white font-bold">
+                              Cansele
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
                     </View>
                   )}
                 </View>

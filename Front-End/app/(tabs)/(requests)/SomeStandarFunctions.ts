@@ -1,4 +1,4 @@
-import { Linking } from "react-native";
+import { Alert, Linking } from "react-native";
 export const timeAgo = (dateString: string): string => {
   const now = new Date();
   const sentDate = new Date(dateString);
@@ -39,4 +39,19 @@ export const formatDateTime = (dateString: string) => {
 export const handelcall = (phoneNumber: string) => {
   const phoneNumberWithCountryCode = `+213${phoneNumber}`;
   Linking.openURL(`tel:${phoneNumberWithCountryCode}`);
+};
+export const handleEmailPress = (recipientEmail: string) => {
+  try {
+    const url = `mailto:${recipientEmail}`;
+    Linking.canOpenURL(url).then((supported) => {
+      if (supported) {
+        Linking.openURL(url);
+      } else {
+        Alert.alert("Error", "Email client not found on this device");
+      }
+    });
+  } catch (error) {
+    console.error("Error opening email:", error);
+    Alert.alert("Error", "Could not open email client");
+  }
 };

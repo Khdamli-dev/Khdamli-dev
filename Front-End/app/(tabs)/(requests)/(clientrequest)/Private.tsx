@@ -16,6 +16,7 @@ import {
 import React, { useState, useRef, useEffect } from "react";
 import {
   Ionicons,
+  MaterialCommunityIcons,
   MaterialIcons,
 } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -30,7 +31,11 @@ import { ResizeMode, Video } from "expo-av";
 import { getSocket } from "@/api/socket";
 import { useNotifications } from "@/context/NotificationContext";
 import { Rating } from "react-native-ratings";
-import { formatDateTime, handelcall } from "../SomeStandarFunctions";
+import {
+  formatDateTime,
+  handelcall,
+  handleEmailPress,
+} from "../SomeStandarFunctions";
 import eventEmitter from "@/context/EventBus";
 
 //import { realTimePrivateRequestStatus, realTimeRequests } from '@/api/realTime';
@@ -504,7 +509,7 @@ const PrivateRequests = () => {
     return (
       <TouchableOpacity
         onPress={() => toggleExpandRequest(item.id)}
-        className="bg-white mt-2 p-4 mb-4 rounded-lg shadow"
+        className={`${item.status === RequestStatus.ON_HOLD ? 'bg-specialGreen/70' : 'bg-white'} mt-2 p-4 mb-4 rounded-lg shadow`}
       >
         <View className="flex-row justify-between items-center">
           <View className="flex-row items-center flex-1">
@@ -601,14 +606,27 @@ const PrivateRequests = () => {
         <View className="flex-row mb-3 justify-end">
           <View className="items-center ">
             {item.status == "Accepted" && (
-              <TouchableOpacity
-                className="mr-4"
-                onPress={() => {
-                  handelcall(item.worker_phone_number);
-                }}
-              >
-                <Ionicons name="call" size={32} color="#000" />
-              </TouchableOpacity>
+              <View style={{ flexDirection: "row" }}>
+                <TouchableOpacity
+                  className="mr-4"
+                  onPress={() => {
+                    handelcall(item.worker_phone_number);
+                  }}
+                >
+                  <Ionicons name="call" size={32} color="#000" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    handleEmailPress(item.worker_email);
+                  }}
+                >
+                  <MaterialCommunityIcons
+                    name="message-badge-outline"
+                    size={32}
+                    color="#000"
+                  />
+                </TouchableOpacity>
+              </View>
             )}
           </View>
         </View>
@@ -756,14 +774,27 @@ const PrivateRequests = () => {
 
         <View className="flex-row justify-end mb-3">
           {item.status === "Accepted" && (
-            <TouchableOpacity
-              className="mr-4"
-              onPress={() => {
-                handelcall(item.client_phone_number);
-              }}
-            >
-              <Ionicons name="call" size={32} color="#000" />
-            </TouchableOpacity>
+            <View style={{ flexDirection: "row" }}>
+              <TouchableOpacity
+                className="mr-4"
+                onPress={() => {
+                  handelcall(item.client_phone_number);
+                }}
+              >
+                <Ionicons name="call" size={32} color="#000" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  handleEmailPress(item.client_email);
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="message-badge-outline"
+                  size={32}
+                  color="#000"
+                />
+              </TouchableOpacity>
+            </View>
           )}
         </View>
 
