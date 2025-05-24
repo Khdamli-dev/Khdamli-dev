@@ -509,7 +509,7 @@ const PrivateRequests = () => {
     return (
       <TouchableOpacity
         onPress={() => toggleExpandRequest(item.id)}
-        className={`${item.status === RequestStatus.ON_HOLD ? 'bg-specialGreen/70' : 'bg-white'} mt-2 p-4 mb-4 rounded-lg shadow`}
+        className={`${item.status === RequestStatus.ON_HOLD ? "bg-specialGreen/70" : "bg-white"} mt-2 p-4 mb-4 rounded-lg shadow`}
       >
         <View className="flex-row justify-between items-center">
           <View className="flex-row items-center flex-1">

@@ -214,7 +214,7 @@ const uploadSelectedMedia = async (requestId: number) => {
         router.push('/(auth)');
       }
     }
-    console.log(error.response)
+    console.log(error.response.data)
   }
 };
 

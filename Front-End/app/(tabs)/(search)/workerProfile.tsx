@@ -58,7 +58,6 @@ const styles = StyleSheet.create({
 });
 
 const UserProfileView = () => {
-
   const { status, requestId, userId, userRole, origin } =
     useLocalSearchParams();
 
@@ -79,7 +78,6 @@ const UserProfileView = () => {
     gallery: any[] | null;
     sentRequests: number | null;
     completedRequests: number | null;
-
   }>({
     fullName: null,
     registration_date: null,
@@ -99,38 +97,37 @@ const UserProfileView = () => {
   });
 
   useEffect(() => {
-
     const fetchUserData = async () => {
       try {
         if (!userId) {
           return;
         }
-        const endpoint =`/users/worker/${userId}`;
+        const endpoint = `/users/worker/${userId}`;
         const response = await apiClient.get(`${endpoint}`);
-          const workerData = {
-            fullName: response.data.worker.username,
-            image: response.data.worker.profile_image,
-            registration_date: response.data.worker.registration_date,
-            age: response.data.worker.age,
-            gender: response.data.worker.sex,
-            region: response.data.worker.location.region,
-            city: response.data.worker.location.city,
-            accountType: "worker",
-            bio: response.data.worker.bio,
-            workingDays: response.data.worker.availability,
-            category: response.data.worker.categories,
-            paymentMethod: response.data.worker.payment_methods,
-            gallery: response.data.worker.media,
-            sentRequests: response.data.worker.activity.sent_requests,
-            completedRequests: response.data.worker.activity.completed_requests,
-          };
-          setUser(workerData);
-      } catch (error:any) {
-              if (error.response?.status === 401) {
-        if (await refreshAccessToken()) {
-          await fetchUserData();
+        const workerData = {
+          fullName: response.data.worker.username,
+          image: response.data.worker.profile_image,
+          registration_date: response.data.worker.registration_date,
+          age: response.data.worker.age,
+          gender: response.data.worker.sex,
+          region: response.data.worker.location.region,
+          city: response.data.worker.location.city,
+          accountType: "worker",
+          bio: response.data.worker.bio,
+          workingDays: response.data.worker.availability,
+          category: response.data.worker.categories,
+          paymentMethod: response.data.worker.payment_methods,
+          gallery: response.data.worker.media,
+          sentRequests: response.data.worker.activity.sent_requests,
+          completedRequests: response.data.worker.activity.completed_requests,
+        };
+        setUser(workerData);
+      } catch (error: any) {
+        if (error.response?.status === 401) {
+          if (await refreshAccessToken()) {
+            await fetchUserData();
+          }
         }
-      }
         console.error("Failed to fetch user data", error.response?.data);
       }
     };
@@ -166,24 +163,24 @@ const UserProfileView = () => {
     </View>
   );
   const handleSendPrivateRequest = () => {
-    console.log(userId)
     router.push({
       pathname: "/(tabs)/(search)/requeste",
-      params: { type: "2" , workerId : userId },
+      params: { type: "2", workerId: userId },
     });
   };
 
-   const handleNavigatetoclientprofiele = (clientId: string) => {
-      console.log(`Navigate to client: ${clientId}`);
-      router.push({
-            pathname: "/workerProfile",
-            params: {
-              userId: clientId,
-              userRole: 1,
-            },
-          });
-      // Navigate to client profile
-    };
+  const handleNavigatetoclientprofiele = (clientId: string) => {
+    console.log(`Navigate to client: ${clientId}`);
+    router.push({
+      pathname: "/profileAsView",
+      params: {
+        userId: clientId,
+        userRole: 1,
+        origin: "search",
+      },
+    });
+    // Navigate to client profile
+  };
 
   return (
     <ScrollView>
@@ -197,9 +194,7 @@ const UserProfileView = () => {
         style={{ borderBottomLeftRadius: 50, borderBottomRightRadius: 50 }}
       >
         <TouchableOpacity
-
           onPress={() => router.back()}
-
           className="justify-end w-full"
         >
           <AntDesign name="left" size={50} color="#F8A100" />
@@ -269,10 +264,8 @@ const UserProfileView = () => {
         <>
           <Dashboard
             workerId={Array.isArray(userId) ? userId[0] : userId} // Pass the userId to the Dashboard component
-
             sent_requests={user.sentRequests || 0}
             completed_requests={user.completedRequests || 0}
-
           />
           {/* Bio Section */}
           <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">

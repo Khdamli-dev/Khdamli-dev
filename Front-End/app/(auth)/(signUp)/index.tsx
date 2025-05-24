@@ -9,6 +9,7 @@ import {
   Pressable,
   Platform,
 } from "react-native";
+import * as SecureStore from "expo-secure-store";
 import {
   AntDesign,
   FontAwesome5,
@@ -105,10 +106,17 @@ export default function SignUp() {
       const response = await axios.post(`${CONFIG.API_URL}/auth/signup`, {
         credentials,
       });
-
       if (response?.status === 201) {
         const user = response.data.user;
         await AsyncStorage.setItem("user", JSON.stringify(user));
+        const {
+          accessToken,
+          refreshToken,
+        }: { accessToken: string; refreshToken: string } = response.data;
+        await SecureStore.setItemAsync("accessToken", accessToken);
+        await SecureStore.setItemAsync("refreshToken", refreshToken);
+        await SecureStore.setItemAsync("email", email);
+        await SecureStore.setItemAsync("password", password);
         router.replace("/OtherInformation");
       }
     } catch (error: any) {
@@ -492,7 +500,7 @@ export default function SignUp() {
                 {/* Sign Up Button */}
                 <TouchableOpacity
                   onPress={handleSubmit as any}
-                  className="bg-specialGreen p-6 mb-3 rounded-full w-full max-w-sm  shadow-md shadow-black mt-10"
+                  className="bg-specialGreen p-6 mb-3 rounded-full w-10/12 max-w-sm  shadow-md shadow-black mt-10"
                 >
                   <Text className="text-white text-center text-4xl font-medium">
                     Sign Up

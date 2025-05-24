@@ -31,8 +31,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import apiClient from "@/api/appClient";
 
 interface JobRequest {
-
-  worker ?: number;
+  worker?: number;
   client: number | null;
   region: number | null;
   city: number | null;
@@ -204,7 +203,7 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
   //Handle Save ------------------------------------------------------------------------------------------
   const [error, setError] = useState<string>("");
   const handleSubmit = async () => {
-    console.log(workerId)
+    console.log(workerId);
     // Basic validation
     if (
       !selectedCategory ||
@@ -243,15 +242,12 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
           working_time,
           category: Number(selectedCategory.id), // Convert to number
           description: trimmedDescription,
-          type : 2,
-          worker : +workerId,
+          type: 2,
+          worker: +workerId,
           status: 3, // "On Hold"
         };
-        console.log(jobRequest)
-        const response = await apiClient.post(
-          `/work/job-request/`,
-          jobRequest
-        );
+        console.log(jobRequest);
+        const response = await apiClient.post(`/work/job-request/`, jobRequest);
 
         if (response.status === 201) {
           const requestId: number = +response.data.request.id;
@@ -262,8 +258,11 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
         console.log("No user data found in AsyncStorage");
         setError("User data not found. Please log in again.");
       }
-    } catch (error : any) {
-      console.error("Error submitting job request:", error.response.data.message);
+    } catch (error: any) {
+      console.error(
+        "Error submitting job request:",
+        error.response.data.message
+      );
       setError("There was an error submitting your request. Please try again.");
     }
   };
@@ -361,7 +360,7 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
                 )}
               </View>
             </View>
- 
+
             {/*  The Region ------------------------------------------------------------------------------------------*/}
             <View className="w-11/12  px-2 mt-6  ">
               <Text className="text-[#CB8400] text-lg font-bold pl-16 mb-1">
