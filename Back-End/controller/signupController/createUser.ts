@@ -2,7 +2,8 @@ import pool from "../../database/dbConnection";
 import Credentials from "../../interface/credentials";
 import { Request, Response } from "express";
 import encryptPassword from "../../utils/authentication/encryptPassword";
-import { sendEmailConfirmationMail }from "../../utils/authentication/sendMail";
+import { sendEmailConfirmationMail } from "../../utils/authentication/sendMail";
+import produceTokens from "../../utils/authentication/produceTokens";
 
 const createUser = async (req: Request, res: Response) => {
   try {
@@ -13,21 +14,24 @@ const createUser = async (req: Request, res: Response) => {
     const { rows: result } = await pool.query(
       `
             INSERT INTO "user" (username , email , phone_number , password , role)
-            VALUES ($1, $2, $3 , $4 , $5) RETURNING "id"
+            VALUES ($1, $2, $3 , $4 , $5) RETURNING *
             `,
       [username, email, phoneNumber, hash, role]
     );
 
     // send confirmation email
-    await sendEmailConfirmationMail(email , result[0].id);
-    const {password : _, ...user} = result[0];
+    await sendEmailConfirmationMail(email, result[0].id);
+    const { password: _, ...user } = result[0];
+    const { accessToken, refreshToken } = produceTokens(result[0].id, 1);
     res.status(201).json({
       message: "User added",
       user,
-      success : true
+      success: true,
+      accessToken,
+      refreshToken,
     });
   } catch (error) {
-    res.status(500).json({ message: "internal error" , success : false});
+    res.status(500).json({ message: "internal error", success: false });
   }
 };
 

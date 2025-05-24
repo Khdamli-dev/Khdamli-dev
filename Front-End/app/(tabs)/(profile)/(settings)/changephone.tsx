@@ -10,6 +10,9 @@ import Header from "@/Component/SettingComponents/Header";
 import { LinearGradient } from "expo-linear-gradient";
 import PasswordInput from "@/Component/SettingComponents/PasswordInput";
 import { NavigationProp } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import apiClient from "@/api/appClient"; // Adjust the import based on your project structure
+import { router } from "expo-router";
 
 type RootStackParamList = {
   Setting: undefined;
@@ -19,12 +22,34 @@ type ChangePhoneprops = {
 };
 const changephone = ({ navigation }: ChangePhoneprops) => {
   const [phone, setPhone] = useState<string>("");
-  const handlePhoneChange = () => {
-
-    if (!phone.trim())
+  const handlePhoneChange = async () => {
+    if (!phone.trim()) {
       return Alert.alert("⚠️ Warning", "Please fill in field!");
-    navigation.navigate("Setting");
-    Alert.alert("✅ Success", "Password changed successfully!");
+    }
+
+    try {
+      // Get user ID from AsyncStorage (or your preferred method)
+      const userData = await AsyncStorage.getItem("user");
+      const user = userData ? JSON.parse(userData) : null;
+      if (!user?.id) {
+        return Alert.alert("Error", "User not found.");
+      }
+
+      // Make API call to update phone number
+      const response = await apiClient.put(`/users/${user.id}`, {
+        credentials :{phoneNumber :phone}
+      });
+
+      if (response.status === 200 || response.status === 201) {
+        Alert.alert("✅ Success", "Phone number changed successfully!");
+        router.push("/(tabs)/(profile)/(settings)");
+      } else {
+        Alert.alert("❌ Error", "Failed to change phone number.");
+      }
+    } catch (error: any) {
+      console.error("Phone change error:", error?.response?.data || error);
+      Alert.alert("❌ Error", "An error occurred while changing phone number.");
+    }
   };
   return (
     <SafeAreaView>

@@ -212,7 +212,11 @@ const CreateRequestScreen = () => {
           router.push("/(auth)");
         }
       }
-      console.log(error.response);
+    }
+    if (typeof error === "object" && error !== null && "response" in error) {
+      console.log((error as any).response.data);
+    } else {
+      console.error("An unexpected error occurred:", error);
     }
   };
 

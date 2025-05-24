@@ -32,6 +32,7 @@ import apiClient from "@/api/appClient";
 import { AntDesign } from "@expo/vector-icons";
 import Dashboard from "@/Component/ProfileComponents/Dashboard";
 import Reviews from "@/Component/ProfileComponents/Reviews";
+import refreshAccessToken from "@/api/refreshAccessToken";
 const { width } = Dimensions.get("window");
 
 interface ProfileItemProps {
@@ -96,71 +97,37 @@ const UserProfileView = () => {
   });
 
   useEffect(() => {
-    const fetchUserRole = async () => {
-      const userData = await AsyncStorage.getItem("user");
-      if (userData) {
-        const user = JSON.parse(userData);
-        setRole(user.role);
-      }
-    };
-    fetchUserRole();
     const fetchUserData = async () => {
       try {
-        if (!userId || !userRole) {
+        if (!userId) {
           return;
         }
-
-        const endpoint =
-          Number(userRole) === 1
-            ? `/users/client/${userId}`
-            : `/users/worker/${userId}`;
-
+        const endpoint = `/users/worker/${userId}`;
         const response = await apiClient.get(`${endpoint}`);
-
-        if (Number(userRole) === 1) {
-          // Client data
-          const clientData = {
-            fullName: response.data.client.username,
-            image: response.data.client.profile_image,
-            registration_date: response.data.client.registration_date,
-            age: response.data.client.age,
-            gender: response.data.client.sex,
-            region: response.data.client.location.region,
-            city: response.data.client.location.city,
-            accountType: "client",
-            bio: null,
-            workingDays: null,
-            paymentMethod: null,
-            category: null,
-            gallery: null,
-            sentRequests: null,
-            completedRequests: null,
-          };
-
-          setUser(clientData);
-        } else {
-          // Worker data
-          const workerData = {
-            fullName: response.data.worker.username,
-            image: response.data.worker.profile_image,
-            registration_date: response.data.worker.registration_date,
-            age: response.data.worker.age,
-            gender: response.data.worker.sex,
-            region: response.data.worker.location.region,
-            city: response.data.worker.location.city,
-            accountType: "worker",
-            bio: response.data.worker.bio,
-            workingDays: response.data.worker.availability,
-            category: response.data.worker.categories,
-            paymentMethod: response.data.worker.payment_methods,
-            gallery: response.data.worker.media,
-            sentRequests: response.data.worker.activity.sent_requests,
-            completedRequests: response.data.worker.activity.completed_requests,
-          };
-
-          setUser(workerData);
-        }
+        const workerData = {
+          fullName: response.data.worker.username,
+          image: response.data.worker.profile_image,
+          registration_date: response.data.worker.registration_date,
+          age: response.data.worker.age,
+          gender: response.data.worker.sex,
+          region: response.data.worker.location.region,
+          city: response.data.worker.location.city,
+          accountType: "worker",
+          bio: response.data.worker.bio,
+          workingDays: response.data.worker.availability,
+          category: response.data.worker.categories,
+          paymentMethod: response.data.worker.payment_methods,
+          gallery: response.data.worker.media,
+          sentRequests: response.data.worker.activity.sent_requests,
+          completedRequests: response.data.worker.activity.completed_requests,
+        };
+        setUser(workerData);
       } catch (error: any) {
+        if (error.response?.status === 401) {
+          if (await refreshAccessToken()) {
+            await fetchUserData();
+          }
+        }
         console.error("Failed to fetch user data", error.response?.data);
       }
     };
@@ -197,18 +164,19 @@ const UserProfileView = () => {
   );
   const handleSendPrivateRequest = () => {
     router.push({
-      pathname: "/(tabs)/(home)/createRequest",
-      params: { type: "2" },
+      pathname: "/(tabs)/(search)/requeste",
+      params: { type: "2", workerId: userId },
     });
   };
 
   const handleNavigatetoclientprofiele = (clientId: string) => {
     console.log(`Navigate to client: ${clientId}`);
     router.push({
-      pathname: "/workerProfile",
+      pathname: "/profileAsView",
       params: {
         userId: clientId,
         userRole: 1,
+        origin: "search",
       },
     });
     // Navigate to client profile
@@ -311,7 +279,7 @@ const UserProfileView = () => {
               className="text-center mt-2 text-[16px]"
               style={{ fontFamily: "Itim_400Regular" }}
             >
-              {user.bio ? user.bio : "The bio is not entered"}
+              {user.bio}
             </Text>
           </View>
 
@@ -323,35 +291,26 @@ const UserProfileView = () => {
             >
               Working Days
             </Text>
-            {user.workingDays && user.workingDays.length > 0 ? (
-              user.workingDays.map((item, index) => (
-                <View
-                  key={index}
-                  className="flex-row justify-between py-2 border-b border-gray-200"
-                >
-                  <Text className="text-[16px] font-semibold">{item.day}</Text>
-                  <Text
-                    className="mr-2 text-[#BD7D06]"
-                    style={{ fontFamily: "Itim_400Regular" }}
-                  >
-                    From {formatTime(item.begin)}
-                  </Text>
-                  <Text
-                    className="mr-2 text-[#BD7D06]"
-                    style={{ fontFamily: "Itim_400Regular" }}
-                  >
-                    To {formatTime(item.end)}
-                  </Text>
-                </View>
-              ))
-            ) : (
-              <Text
-                className="text-center mt-2 text-[16px]"
-                style={{ fontFamily: "Itim_400Regular" }}
+            {user.workingDays?.map((item, index) => (
+              <View
+                key={index}
+                className="flex-row justify-between py-2 border-b border-gray-200"
               >
-                No working days entered
-              </Text>
-            )}
+                <Text className="text-[16px] font-semibold">{item.day}</Text>
+                <Text
+                  className="mr-2 text-[#BD7D06]"
+                  style={{ fontFamily: "Itim_400Regular" }}
+                >
+                  From {formatTime(item.begin)}
+                </Text>
+                <Text
+                  className="mr-2 text-[#BD7D06]"
+                  style={{ fontFamily: "Itim_400Regular" }}
+                >
+                  To {formatTime(item.end)}
+                </Text>
+              </View>
+            ))}
           </View>
         </>
       )}

@@ -10,8 +10,6 @@ import {
   Dimensions,
 } from "react-native";
 import refreshAccessToken from "@/api/refreshAccessToken";
-
-import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Trash,
   Calendar,
@@ -26,20 +24,16 @@ import {
   Globe,
   Settings,
 } from "lucide-react-native";
-import CONFIG from "../../../config";
-import { Video, ResizeMode } from "expo-av";
 import { LinearGradient } from "expo-linear-gradient";
-import { useFonts, Itim_400Regular } from "@expo-google-fonts/itim";
 import * as ImagePicker from "expo-image-picker";
 import { NavigationProp } from "@react-navigation/native";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
-import { FontAwesome } from "@expo/vector-icons";
+
 import apiClient from "@/api/appClient";
 import Dashboard from "@/Component/ProfileComponents/Dashboard";
 import Reviews from "@/Component/ProfileComponents/Reviews";
-const { width } = Dimensions.get("window");
+
 
 type RootStackParamList = {
   EditProfile: undefined;
@@ -55,7 +49,8 @@ interface ProfileItemProps {
 }
 
 const pickProfileImage = async (
-  updateProfileImage: (newImage: string) => void
+  updateProfileImage: (newImage: string) => void,
+  userId: string
 ) => {
   const permissionResult =
     await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -76,7 +71,36 @@ const pickProfileImage = async (
   });
 
   if (!result.canceled && result.assets?.[0]?.uri) {
-    updateProfileImage(result.assets[0].uri);
+    const uri = result.assets[0].uri;
+    updateProfileImage(uri);
+
+    // Prepare FormData
+    const formData = new FormData();
+    formData.append("file", {
+      uri,
+      type: "image/jpeg",
+      name: "profile_image.jpg",
+    } as any);
+
+    try {
+      const response = await apiClient.put(
+        `/users/${userId}/profile-picture`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      console.log("Image uploaded:", response.data);
+    } catch (error: any) {
+       if (error.response?.status === 401) {
+        if (await refreshAccessToken()) {
+          await pickProfileImage(updateProfileImage, userId);
+        }};
+      console.error("Error uploading profile image:", error?.response?.data || error);
+      Alert.alert("Upload Failed", "Could not upload the profile image.");
+    }
   }
 };
 
@@ -131,13 +155,11 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         if (!user) {
           return;
         }
-
         const { id, role } = user;
         const endpoint =
           role === 1 ? `/users/client/` : role === 2 ? `/users/worker/` : null;
         if (endpoint) {
           const response = await apiClient.get(`${endpoint}${id}`);
-          console.log(response);
           const newUserData =
             role === 1
               ? {
@@ -178,7 +200,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
             await fetchUser();
           }
         }
-        console.error("Failed to fetch user data", error);
+        console.error("Failed to fetch user data", error.response.data);
       }
     };
 
@@ -189,43 +211,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     // Handle various formats, returning just HH:MM
     return timeString.split(":").slice(0, 2).join(":");
   };
-  const pickGalleryMedia = async () => {
-    const { granted } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!granted) {
-      Alert.alert(
-        "Permission Required",
-        "You need to enable permissions to access the gallery."
-      );
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
-
-    if (result.assets?.length) {
-      const selectedMedia = result.assets[0];
-      const newMedia: MediaItem = {
-        uri: selectedMedia.uri,
-        type: selectedMedia.type === "video" ? "video" : "image",
-      };
-      addGalleryImage(newMedia);
-    }
-  };
-
-  const addGalleryImage = (newMedia: MediaItem) => {
-    setUser((prevUser) => ({
-      ...prevUser,
-      gallery: prevUser.gallery
-        ? prevUser.gallery.some((item) => item.uri === newMedia.uri)
-          ? prevUser.gallery
-          : [...prevUser.gallery, newMedia]
-        : null,
-    }));
-  };
+ 
 
   const updateProfileImage = async (newImage: string) => {
     setUser((prevUser) => ({
@@ -300,7 +286,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     });
     // Navigate to client profile
   };
-
+  
   return (
     <ScrollView>
       <LinearGradient
@@ -356,7 +342,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
             <TouchableOpacity
               className="absolute bottom-0 right-0 bg-[#BD7D06] rounded-full p-[6px] border-[1.5px] border-white"
               onPress={() => {
-                pickProfileImage(updateProfileImage);
+                pickProfileImage(updateProfileImage, userId);
               }}
             >
               <Pencil size={20} color="white" />
@@ -490,51 +476,6 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
       </View>
       {user.accountType === "worker" && (
         <>
-          <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
-            <View className="flex-row justify-between items-center mb-2.5">
-              <Text
-                className="text-center text-[#BD7D06]  mb-2.5 text-[20px]"
-                style={{ fontFamily: "Itim_400Regular" }}
-              >
-                Some Pictures
-              </Text>
-              <TouchableOpacity
-                className="items-center my-2.5 p-1.25"
-                onPress={pickGalleryMedia}
-              >
-                <Plus size={22} color="#BD7D06" strokeWidth={4} />
-              </TouchableOpacity>
-            </View>
-            <FlatList
-              data={user.gallery}
-              renderItem={({ item }) => (
-                <View className="relative mx-4">
-                  {item.type === "image" ? (
-                    <Image
-                      source={{ uri: item.uri }}
-                      className="h-[300px] rounded-[10px] my-1.5"
-                      style={{ width: width - 32 }}
-                    />
-                  ) : (
-                    <Video
-                      source={{ uri: item.uri }}
-                      className="h-[300px] rounded-[10px] my-1.5"
-                      style={{ width: width - 32 }}
-                      useNativeControls={true}
-                      resizeMode={ResizeMode.CONTAIN}
-                      shouldPlay={false}
-                    />
-                  )}
-
-                  <TouchableOpacity className="absolute top-[10px] right-[10px] bg-[rgba(255,0,0,0.7)] rounded-[15px] p-2">
-                    <Trash size={20} color="white" />
-                  </TouchableOpacity>
-                </View>
-              )}
-              keyExtractor={(item, index) => item.uri + index}
-              scrollEnabled={false}
-            />
-          </View>
           <Reviews
             workerId={userId}
             onClientPress={(clientId) => {
