@@ -12,6 +12,7 @@ import {
   Platform,
   Alert,
   TextInput,
+  TouchableWithoutFeedback,
   Keyboard,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
@@ -31,9 +32,14 @@ import apiClient from "@/api/appClient";
 import refreshAccessToken from "@/api/refreshAccessToken";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ResizeMode, Video } from "expo-av"; // Import for video playback
-import { formatDateTime, handelcall } from "../SomeStandarFunctions";
+import {
+  formatDateTime,
+  handelcall,
+  handleEmailPress,
+} from "../SomeStandarFunctions";
 import { useNotifications } from "@/context/NotificationContext";
 import { Rating } from "react-native-ratings";
+import eventEmitter from "@/context/EventBus";
 
 // Define the UserRole enum
 enum UserRole {
@@ -47,6 +53,7 @@ enum RequestStatus {
   ON_HOLD = "On Hold",
   COMPLETED = "Completed",
   CANCELLED = "Cancelled",
+  VERIFICATION_PENDING = "verification pending",
 }
 
 // Define media types
@@ -150,6 +157,28 @@ const PublicRequest = () => {
     };
 
     getUserInfo();
+  }, []);
+
+  useEffect(() => {
+    const handler = (data: { id: number; status: string }) => {
+      console.log('Public request status update:', data);
+      
+      setRequests((prev) =>
+        prev.map((request) =>
+          request.id === data.id 
+            ? { ...request, status: data.status } 
+            : request
+        )
+      );
+    };
+
+    // Add listener
+    eventEmitter.on('change-public-request-status', handler);
+
+    // Cleanup function
+    return () => {
+      eventEmitter.off('change-public-request-status', handler);
+    };
   }, []);
 
   useEffect(() => {
@@ -332,7 +361,7 @@ const PublicRequest = () => {
   const handleSelectRequest = (
     id: number,
     status: string,
-    workerId?: number
+    workerId: number
   ) => {
     router.push({
       pathname: "/WorkerComments",
@@ -365,7 +394,8 @@ const PublicRequest = () => {
         return (
           <MaterialIcons name="hourglass-empty" size={24} color="orange" />
         );
-
+      case RequestStatus.VERIFICATION_PENDING:
+        return <MaterialIcons name="pending-actions" size={24} color="blue" />;
       case RequestStatus.COMPLETED:
         return <MaterialIcons name="verified" size={24} color="blue" />;
       default:
@@ -443,7 +473,7 @@ const PublicRequest = () => {
     return (
       <TouchableOpacity
         onPress={() => toggleExpandRequest(item.id)}
-        className="bg-white mt-2 p-4 mb-4 rounded-lg shadow"
+        className={`${item.status === RequestStatus.VERIFICATION_PENDING ? "bg-specialGreen/70" : "bg-white"} mt-2 p-4 mb-4 rounded-lg shadow`}
       >
         <View className="flex-row justify-between items-center">
           <View className="flex-row items-center flex-1">
@@ -545,37 +575,40 @@ const PublicRequest = () => {
             </View>
           </View>
         </TouchableOpacity>
+
         <View>
           <Text className="text-lg font-medium mb-2">Request Details:</Text>
 
           <View className="pl-2">
             <Text className="text-base mb-1">
               <Text className="font-bold">Date Request: </Text>
-              <Text className="text-green-500">
+              <Text className="text-specialGreen">
                 {formatDateTime(item.sent_date)}
               </Text>
             </Text>
             <Text className="text-base mb-1">
               <Text className="font-bold">Work time: </Text>
-              <Text className="text-green-500">
+              <Text className="text-specialGreen">
                 {formatDateTime(item.work_date)}
               </Text>
             </Text>
             <Text className="text-base mb-1">
               <Text className="font-bold">Address: </Text>
-              <Text className="text-green-500">
+              <Text className="text-specialGreen">
                 {item.location?.city}, {item.location?.region},{" "}
                 {item.location?.country}
               </Text>
             </Text>
             <Text className="text-base mb-1">
               <Text className="font-bold">Category: </Text>
-              <Text className="text-green-500">{item.category}</Text>
+              <Text className="text-specialGreen">{item.category}</Text>
             </Text>
             <Text className="text-base mb-2">
               <Text className="font-bold">About Service: </Text>
             </Text>
-            <Text className="text-green-500 mb-3 pl-1">{item.description}</Text>
+            <Text className="text-specialGreen mb-3 pl-1">
+              {item.description}
+            </Text>
           </View>
         </View>
 
@@ -636,7 +669,7 @@ const PublicRequest = () => {
               onPress={() =>
                 handleSelectRequest(item.id, item.status, item.workerId)
               }
-              className="bg-green-500 w-1/2 justify-center items-center py-2 rounded-l mr-2"
+              className="bg-specialGreen w-1/2 justify-center items-center py-2 rounded-l mr-2"
             >
               <Text className="text-base text-white">Comments</Text>
             </TouchableOpacity>
@@ -650,7 +683,8 @@ const PublicRequest = () => {
               <Text className="text-base text-white">Worker comment</Text>
             </TouchableOpacity>
           )}
-          {item.status === RequestStatus.ON_HOLD && (
+          {(item.status === RequestStatus.ON_HOLD ||
+            item.status === RequestStatus.VERIFICATION_PENDING) && (
             <TouchableOpacity
               className="bg-red-500 w-1/2 justify-center items-center py-2 rounded-r"
               onPress={() => deleteRequest(item.id)}
@@ -662,15 +696,14 @@ const PublicRequest = () => {
 
         {/* Client verification section - when job is marked as completed by worker */}
 
-        {item.status === RequestStatus.ACCEPTED &&
-          userRole === UserRole.CLIENT && (
-            <TouchableOpacity
-              className="bg-green-500 w-full items-center justify-center py-3 mt-3 rounded"
-              onPress={() => handleConfirmCompletion(item)}
-            >
-              <Text className="text-base text-white">Declare Completed</Text>
-            </TouchableOpacity>
-          )}
+        {item.status === RequestStatus.ACCEPTED && (
+          <TouchableOpacity
+            className="bg-green-500 w-full items-center justify-center py-3 mt-3 rounded"
+            onPress={() => handleConfirmCompletion(item)}
+          >
+            <Text className="text-base text-white">Declare Completed</Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   };
@@ -761,7 +794,6 @@ const PublicRequest = () => {
     const [commentText, setCommentText] = useState(initialComment || "");
     const commentInputRef = useRef(null);
     const [keyboardVisible, setKeyboardVisible] = useState(false);
-
     useEffect(() => {
       const keyboardDidShowListener = Keyboard.addListener(
         "keyboardDidShow",
@@ -879,7 +911,6 @@ const PublicRequest = () => {
   // Render worker view - using WorkerPublicRequest interface
   const renderWorkerRequest = (item: WorkerPublicRequest) => {
     const isExpanded = expandedRequestId === item.id;
-
     const modifyRequestStatus = async (status: number) => {
       try {
         await apiClient.put(
@@ -921,7 +952,7 @@ const PublicRequest = () => {
         case 2:
           return RequestStatus.ON_HOLD;
         default:
-          return RequestStatus.ON_HOLD;
+          return RequestStatus.VERIFICATION_PENDING;
       }
     };
 
@@ -972,14 +1003,27 @@ const PublicRequest = () => {
         <View className="flex-row mb-3 justify-end">
           <View className="items-center ">
             {item.status == "Accepted" && (
-              <TouchableOpacity
-                className="mr-4"
-                onPress={() => {
-                  handelcall(item.client_phone_number);
-                }}
-              >
-                <Ionicons name="call" size={32} color="#000" />
-              </TouchableOpacity>
+              <View style={{ flexDirection: "row" }}>
+                <TouchableOpacity
+                  className="mr-4"
+                  onPress={() => {
+                    handelcall(item.client_phone_number);
+                  }}
+                >
+                  <Ionicons name="call" size={32} color="#000" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    handleEmailPress(item.client_email);
+                  }}
+                >
+                  <MaterialCommunityIcons
+                    name="message-badge-outline"
+                    size={32}
+                    color="#000"
+                  />
+                </TouchableOpacity>
+              </View>
             )}
           </View>
         </View>
@@ -987,33 +1031,33 @@ const PublicRequest = () => {
         <View className="pl-2">
           <Text className="text-base mb-1">
             <Text className="font-bold">Request Date:</Text>
-            <Text className="text-green-500">{item.post_date}</Text>
+            <Text className="text-specialGreen">{item.post_date}</Text>
           </Text>
           <Text className="text-base mb-1">
             <Text className="font-bold">Work Address: </Text>
-            <Text className="text-green-500">
+            <Text className="text-specialGreen">
               {item.location?.city}, {item.location?.region},{" "}
               {item.location?.country}
             </Text>
           </Text>
           <Text className="text-base mb-2">
             <Text className="font-bold text-black">Category:</Text>
-            <Text className="text-green-500">{item.category}</Text>
+            <Text className="text-specialGreen">{item.category}</Text>
           </Text>
           <Text className="text-base mb-2">
             <Text className="font-bold text-black">About Service: </Text>
-            <Text className="text-green-500">{item.description}</Text>
+            <Text className="text-specialGreen">{item.description}</Text>
           </Text>
           {item.worker_comment && (
             <Text className="text-base mb-2">
               <Text className="font-bold text-black">Your Comment: </Text>
-              <Text className="text-green-500">{item.worker_comment}</Text>
+              <Text className="text-specialGreen">{item.worker_comment}</Text>
             </Text>
           )}
           {item.comment_date && (
             <Text className="text-base mb-2">
               <Text className="font-bold text-black">Comment Date: </Text>
-              <Text className="text-green-500">
+              <Text className="text-specialGreen">
                 {formatDateTime(item.comment_date)}
               </Text>
             </Text>
@@ -1072,28 +1116,27 @@ const PublicRequest = () => {
         </View>
 
         {/* For PENDING_WORKER_VERIFICATION requests */}
-        {item.status !== RequestStatus.COMPLETED &&
-          item.status === RequestStatus.ACCEPTED && (
-            <View className="flex-row justify-between mt-4 px-2">
-              <TouchableOpacity
-                className="flex-1 bg-green-600 items-center justify-center py-3 rounded-lg shadow mr-2"
-                onPress={async () => await modifyRequestStatus(1)}
-              >
-                <Text className="text-base font-medium text-white">
-                  Confirm Work
-                </Text>
-              </TouchableOpacity>
+        {item.status === RequestStatus.VERIFICATION_PENDING && (
+          <View className="flex-row justify-between mt-4 px-2">
+            <TouchableOpacity
+              className="flex-1 bg-green-600 items-center justify-center py-3 rounded-lg shadow mr-2"
+              onPress={async () => await modifyRequestStatus(1)}
+            >
+              <Text className="text-base font-medium text-white">
+                Confirm Work
+              </Text>
+            </TouchableOpacity>
 
-              <TouchableOpacity
-                className="flex-1 bg-red-500 items-center justify-center py-3 rounded-lg shadow"
-                onPress={async () => await modifyRequestStatus(2)}
-              >
-                <Text className="text-base font-medium text-white">
-                  Cancel Work
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
+            <TouchableOpacity
+              className="flex-1 bg-red-500 items-center justify-center py-3 rounded-lg shadow"
+              onPress={async () => await modifyRequestStatus(2)}
+            >
+              <Text className="text-base font-medium text-white">
+                Cancel Work
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* For COMPLETED requests - Worker sees completed status */}
         {item.status === RequestStatus.COMPLETED && (
@@ -1105,15 +1148,14 @@ const PublicRequest = () => {
         )}
 
         {/* ONLY show Edit Comment button for worker */}
-        {item.status != RequestStatus.ACCEPTED &&
-          item.status != RequestStatus.COMPLETED && (
-            <TouchableOpacity
-              className="bg-blue-500 items-center justify-center py-3 mt-3 rounded"
-              onPress={() => handleEditComment(item.id, item.worker_comment)}
-            >
-              <Text className="text-base text-white">Edit Comment</Text>
-            </TouchableOpacity>
-          )}
+        {!(item.status == RequestStatus.ACCEPTED) && (
+          <TouchableOpacity
+            className="bg-blue-500 items-center justify-center py-3 mt-3 rounded"
+            onPress={() => handleEditComment(item.id, item.worker_comment)}
+          >
+            <Text className="text-base text-white">Edit Comment</Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   };

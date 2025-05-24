@@ -8,6 +8,7 @@ import {
   useNotifications,
 } from '@/context/NotificationContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ClientProvider } from '@/context/ClientContext';
 
 const CustomTabBarIcon = ({
   name,
@@ -152,6 +153,8 @@ export default function TabLayout() {
       <TabsContent />
     </NotificationProvider>
   ) : (
-    <TabsContent />
+    <ClientProvider>
+      <TabsContent />
+    </ClientProvider>
   );
 }

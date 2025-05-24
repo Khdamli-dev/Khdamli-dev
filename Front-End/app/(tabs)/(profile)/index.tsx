@@ -55,7 +55,8 @@ interface ProfileItemProps {
 }
 
 const pickProfileImage = async (
-  updateProfileImage: (newImage: string) => void
+  updateProfileImage: (newImage: string) => void,
+  userId: string
 ) => {
   const permissionResult =
     await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -76,7 +77,36 @@ const pickProfileImage = async (
   });
 
   if (!result.canceled && result.assets?.[0]?.uri) {
-    updateProfileImage(result.assets[0].uri);
+    const uri = result.assets[0].uri;
+    updateProfileImage(uri);
+
+    // Prepare FormData
+    const formData = new FormData();
+    formData.append("file", {
+      uri,
+      type: "image/jpeg",
+      name: "profile_image.jpg",
+    } as any);
+
+    try {
+      const response = await apiClient.put(
+        `/users/${userId}/profile-picture`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      console.log("Image uploaded:", response.data);
+    } catch (error: any) {
+       if (error.response?.status === 401) {
+        if (await refreshAccessToken()) {
+          await pickProfileImage(updateProfileImage, userId);
+        }};
+      console.error("Error uploading profile image:", error?.response?.data || error);
+      Alert.alert("Upload Failed", "Could not upload the profile image.");
+    }
   }
 };
 
@@ -122,6 +152,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
 
   });
   const [userId, setUserId] = useState<string>("");
+  const [pendingGallery, setPendingGallery] = useState<MediaItem[]>([]);
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -131,13 +162,11 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         if (!user) {
           return;
         }
-
         const { id, role } = user;
         const endpoint =
           role === 1 ? `/users/client/` : role === 2 ? `/users/worker/` : null;
         if (endpoint) {
           const response = await apiClient.get(`${endpoint}${id}`);
-          console.log(response);
           const newUserData =
             role === 1
               ? {
@@ -178,7 +207,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
             await fetchUser();
           }
         }
-        console.error("Failed to fetch user data", error);
+        console.error("Failed to fetch user data", error.response.data);
       }
     };
 
@@ -198,33 +227,20 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
       );
       return;
     }
-
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
-      aspect: [1, 1],
+      allowsEditing: false,
+      allowsMultipleSelection: true, // <-- enable multiple selection
       quality: 1,
     });
 
     if (result.assets?.length) {
-      const selectedMedia = result.assets[0];
-      const newMedia: MediaItem = {
-        uri: selectedMedia.uri,
-        type: selectedMedia.type === "video" ? "video" : "image",
-      };
-      addGalleryImage(newMedia);
+      const newMediaItems: MediaItem[] = result.assets.map((asset) => ({
+        uri: asset.uri,
+        type: asset.type === "video" ? "video" : "image",
+      }));
+      addGalleryImages(newMediaItems);
     }
-  };
-
-  const addGalleryImage = (newMedia: MediaItem) => {
-    setUser((prevUser) => ({
-      ...prevUser,
-      gallery: prevUser.gallery
-        ? prevUser.gallery.some((item) => item.uri === newMedia.uri)
-          ? prevUser.gallery
-          : [...prevUser.gallery, newMedia]
-        : null,
-    }));
   };
 
   const updateProfileImage = async (newImage: string) => {
@@ -300,6 +316,58 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     });
     // Navigate to client profile
   };
+  const uploadGalleryMedia = async () => {
+    console.log(pendingGallery)
+    if (!userId || pendingGallery.length === 0) {
+      Alert.alert("No media", "There are no media items to upload.");
+      return;
+    }
+    const formData = new FormData();
+    pendingGallery.forEach((media, idx) => {
+      formData.append("file", {
+        uri: media.uri,
+        type: media.type === "video" ? "video/mp4" : "image/jpeg",
+        name: `media_${idx}.${media.type === "video" ? "mp4" : "jpg"}`,
+      } as any);
+    });
+
+    try {
+      const response = await apiClient.put(
+        `/users/${userId}/worker/media`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      Alert.alert("Success", "Gallery media uploaded!");
+      // On success, add to user.gallery and clear pendingGallery
+      setUser((prevUser) => ({
+        ...prevUser,
+        gallery: prevUser.gallery
+          ? [...prevUser.gallery, ...pendingGallery]
+          : [...pendingGallery],
+      }));
+      setPendingGallery([]);
+    } catch (error: any) {
+      console.error("Error uploading gallery media:", error?.response?.data || error);
+      Alert.alert("Upload Failed", "Could not upload gallery media.");
+    }
+  };
+
+  const addGalleryImages = (newMediaItems: MediaItem[]) => {
+    setPendingGallery((prev) => {
+      const existingUris = prev.map((item) => item.uri);
+      const filteredNewMedia = newMediaItems.filter(
+        (item) => !existingUris.includes(item.uri)
+      );
+      return [...prev, ...filteredNewMedia];
+    });
+    console.log(pendingGallery)
+    // After updating pendingGallery, upload all pending media
+    setTimeout(uploadGalleryMedia, 0);
+  };
 
   return (
     <ScrollView>
@@ -356,7 +424,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
             <TouchableOpacity
               className="absolute bottom-0 right-0 bg-[#BD7D06] rounded-full p-[6px] border-[1.5px] border-white"
               onPress={() => {
-                pickProfileImage(updateProfileImage);
+                pickProfileImage(updateProfileImage, userId);
               }}
             >
               <Pencil size={20} color="white" />
@@ -389,7 +457,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
               className="text-center mt-2 text-[16px]"
               style={{ fontFamily: "Itim_400Regular" }}
             >
-              {user.bio}
+              {user.bio ? user.bio : "The bio is not entered"}
             </Text>
           </View>
           <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
@@ -399,26 +467,35 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
             >
               Working Days
             </Text>
-            {user.workingDays?.map((item, index) => (
-              <View
-                key={index}
-                className="flex-row justify-between py-2 border-b border-gray-200"
+            {user.workingDays && user.workingDays.length > 0 ? (
+              user.workingDays.map((item, index) => (
+                <View
+                  key={index}
+                  className="flex-row justify-between py-2 border-b border-gray-200"
+                >
+                  <Text className="text-[16px] font-semibold">{item.day}</Text>
+                  <Text
+                    className="mr-2 text-[#BD7D06]"
+                    style={{ fontFamily: "Itim_400Regular" }}
+                  >
+                    From {formatTime(item.begin)}
+                  </Text>
+                  <Text
+                    className="mr-2 text-[#BD7D06]"
+                    style={{ fontFamily: "Itim_400Regular" }}
+                  >
+                    To {formatTime(item.end)}
+                  </Text>
+                </View>
+              ))
+            ) : (
+              <Text
+                className="text-center mt-2 text-[16px]"
+                style={{ fontFamily: "Itim_400Regular" }}
               >
-                <Text className="text-[16px] font-semibold">{item.day}</Text>
-                <Text
-                  className="mr-2 text-[#BD7D06]"
-                  style={{ fontFamily: "Itim_400Regular" }}
-                >
-                  From {formatTime(item.begin)}
-                </Text>
-                <Text
-                  className="mr-2 text-[#BD7D06]"
-                  style={{ fontFamily: "Itim_400Regular" }}
-                >
-                  To {formatTime(item.end)}
-                </Text>
-              </View>
-            ))}
+                No working days entered
+              </Text>
+            )}
           </View>
         </>
       )}

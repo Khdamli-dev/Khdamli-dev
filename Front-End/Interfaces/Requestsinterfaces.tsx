@@ -3,6 +3,7 @@ interface WorkerPrivateRequest {
   clientId : number,
   id: number;
   client_id: number;
+  client_email: string;
   client_phone_number: string;
   client_username: string;
   category: string;
@@ -25,6 +26,7 @@ interface ClientPrivateRequest {
   clientId : number,
   id: number;
   status: string;
+  worker_email: string;
   worker_phone_number: string;
   worker_username: string;
   worker_profile_image: string;
@@ -45,6 +47,7 @@ interface WorkerPublicRequest {
   id: number;
   category: string;
   client_id: number;
+  client_email: string;
   client_phone_number: string;
   client_username: string;
   client_profile_image: string;

@@ -45,9 +45,9 @@ const getRequests = async (req: Request, res: Response) => {
       FROM request r
       INNER JOIN public_request_messages prm ON r.id = prm.request
       WHERE r.type = $3 
-      AND r.status = $2 
+      AND r.status IN ($2, $4)    
       AND prm.worker = $1`;
-      values = [+worker, +onholdRequestStatusId, +publicRequestId];
+      values = [+worker, +onholdRequestStatusId, +publicRequestId, +acceptedRequestStatusId];
     } else {
       query = `SELECT id FROM request WHERE`;
       if (worker) {

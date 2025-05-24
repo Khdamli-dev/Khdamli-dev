@@ -23,7 +23,6 @@ const getWorkerProfile = async (req: Request, res: Response) => {
       `,
       [workerId]
     );
-
     if (!userCheck.rows.length) {
       res
         .status(404)

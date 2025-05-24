@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import pool from "../../database/dbConnection";
+import { changeRequestStatus } from "./jobRequestEmitter";
 
 export const updateRequestStatus = async (req: Request, res: Response) => {
   try {
@@ -35,6 +36,10 @@ export const updateRequestStatus = async (req: Request, res: Response) => {
       });
       return;
     }
+    
+    // sent updated status to client to make it real time
+    changeRequestStatus(rows[0]);
+
     res.status(201).json({
       message: "status updated successfully",
       status,

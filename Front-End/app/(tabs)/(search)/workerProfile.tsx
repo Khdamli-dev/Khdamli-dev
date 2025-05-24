@@ -19,6 +19,15 @@ import {
   Briefcase,
   CreditCard,
   MessageSquare,
+  Heart,
+  Share,
+  MoreHorizontal,
+  Star,
+  Grid3X3,
+  BookOpen,
+  Award,
+  Users,
+  CheckCircle
 } from "lucide-react-native";
 import CONFIG from "../../../config";
 import { LinearGradient } from "expo-linear-gradient";
@@ -32,6 +41,7 @@ import apiClient from "@/api/appClient";
 import { AntDesign } from "@expo/vector-icons";
 import Dashboard from "@/Component/ProfileComponents/Dashboard";
 import Reviews from "@/Component/ProfileComponents/Reviews";
+import refreshAccessToken from "@/api/refreshAccessToken";
 const { width } = Dimensions.get("window");
 
 interface ProfileItemProps {
@@ -44,24 +54,97 @@ const styles = StyleSheet.create({
   requestButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#BD7D06",
-    padding: 10,
-    borderRadius: 8,
+    backgroundColor: "#22C55E",
+    padding: 12,
+    borderRadius: 25,
     marginTop: 10,
   },
   requestButtonText: {
     color: "white",
     fontFamily: "Itim_400Regular",
     fontSize: 16,
+    fontWeight: "600",
+  },
+  socialButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#22C55E",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    marginHorizontal: 4,
+  },
+  socialButtonSecondary: {
+    backgroundColor: "#F3F4F6",
+  },
+  socialButtonText: {
+    color: "white",
+    fontWeight: "600",
+    fontSize: 15,
+    marginLeft: 6,
+  },
+  socialButtonTextSecondary: {
+    color: "#374151",
+  },
+  tabButton: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: 2,
+    borderBottomColor: "transparent",
+  },
+  tabButtonActive: {
+    borderBottomColor: "#22C55E",
+  },
+  tabText: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#6B7280",
+    marginTop: 4,
+  },
+  tabTextActive: {
+    color: "#22C55E",
+    fontWeight: "600",
+  },
+  postCard: {
+    backgroundColor: "white",
+    marginBottom: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  statsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F3F4F6",
+  },
+  statItem: {
+    alignItems: "center",
+  },
+  statNumber: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#111827",
+  },
+  statLabel: {
+    fontSize: 13,
+    color: "#6B7280",
+    marginTop: 2,
   },
 });
 
 const UserProfileView = () => {
-
   const { status, requestId, userId, userRole, origin } =
     useLocalSearchParams();
 
   const [role, setRole] = useState(1); // 1 Client 2 worker
+  const [activeTab, setActiveTab] = useState("posts"); // posts, about, reviews
   const [user, setUser] = useState<{
     fullName: string | null;
     registration_date: string | null;
@@ -78,7 +161,6 @@ const UserProfileView = () => {
     gallery: any[] | null;
     sentRequests: number | null;
     completedRequests: number | null;
-
   }>({
     fullName: null,
     registration_date: null,
@@ -98,26 +180,35 @@ const UserProfileView = () => {
   });
 
   useEffect(() => {
-    const fetchUserRole = async () => {
-      const userData = await AsyncStorage.getItem("user");
-      if (userData) {
-        const user = JSON.parse(userData);
-        setRole(user.role);
-      }
-    };
-    fetchUserRole();
     const fetchUserData = async () => {
       try {
         if (!userId || !userRole) {
           return;
         }
 
-        const endpoint =
-          Number(userRole) === 1
-            ? `/users/client/${userId}`
-            : `/users/worker/${userId}`;
+        const endpoint = `/users/worker/${userId}`;
 
         const response = await apiClient.get(`${endpoint}`);
+        // Worker data
+        const workerData = {
+          fullName: response.data.worker.username,
+          image: response.data.worker.profile_image,
+          registration_date: response.data.worker.registration_date,
+          age: response.data.worker.age,
+          gender: response.data.worker.sex,
+          region: response.data.worker.location.region,
+          city: response.data.worker.location.city,
+          accountType: "worker",
+          bio: response.data.worker.bio,
+          workingDays: response.data.worker.availability,
+          category: response.data.worker.categories,
+          paymentMethod: response.data.worker.payment_methods,
+          gallery: response.data.worker.media,
+          sentRequests: response.data.worker.activity.sent_requests,
+          completedRequests: response.data.worker.activity.completed_requests,
+        };
+        setUser(workerData);
+      } catch (error: any) {
 
         if (Number(userRole) === 1) {
           // Client data
@@ -137,7 +228,6 @@ const UserProfileView = () => {
             gallery: null,
             sentRequests: null,
             completedRequests: null,
-
           };
 
           setUser(clientData);
@@ -163,13 +253,20 @@ const UserProfileView = () => {
 
           setUser(workerData);
         }
-      } catch (error:any) {
+      } catch (error: any) {
         console.error("Failed to fetch user data", error.response?.data);
+        if (error.response?.status === 401) {
+          if (await refreshAccessToken()) {
+            await fetchUserData();
+          } else {
+            router.push("/(auth)");
+          }
+        }
       }
     };
 
     fetchUserData();
-  }, [userId, userRole]);
+  }, []);
 
   const formatTime = (timeString: string | null) => {
     if (!timeString) return "";
@@ -179,25 +276,48 @@ const UserProfileView = () => {
 
   // Profile item component - read-only version
   const ProfileItem = ({ label, value, Icon }: ProfileItemProps) => (
-    <View className="flex-row justify-between items-center py-4 px-[10px] mb-[3px]">
-      <Text
-        className="font-bold text-[16px]"
-        style={{ fontFamily: "Itim_400Regular" }}
-      >
-        {label}
-      </Text>
-      <View className="flex-row items-center gap-[10px]">
-        <Text
-          className="mr-[8px] text-[#BD7D06] font-semibold"
-          style={{ fontFamily: "Itim_400Regular" }}
-        >
-          {value || "Unknown"}
-          {label === "Age" && value ? " Years" : null}
+    <View style={{
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: "#F9FAFB",
+    }}>
+      {Icon && (
+        <View style={{
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: "#F0FDF4",
+          alignItems: "center",
+          justifyContent: "center",
+          marginRight: 12,
+        }}>
+          <Icon size={20} color="#22C55E" />
+        </View>
+      )}
+      <View style={{ flex: 1 }}>
+        <Text style={{
+          fontSize: 15,
+          color: "#6B7280",
+          marginBottom: 2,
+        }}>
+          {label}
         </Text>
-        {Icon && <Icon size={20} color="#BD7D06" />}
+        <Text style={{
+          fontSize: 16,
+          fontWeight: "600",
+          color: "#111827",
+          fontFamily: "Itim_400Regular"
+        }}>
+          {value || "Not specified"}
+          {label === "Age" && value ? " years old" : null}
+        </Text>
       </View>
     </View>
   );
+
   const handleSendPrivateRequest = () => {
     router.push({
       pathname: "/(tabs)/(home)/createRequest",
@@ -205,18 +325,170 @@ const UserProfileView = () => {
     });
   };
 
-   const handleNavigatetoclientprofiele = (clientId: string) => {
-      console.log(`Navigate to client: ${clientId}`);
-      router.push({
-            pathname: "/workerProfile",
-            params: {
-              userId: clientId,
-              userRole: 1,
-            },
-          });
-      // Navigate to client profile
-    };
+  const handleNavigatetoclientprofiele = (clientId: string) => {
+    console.log(`Navigate to client: ${clientId}`);
+    router.push({
+      pathname: "/workerProfile",
+      params: {
+        userId: clientId,
+        userRole: 1,
+      },
+    });
+    // Navigate to client profile
+  };
+  const handleNavigatetoclientprofiele = (clientId: string) => {
+    console.log(`Navigate to client: ${clientId}`);
+    router.push({
+      pathname: "/workerProfile",
+      params: {
+        userId: clientId,
+        userRole: 1,
+      },
+    });
+    // Navigate to client profile
+  };
 
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "posts":
+        return (
+          <View>
+            {/* Gallery as Posts */}
+            {user.gallery && user.gallery.length > 0 ? (
+              <FlatList
+                data={user.gallery}
+                renderItem={({ item, index }) => (
+                  <View style={styles.postCard}>
+                    {/* Post Header */}
+                    <View style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      padding: 12,
+                    }}>
+                      <Image
+                        source={{
+                          uri: user.image ?? "https://cdn-icons-png.flaticon.com/512/149/149071.png",
+                        }}
+                        style={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 20,
+                          marginRight: 12,
+                        }}
+                      />
+                      <View style={{ flex: 1 }}>
+                        <Text style={{
+                          fontSize: 16,
+                          fontWeight: "600",
+                          color: "#111827",
+                        }}>
+                          {user.fullName}
+                        </Text>
+                        <Text style={{
+                          fontSize: 12,
+                          color: "#6B7280",
+                        }}>
+                          Portfolio • Work Sample
+                        </Text>
+                      </View>
+                      <TouchableOpacity style={{ padding: 8 }}>
+                        <MoreHorizontal size={20} color="#6B7280" />
+                      </TouchableOpacity>
+                    </View>
+                    {/* Post Content */}
+                    {item.type === "image" ? (
+                      <Image
+                        source={{ uri: item.uri }}
+                        style={{
+                          height: width,
+                          width: '100%',
+                        }}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <Video
+                        source={{ uri: item.uri }}
+                        style={{
+                          height: width * 0.75,
+                          width: '100%',
+                        }}
+                        useNativeControls={true}
+                        resizeMode={ResizeMode.CONTAIN}
+                        shouldPlay={false}
+                      />
+                    )}
+
+                    {/* Post Actions */}
+                    <View style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: 12,
+                    }}>
+                      <View style={{ flexDirection: "row", alignItems: "center" }}>
+                        <TouchableOpacity style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          marginRight: 16,
+                        }}>
+                          <Heart size={24} color="#6B7280" />
+                          <Text style={{
+                            fontSize: 14,
+                            color: "#6B7280",
+                            marginLeft: 6,
+                          }}>
+                            Like
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          marginRight: 16,
+                        }}>
+                          <MessageSquare size={24} color="#6B7280" />
+                          <Text style={{
+                            fontSize: 14,
+                            color: "#6B7280",
+                            marginLeft: 6,
+                          }}>
+                            Comment
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                      <TouchableOpacity>
+                        <Share size={24} color="#6B7280" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+                keyExtractor={(item, index) => item.uri + index}
+                scrollEnabled={false}
+              />
+            ) : (
+              <View style={{
+                backgroundColor: "white",
+                padding: 40,
+                alignItems: "center",
+              }}>
+                <Grid3X3 size={60} color="#D1D5DB" />
+                <Text style={{
+                  fontSize: 16,
+                  color: "#6B7280",
+                  marginTop: 16,
+                  textAlign: "center",
+                }}>
+                  No posts yet
+                </Text>
+                <Text style={{
+                  fontSize: 14,
+                  color: "#9CA3AF",
+                  marginTop: 8,
+                  textAlign: "center",
+                }}>
+                  When {user.fullName} shares work, it will appear here
+                </Text>
+              </View>
+            )}
   return (
     <ScrollView>
       {/* Profile Header - Without Edit Buttons */}
@@ -229,9 +501,7 @@ const UserProfileView = () => {
         style={{ borderBottomLeftRadius: 50, borderBottomRightRadius: 50 }}
       >
         <TouchableOpacity
-
           onPress={() => router.back()}
-
           className="justify-end w-full"
         >
           <AntDesign name="left" size={50} color="#F8A100" />
@@ -301,12 +571,8 @@ const UserProfileView = () => {
         <>
           <Dashboard
             workerId={Array.isArray(userId) ? userId[0] : userId} // Pass the userId to the Dashboard component
-
             sent_requests={user.sentRequests || 0}
             completed_requests={user.completedRequests || 0}
-
-            }}
-
           />
           {/* Bio Section */}
           <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
@@ -320,9 +586,68 @@ const UserProfileView = () => {
               className="text-center mt-2 text-[16px]"
               style={{ fontFamily: "Itim_400Regular" }}
             >
-              {user.bio}
+              {user.bio ? user.bio : "The bio is not entered"}
             </Text>
           </View>
+        );
+
+      case "about":
+        return (
+          <View style={{ backgroundColor: "white" }}>
+            {/* Bio Section */}
+            {user.bio && (
+              <View style={{
+                padding: 16,
+                borderBottomWidth: 8,
+                borderBottomColor: "#F9FAFB",
+              }}>
+                <View style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginBottom: 12,
+                }}>
+                  <BookOpen size={20} color="#22C55E" />
+                  <Text style={{
+                    fontSize: 18,
+                    fontWeight: "600",
+                    color: "#111827",
+                    marginLeft: 8,
+                  }}>
+                    About
+                  </Text>
+                </View>
+                <Text style={{
+                  fontSize: 16,
+                  color: "#374151",
+                  lineHeight: 24,
+                  fontFamily: "Itim_400Regular"
+                }}>
+                  {user.bio}
+                </Text>
+              </View>
+            )}
+
+            {/* Professional Info */}
+            <View style={{
+              borderBottomWidth: 8,
+              borderBottomColor: "#F9FAFB",
+            }}>
+              <View style={{
+                flexDirection: "row",
+                alignItems: "center",
+                padding: 16,
+                paddingBottom: 8,
+              }}>
+                <Briefcase size={20} color="#22C55E" />
+                <Text style={{
+                  fontSize: 18,
+                  fontWeight: "600",
+                  color: "#111827",
+                  marginLeft: 8,
+                }}>
+                  Professional Details
+                </Text>
+              </View>
 
           {/* Working Days Section */}
           <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
@@ -332,149 +657,478 @@ const UserProfileView = () => {
             >
               Working Days
             </Text>
-            {user.workingDays?.map((item, index) => (
-              <View
-                key={index}
-                className="flex-row justify-between py-2 border-b border-gray-200"
+            {user.workingDays && user.workingDays.length > 0 ? (
+              user.workingDays.map((item, index) => (
+                <View
+                  key={index}
+                  className="flex-row justify-between py-2 border-b border-gray-200"
+                >
+                  <Text className="text-[16px] font-semibold">{item.day}</Text>
+                  <Text
+                    className="mr-2 text-[#BD7D06]"
+                    style={{ fontFamily: "Itim_400Regular" }}
+                  >
+                    From {formatTime(item.begin)}
+                  </Text>
+                  <Text
+                    className="mr-2 text-[#BD7D06]"
+                    style={{ fontFamily: "Itim_400Regular" }}
+                  >
+                    To {formatTime(item.end)}
+                  </Text>
+                </View>
+              ))
+            ) : (
+              <Text
+                className="text-center mt-2 text-[16px]"
+                style={{ fontFamily: "Itim_400Regular" }}
               >
-                <Text className="text-[16px] font-semibold">{item.day}</Text>
-                <Text
-                  className="mr-2 text-[#BD7D06]"
-                  style={{ fontFamily: "Itim_400Regular" }}
-                >
-                  From {formatTime(item.begin)}
-                </Text>
-                <Text
-                  className="mr-2 text-[#BD7D06]"
-                  style={{ fontFamily: "Itim_400Regular" }}
-                >
-                  To {formatTime(item.end)}
+                No working days entered
+              </Text>
+            )}
+          </View>
+        </>
+      )
+
+              <ProfileItem
+                label="Account Type"
+                value="Professional Worker"
+                Icon={(props) => <Award {...props} />}
+              />
+              
+              {user.category?.map((cat, index) => (
+                <ProfileItem
+                  key={index}
+                  label={`Profession ${index + 1}`}
+                  value={cat.name}
+                  Icon={(props) => <Briefcase {...props} />}
+                />
+              ))}
+
+              {user.paymentMethod && (
+                <ProfileItem
+                  label="Payment Methods"
+                  value={user.paymentMethod.join(" • ")}
+                  Icon={(props) => <CreditCard {...props} />}
+                />
+              )}
+            </View>
+
+            {/* Working Schedule */}
+            {user.workingDays && user.workingDays.length > 0 && (
+              <View style={{
+                borderBottomWidth: 8,
+                borderBottomColor: "#F9FAFB",
+              }}>
+                <View style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  padding: 16,
+                  paddingBottom: 8,
+                }}>
+                  <Clock size={20} color="#22C55E" />
+                  <Text style={{
+                    fontSize: 18,
+                    fontWeight: "600",
+                    color: "#111827",
+                    marginLeft: 8,
+                  }}>
+                    Working Schedule
+                  </Text>
+                </View>
+                
+                {user.workingDays.map((item, index) => (
+                  <View
+                    key={index}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      paddingVertical: 12,
+                      paddingHorizontal: 16,
+                      borderBottomWidth: user.workingDays && index < user.workingDays.length - 1 ? 1 : 0,
+                      borderBottomColor: "#F9FAFB",
+                    }}
+                  >
+                    <View style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 20,
+                      backgroundColor: "#F0FDF4",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginRight: 12,
+                    }}>
+                      <Clock size={20} color="#22C55E" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{
+                        fontSize: 16,
+                        fontWeight: "600",
+                        color: "#111827",
+                      }}>
+                        {item.day}
+                      </Text>
+                      <Text style={{
+                        fontSize: 14,
+                        color: "#22C55E",
+                        marginTop: 2,
+                        fontFamily: "Itim_400Regular"
+                      }}>
+                        {formatTime(item.begin)} - {formatTime(item.end)}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* Personal & Location Info */}
+            <View>
+              <View style={{
+                flexDirection: "row",
+                alignItems: "center",
+                padding: 16,
+                paddingBottom: 8,
+              }}>
+                <User size={20} color="#22C55E" />
+                <Text style={{
+                  fontSize: 18,
+                  fontWeight: "600",
+                  color: "#111827",
+                  marginLeft: 8,
+                }}>
+                  Personal Information
                 </Text>
               </View>
-            ))}
+
+              <ProfileItem
+                label="Age"
+                value={user.age}
+                Icon={(props) => <User {...props} />}
+              />
+              <ProfileItem
+                label="Gender"
+                value={user.gender}
+                Icon={(props) => <User {...props} />}
+              />
+              <ProfileItem
+                label="Location"
+                value={`${user.city}, ${user.region}`}
+                Icon={(props) => <MapPin {...props} />}
+              />
+              <ProfileItem
+                label="Member since"
+                value={user.registration_date ? user.registration_date.split("T")[0] : ""}
+                Icon={(props) => <Calendar {...props} />}
+              />
+            </View>
           </View>
-        </>
-      )}
-
-      {/* Location Information Card */}
-      <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
-        <ProfileItem
-          label="Registration Date"
-          value={
-            user.registration_date ? user.registration_date.split("T")[0] : ""
-          }
-          Icon={(props) => <Calendar {...props} />}
-        />
-        <ProfileItem
-          label="Region"
-          value={user.region}
-          Icon={(props) => <Globe {...props} />}
-        />
-        <ProfileItem
-          label="City"
-          value={user.city}
-          Icon={(props) => <MapPin {...props} />}
-        />
-      </View>
-
-      {/* Personal Information Card */}
-      <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
-        <ProfileItem
-          label="Account Type"
-          value={user.accountType === "worker" ? "Worker" : "Client"}
-          Icon={(props) => <User {...props} />}
-        />
-        <ProfileItem
-          label="Age"
-          value={user.age}
-          Icon={(props) => <Clock {...props} />}
-        />
-        <ProfileItem
-          label="Gender"
-          value={user.gender}
-          Icon={(props) => <User {...props} />}
-        />
-
-        {/* Worker-specific information */}
-        {user.accountType === "worker" && (
-          <>
-            {user.category?.map((cat, index) => (
-              <ProfileItem
-                key={index}
-                label={`Profession ${index + 1}`}
-                value={`${cat.name}`}
-                Icon={(props) => <Briefcase {...props} />}
-              />
-            ))}
-
-            {user.paymentMethod && (
-              <ProfileItem
-                label="Payment Method"
-                value={user.paymentMethod.join(" / ")}
-                Icon={(props) => <CreditCard {...props} />}
-              />
-            )}
-          </>
-        )}
-      </View>
-
-      {/* Gallery - Worker only */}
-      {user.accountType === "worker" &&
-        user.gallery &&
-        user.gallery.length > 0 && (
-          <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
-            <Text
-              className="text-center text-[#BD7D06] mb-2.5 text-[20px]"
-              style={{ fontFamily: "Itim_400Regular" }}
-            >
-              Portfolio
-            </Text>
-
-            <FlatList
-              data={user.gallery}
-              renderItem={({ item }) => (
-                <View className="mx-4">
-                  {item.type === "image" ? (
-                    <Image
-                      source={{ uri: item.uri }}
-                      className="h-[300px] rounded-[10px] my-1.5"
-                      style={{ width: width - 32 }}
-                    />
-                  ) : (
-                    <Video
-                      source={{ uri: item.uri }}
-                      className="h-[300px] rounded-[10px] my-1.5"
-                      style={{ width: width - 32 }}
-                      useNativeControls={true}
-                      resizeMode={ResizeMode.CONTAIN}
-                      shouldPlay={false}
-                    />
-                  )}
-                </View>
-              )}
-              keyExtractor={(item, index) => item.uri + index}
-              scrollEnabled={false}
+        );
+      case "reviews":
+        return (
+          <View style={{ backgroundColor: "white", minHeight: 400 }}>
+            <Reviews
+              workerId={Array.isArray(userId) ? userId[0] : userId}
+              onClientPress={(clientId) => {
+                handleNavigatetoclientprofiele(clientId);
+              }}
+              onViewAllPress={() => {
+                console.log("View all reviews");
+              }}
             />
           </View>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <ScrollView style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+      {/* Header with Back Button */}
+      <View style={{
+        backgroundColor: "white",
+        paddingTop: 50,
+        paddingHorizontal: 16,
+        paddingBottom: 12,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 2,
+      }}>
+        <View style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              backgroundColor: "#F3F4F6",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            activeOpacity={0.7}
+          >
+            <AntDesign name="left" size={20} color="#374151" />
+          </TouchableOpacity>
+          
+          <Text style={{
+            fontSize: 18,
+            fontWeight: "600",
+            color: "#111827",
+          }}>
+            {user.fullName}
+          </Text>
+          
+          <TouchableOpacity style={{
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: "#F3F4F6",
+            alignItems: "center",
+            justifyContent: "center",
+          }}>
+            <MoreHorizontal size={20} color="#374151" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Profile Header - Instagram Style */}
+      <View style={{ backgroundColor: "white", paddingBottom: 16 }}>
+        {/* Profile Image and Stats */}
+        <View style={{
+          flexDirection: "row",
+          alignItems: "center",
+          paddingHorizontal: 16,
+          paddingTop: 20,
+          paddingBottom: 16,
+        }}>
+          {/* Profile Image */}
+          <View style={{ position: "relative", marginRight: 20 }}>
+            <Image
+              source={{
+                uri: user.image ?? "https://cdn-icons-png.flaticon.com/512/149/149071.png",
+              }}
+              style={{
+                width: 90,
+                height: 90,
+                borderRadius: 45,
+                borderWidth: 3,
+                borderColor: "#22C55E",
+              }}
+            />
+            {/* Verified Badge */}
+            <View style={{
+              position: "absolute",
+              bottom: 2,
+              right: 2,
+              backgroundColor: "#22C55E",
+              width: 24,
+              height: 24,
+              borderRadius: 12,
+              alignItems: "center",
+              justifyContent: "center",
+              borderWidth: 2,
+              borderColor: "white",
+            }}>
+              <CheckCircle size={16} color="white" />
+            </View>
+          </View>
+
+          {/* Stats */}
+          <View style={{ flex: 1 }}>
+            <View style={styles.statsContainer}>
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>
+                  {user.gallery?.length || 0}
+                </Text>
+                <Text style={styles.statLabel}>Posts</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>
+                  {user.completedRequests || 0}
+                </Text>
+                <Text style={styles.statLabel}>Completed</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>
+                  {user.sentRequests || 0}
+                </Text>
+                <Text style={styles.statLabel}>Requests</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Name and Bio */}
+        <View style={{ paddingHorizontal: 16, marginBottom: 16 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 4 }}>
+            <Text style={{
+              fontSize: 16,
+              fontWeight: "700",
+              color: "#111827",
+              fontFamily: "Itim_400Regular"
+            }}>
+              {user.fullName}
+            </Text>
+            <View style={{
+              backgroundColor: "#22C55E",
+              paddingHorizontal: 8,
+              paddingVertical: 2,
+              borderRadius: 12,
+              marginLeft: 8,
+            }}>
+              <Text style={{
+                color: "white",
+                fontSize: 11,
+                fontWeight: "600",
+              }}>
+                WORKER
+              </Text>
+            </View>
+          </View>
+          
+          {user.category && user.category.length > 0 && (
+            <Text style={{
+              fontSize: 14,
+              color: "#6B7280",
+              marginBottom: 8,
+            }}>
+              {user.category.map(cat => cat.name).join(" • ")}
+            </Text>
+          )}
+          
+          {user.bio && (
+            <Text style={{
+              fontSize: 14,
+              color: "#374151",
+              lineHeight: 20,
+              fontFamily: "Itim_400Regular"
+            }}>
+              {user.bio}
+            </Text>
+          )}
+          
+          <Text style={{
+            fontSize: 13,
+            color: "#6B7280",
+            marginTop: 4,
+          }}>
+            📍 {user.city}, {user.region}
+          </Text>
+        </View>
+        {/* Action Buttons */}
+        {role === 1 && (
+          <View style={{
+            flexDirection: "row",
+            paddingHorizontal: 16,
+            marginBottom: 16,
+          }}>
+            <TouchableOpacity
+              onPress={handleSendPrivateRequest}
+              style={styles.socialButton}
+              activeOpacity={0.8}
+            >
+              <MessageSquare size={18} color="white" />
+              <Text style={styles.socialButtonText}>
+                Send Request
+              </Text>
+            </TouchableOpacity>
+          </View>
         )}
-      {/* Reviews Section - Worker only */}
-      {user.accountType === "worker" && (
-        <>
-          <Reviews
+
+        {/* Navigation Tabs */}
+        <View style={{
+          flexDirection: "row",
+          borderTopWidth: 1,
+          borderTopColor: "#F3F4F6",
+        }}>
+          <TouchableOpacity
+            style={[
+              styles.tabButton,
+              activeTab === "posts" && styles.tabButtonActive,
+            ]}
+            onPress={() => setActiveTab("posts")}
+          >
+            <Grid3X3
+              size={20}
+              color={activeTab === "posts" ? "#22C55E" : "#6B7280"}
+            />
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "posts" && styles.tabTextActive,
+              ]}
+            >
+              Posts
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.tabButton,
+              activeTab === "about" && styles.tabButtonActive,
+            ]}
+            onPress={() => setActiveTab("about")}
+          >
+            <User
+              size={20}
+              color={activeTab === "about" ? "#22C55E" : "#6B7280"}
+            />
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "about" && styles.tabTextActive,
+              ]}
+            >
+              About
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.tabButton,
+              activeTab === "reviews" && styles.tabButtonActive,
+            ]}
+            onPress={() => setActiveTab("reviews")}
+          >
+            <Star
+              size={20}
+              color={activeTab === "reviews" ? "#22C55E" : "#6B7280"}
+            />
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "reviews" && styles.tabTextActive,
+              ]}
+            >
+              Reviews
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Tab Content */}
+      {renderTabContent()}
+
+      {/* Dashboard Component for Worker Stats */}
+      {user.accountType === "worker" && activeTab === "about" && (
+        <View style={{ marginTop: 16 }}>
+          <Dashboard
             workerId={Array.isArray(userId) ? userId[0] : userId}
-            onClientPress={(clientId) => {
-              handleNavigatetoclientprofiele(clientId);
-              // Navigate to client profile
-            }}
-            onViewAllPress={() => {
-              console.log("View all reviews");
-              // Navigate to all reviews screen
-            }}
+            sent_requests={user.sentRequests || 0}
+            completed_requests={user.completedRequests || 0}
           />
-        </>
+        </View>
       )}
     </ScrollView>
   );
-};
+}
 
 export default UserProfileView;

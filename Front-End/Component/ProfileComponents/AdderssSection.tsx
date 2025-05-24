@@ -94,7 +94,6 @@ const AddressSection = ({
           role === 1 ? `/users/client/` : role === 2 ? `/users/worker/` : null;
         if (endpoint) {
           const response = await apiClient.get(`${endpoint}${id}`);
-          console.log(response);
           const newUserData =
             role === 1
               ? {

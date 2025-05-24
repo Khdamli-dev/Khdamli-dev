@@ -113,7 +113,7 @@ const HomeScreen = () => {
       keyboardDidShowListener.remove();
       keyboardDidHideListener.remove();
     };
-  }, [viewingSinglePost]);
+  },[]);
   // Improved media download function that handles both images and videos
   const handleMediaDownload = async (
     mediaUrl: string,
@@ -284,7 +284,6 @@ const HomeScreen = () => {
   // Open comment box and fetch comments
   const openCommentBox = async (postId: number) => {
     setSelectedPostId(postId);
-    setViewingSinglePost(true);
     setComments([]); // Initialize comments as empty array while loading
     setHasUserCommented(false); // Reset user comment status
     const fetchComments = async (postId: number) => {
@@ -327,7 +326,6 @@ const HomeScreen = () => {
   const closeCommentBox = () => {
     setSelectedPostId(null);
     setComments([]);
-    setViewingSinglePost(false);
     setHasUserCommented(false);
     setCommentText(""); // Clear comment text when closing
     // Dismiss keyboard
@@ -421,197 +419,303 @@ const HomeScreen = () => {
       },
     });
   };
-  // Render media item
-  const renderMediaItem = ({ item }: { item: MediaItem }) => {
-    if (!item) return null;
-    if (item.type === "image" && item.url) {
-      return (
-        <TouchableOpacity
-          className="mr-2"
-          onPress={() => setSelectedImage(item.url ?? null)}
-        >
-          <Image
+  // Media Item Renderer - Clean and Modern
+const renderMediaItem = ({ item }: { item: MediaItem }) => {
+  if (!item) return null;
+  
+  if (item.type === "image" && item.url) {
+    return (
+      <TouchableOpacity
+        style={{
+          marginRight: 8,
+          borderRadius: 12,
+          overflow: 'hidden',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 3,
+        }}
+        onPress={() => setSelectedImage(item.url ?? null)}
+        activeOpacity={0.9}
+      >
+        <Image
+          source={{ uri: item.url }}
+          style={{
+            width: 200,
+            height: 140,
+            backgroundColor: '#F3F4F6',
+          }}
+          resizeMode="cover"
+        />
+      </TouchableOpacity>
+    );
+  }
+  
+  if (item.type === "video" && item.url) {
+    return (
+      <TouchableOpacity
+        style={{
+          marginRight: 8,
+          borderRadius: 12,
+          overflow: 'hidden',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 3,
+        }}
+        onPress={() => setSelectedVideo(item.url ?? null)}
+        activeOpacity={0.9}
+      >
+        <View style={{ position: 'relative', width: 200, height: 140 }}>
+          <Video
             source={{ uri: item.url }}
-            className="w-48 h-32 rounded-xl"
-            resizeMode="cover"
+            useNativeControls={false}
+            resizeMode={ResizeMode.COVER}
+            isLooping={false}
+            style={{ width: 200, height: 140 }}
+            posterSource={{ uri: "https://picsum.photos/800/400" }}
           />
-        </TouchableOpacity>
-      );
-    }
-    if (item.type === "video" && item.url) {
-      return (
-        <TouchableOpacity
-          className="mr-2"
-          onPress={() => setSelectedVideo(item.url ?? null)}
-        >
-          <View className="relative w-48 h-32 rounded-xl overflow-hidden">
-            <Video
-              source={{ uri: item.url }}
-              useNativeControls={false}
-              resizeMode={ResizeMode.COVER}
-              isLooping={false}
-              style={{ width: 192, height: 128 }}
-              posterSource={{ uri: "https://picsum.photos/800/400" }}
-            />
-            <View className="absolute inset-0 flex items-center justify-center">
-              <View className="bg-black/40 rounded-full p-2">
-                <Ionicons name="play" size={28} color="white" />
-              </View>
+          <View
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: 'rgba(34, 197, 94, 0.9)', // Green with opacity
+                borderRadius: 30,
+                padding: 12,
+              }}
+            >
+              <Ionicons name="play" size={24} color="white" />
             </View>
           </View>
-        </TouchableOpacity>
-      );
-    }
-    return null;
-  };
-  // Format working time
-  const formatWorkingTime = (working_time: string): string => {
-    if (!working_time) return "Flexible";
-    // If working_time is already formatted nicely, just return it
-    if (
-      working_time.includes(" - ") ||
-      working_time.includes("hours") ||
-      working_time.includes("days") ||
-      working_time.toLowerCase().includes("flexible")
-    ) {
+        </View>
+      </TouchableOpacity>
+    );
+  }
+  return null;
+};
+
+// Format working time utility
+const formatWorkingTime = (working_time: string): string => {
+  if (!working_time) return "Flexible";
+  
+  if (
+    working_time.includes(" - ") ||
+    working_time.includes("hours") ||
+    working_time.includes("days") ||
+    working_time.toLowerCase().includes("flexible")
+  ) {
+    return working_time;
+  }
+  
+  if (/^\d+h$/i.test(working_time)) {
+    const hours = parseInt(working_time, 10);
+    return hours === 1 ? "1 hour" : `${hours} hours`;
+  }
+  
+  if (/^\d+d$/i.test(working_time)) {
+    const days = parseInt(working_time, 10);
+    return days === 1 ? "1 day" : `${days} days`;
+  }
+  
+  if (
+    working_time.includes(":") ||
+    /\d{1,2}\/\d{1,2}\/\d{2,4}/.test(working_time)
+  ) {
+    try {
+      const date = new Date(working_time);
+      return date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch (e) {
       return working_time;
     }
-    // Try to parse simple time formats like "2h" or "3d"
-    if (/^\d+h$/i.test(working_time)) {
-      const hours = parseInt(working_time, 10);
-      return hours === 1 ? "1 hour" : `${hours} hours`;
-    }
-    if (/^\d+d$/i.test(working_time)) {
-      const days = parseInt(working_time, 10);
-      return days === 1 ? "1 day" : `${days} days`;
-    }
-    // If we have a timestamp or date format, try to extract a readable time
-    if (
-      working_time.includes(":") ||
-      /\d{1,2}\/\d{1,2}\/\d{2,4}/.test(working_time)
-    ) {
-      try {
-        const date = new Date(working_time);
-        return date.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-      } catch (e) {
-        // If parsing fails, return the original
-        return working_time;
-      }
-    }
-    return working_time;
-  };
-  // Time ago helper
-  const getTimeAgo = (dateString: string): string => {
-    const now = new Date();
-    const sentDate = new Date(dateString);
-    const diffInSeconds = Math.floor(
-      (now.getTime() - sentDate.getTime()) / 1000
-    );
-    if (diffInSeconds < 60) return `${diffInSeconds} seconds ago`;
-    if (diffInSeconds < 3600)
-      return `${Math.floor(diffInSeconds / 60)} minutes ago`;
-    if (diffInSeconds < 86400)
-      return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-    // Calculate days more precisely
-    const days = Math.floor(diffInSeconds / 86400);
-    return days === 1 ? "1 day ago" : `${days} days ago`;
-  };
-  // Get day name for the post date
-  const getDayName = (dateString: string): string => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString("en-US", { weekday: "long" });
-    } catch (e) {
-      return "";
-    }
-  };
-  // Get formatted date string for the post date (e.g. "Sunday 05-05-2023")
-  const getFormattedDate = (dateString: string): string => {
-    try {
-      const date = new Date(dateString);
-      const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
-      // Format the date as DD-MM-YYYY
-      const day = date.getDate().toString().padStart(2, "0");
-      const month = (date.getMonth() + 1).toString().padStart(2, "0");
-      const year = date.getFullYear();
-      return `${dayName} ${day}-${month}-${year}`;
-    } catch (e) {
-      return "";
-    }
-  };
-  // Render single comment with expand/collapse functionality
-  const renderComment = (comment: Comment) => {
-    if (!comment) return null;
-    // Add null check before accessing text.length
-    const isLongComment = comment.message && comment.message.length > 100;
-    const displayText =
-      isLongComment && !comment.expanded
-        ? `${comment.message.substring(0, 100)}...`
-        : comment.message || "";
+  }
+  return working_time;
+};
 
-    return (
-      <View
-        key={comment.worker_id}
-        className="bg-gray-100 p-4 rounded-2xl mb-2"
-      >
-        <View className="flex-row items-center mb-2">
-          <TouchableOpacity
-            onPress={() => navigateToProfile(comment.worker_id, 2)}
-          >
-            <Image
-              source={{ uri: comment.profile_image }}
-              className="w-8 h-8 rounded-full mr-2"
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => navigateToProfile(comment.worker_id, 2)}
-          >
-            <Text className="font-bold text-sm">{comment.username}</Text>
-          </TouchableOpacity>
-        </View>
-        <Text className="text-gray-600">{displayText}</Text>
-        {isLongComment && (
-          <TouchableOpacity
-            onPress={() => toggleCommentExpand(comment.worker_id)}
-            className="mt-1"
-          >
-            <Text className="text-blue-500 text-sm">
-              {comment.expanded ? "Show less" : "Read more"}
-            </Text>
-          </TouchableOpacity>
-        )}
-      </View>
-    );
-  };
-  // Render comment section
-  const renderCommentSection = () => {
-    return (
-      <View className="mt-4 mb-10">
-        {/* Add bottom margin to prevent keyboard overlap */}
-        {comments && comments.length > 0 ? (
-          comments.map(renderComment)
-        ) : (
-          <Text className="text-gray-500 text-center py-4">
-            No comments yet
+// Time ago helper
+const getTimeAgo = (dateString: string): string => {
+  const now = new Date();
+  const sentDate = new Date(dateString);
+  const diffInSeconds = Math.floor(
+    (now.getTime() - sentDate.getTime()) / 1000
+  );
+  
+  if (diffInSeconds < 60) return `${diffInSeconds}s`;
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h`;
+  
+  const days = Math.floor(diffInSeconds / 86400);
+  return days === 1 ? "1d" : `${days}d`;
+};
+
+// Get formatted date string
+const getFormattedDate = (dateString: string): string => {
+  try {
+    const date = new Date(dateString);
+    const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear();
+    return `${dayName} ${day}-${month}-${year}`;
+  } catch (e) {
+    return "";
+  }
+};
+
+// Single Comment Component - Instagram Style
+const renderComment = (comment: Comment) => {
+  if (!comment) return null;
+  
+  const isLongComment = comment.message && comment.message.length > 100;
+  const displayText =
+    isLongComment && !comment.expanded
+      ? `${comment.message.substring(0, 100)}...`
+      : comment.message || "";
+
+  return (
+    <View
+      key={comment.worker_id}
+      style={{
+        backgroundColor: '#FFFFFF',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        marginBottom: 8,
+        borderRadius: 8,
+        borderLeftWidth: 3,
+        borderLeftColor: '#22C55E',
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+        <TouchableOpacity
+          onPress={() => navigateToProfile(comment.worker_id, 2)}
+          activeOpacity={0.7}
+        >
+          <Image
+            source={{ uri: comment.profile_image }}
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 16,
+              marginRight: 12,
+              borderWidth: 2,
+              borderColor: '#22C55E',
+            }}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => navigateToProfile(comment.worker_id, 2)}
+          activeOpacity={0.7}
+        >
+          <Text style={{ 
+            fontWeight: '600', 
+            fontSize: 14,
+            color: '#374151'
+          }}>
+            {comment.username}
           </Text>
-        )}
-        {role === 2 && (
-          <>
-            {!hasUserCommented ? (
+        </TouchableOpacity>
+      </View>
+      <Text style={{ 
+        color: '#4B5563', 
+        fontSize: 14,
+        lineHeight: 20,
+        marginLeft: 4
+      }}>
+        {displayText}
+      </Text>
+      {isLongComment && (
+        <TouchableOpacity
+          onPress={() => toggleCommentExpand(comment.worker_id)}
+          style={{ marginTop: 8, marginLeft: 4 }}
+          activeOpacity={0.7}
+        >
+          <Text style={{ 
+            color: '#22C55E', 
+            fontSize: 13,
+            fontWeight: '500'
+          }}>
+            {comment.expanded ? "Show less" : "Read more"}
+          </Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+};
+
+// Comment Section - Clean Design
+const renderCommentSection = () => {
+  return (
+    <View style={{ 
+      marginTop: 16, 
+      marginBottom: 40,
+      backgroundColor: '#F9FAFB',
+      borderRadius: 12,
+      padding: 16
+    }}>
+      {comments && comments.length > 0 ? (
+        <>
+          <Text style={{
+            fontSize: 16,
+            fontWeight: '600',
+            color: '#374151',
+            marginBottom: 12
+          }}>
+            Comments ({comments.length})
+          </Text>
+          {comments.map(renderComment)}
+        </>
+      ) : (
+        <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+          <Ionicons name="chatbubble-outline" size={32} color="#D1D5DB" />
+          <Text style={{ 
+            color: '#9CA3AF', 
+            textAlign: 'center',
+            marginTop: 8,
+            fontSize: 14
+          }}>
+            No comments yet. Be the first to comment!
+          </Text>
+        </View>
+      )}
+      
+      {role === 2 && (
+        <>
+          {!hasUserCommented ? (
+            <View style={{ marginTop: 16 }}>
               <TouchableWithoutFeedback onPress={focusCommentInput}>
                 <View>
                   <TextInput
                     ref={commentInputRef}
-                    className="border border-gray-300 rounded-xl p-2 h-16 text-right mt-2"
+                    style={{
+                      borderWidth: 1,
+                      borderColor: '#D1D5DB',
+                      borderRadius: 12,
+                      padding: 12,
+                      minHeight: 60,
+                      textAlignVertical: 'top',
+                      backgroundColor: '#FFFFFF',
+                      fontSize: 14,
+                      color: '#374151'
+                    }}
                     placeholder="Write your comment..."
+                    placeholderTextColor="#9CA3AF"
                     multiline
                     value={commentText}
                     onChangeText={setCommentText}
                     onFocus={() => {
-                      // When input is focused, scroll to it
                       setTimeout(() => {
                         scrollViewRef.current?.scrollToEnd({ animated: true });
                       }, 200);
@@ -619,304 +723,550 @@ const HomeScreen = () => {
                   />
                   <TouchableOpacity
                     onPress={() => submitComment(selectedPostId!)}
-                    className="bg-green-600 px-4 py-2 rounded-xl mt-2"
+                    style={{
+                      backgroundColor: '#22C55E',
+                      paddingHorizontal: 20,
+                      paddingVertical: 12,
+                      borderRadius: 8,
+                      marginTop: 12,
+                      alignItems: 'center'
+                    }}
+                    activeOpacity={0.8}
                   >
-                    <Text className="text-white text-center">Post Comment</Text>
+                    <Text style={{ 
+                      color: 'white', 
+                      fontWeight: '600',
+                      fontSize: 14
+                    }}>
+                      Post Comment
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </TouchableWithoutFeedback>
-            ) : (
-              <View className="bg-gray-100 p-3 rounded-xl mt-2">
-                <Text className="text-center text-gray-600">
-                  You have already commented on this post
-                </Text>
-              </View>
-            )}
-          </>
-        )}
-        <TouchableOpacity
-          onPress={closeCommentBox}
-          className="mt-4 bg-red-500 px-4 py-2 rounded-xl"
-        >
-          <Text className="text-white text-center">Close Comments</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
-
-  // Render post
-  const renderPost = ({ item }: { item: Post }) => {
-    if (!item) return null;
-
-    const formattedWorkingTime = formatWorkingTime(item.working_time);
-    const formattedDate = getFormattedDate(item.sent_time);
-
-    return (
-      <View className="bg-white rounded-2xl shadow p-4 mb-4 mx-2">
-        {/* Header */}
-        <View className="flex-row items-center mb-2">
-          <TouchableOpacity onPress={() => navigateToProfile(item.clientId, 1)}>
-            <Image
-              source={{ uri: item.profileImage }}
-              className="w-10 h-10 rounded-full mr-2"
-            />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigateToProfile(item.clientId, 1)}>
-            <View>
-              <Text className="font-bold text-lg">{item.userName}</Text>
-              <Text className="text-sm text-gray-500">
-                {item.region}, {item.city}
+            </View>
+          ) : (
+            <View style={{
+              backgroundColor: '#F3F4F6',
+              padding: 16,
+              borderRadius: 8,
+              marginTop: 16,
+              borderLeftWidth: 3,
+              borderLeftColor: '#22C55E'
+            }}>
+              <Text style={{
+                textAlign: 'center',
+                color: '#6B7280',
+                fontSize: 14
+              }}>
+                ✓ You have already commented on this post
               </Text>
             </View>
-          </TouchableOpacity>
-        </View>
-        {/* Description */}
-        <Text className="text-gray-700">{item.description}</Text>
-        {/* Media */}
-        {item.media && item.media.length > 0 ? (
-          <View className="mt-2">
-            <FlatList
-              horizontal
-              data={item.media}
-              keyExtractor={(_, i) => `media-${i}`}
-              renderItem={renderMediaItem}
-              showsHorizontalScrollIndicator={false}
-            />
-          </View>
-        ) : (
-          <View className="mt-2 py-2">
-            <Text className="text-gray-500 text-sm italic">Text only post</Text>
-          </View>
-        )}
-        {/* Time & category - Updated format */}
-        <View className="mt-2">
-          <View className="flex-row items-center gap-2">
-            <Ionicons name="time-outline" size={14} color="green" />
-            <Text className="text-sm text-green-700">
-              {getTimeAgo(item.sent_time)}
-            </Text>
-          </View>
-          <View className="flex-row items-center gap-2 mt-1">
-            <MaterialCommunityIcons name="tools" size={14} color="green" />
-            <Text className="text-sm text-green-700">{item.category}</Text>
-          </View>
-          <View className="flex-row items-center gap-2 mt-1">
-            <Ionicons name="calendar-outline" size={14} color="green" />
-            <Text className="text-sm text-green-700">
-              {formattedDate} | Work time: {formattedWorkingTime}
-            </Text>
-          </View>
-        </View>
-        {/* Comment button */}
-        <View className="flex-row justify-end mt-2">
-          <TouchableOpacity
-            onPress={() => openCommentBox(item.id)}
-            className="bg-blue-500 rounded-xl px-4 py-1"
-          >
-            <Text className="text-white">💬 Comment</Text>
-          </TouchableOpacity>
-        </View>
-        {/* Comments */}
-        {selectedPostId === item.id && renderCommentSection()}
-      </View>
-    );
-  };
-  return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1 }}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
-      enabled
-    >
-      <View className="flex-1 bg-gray-100 pt-4">
-        <LinearGradient
-          colors={["#2B524A", "#BED2D0"]}
-          start={{ x: 1, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          className="shadow-2xl"
-        >
-          <View className="overflow-hidden border-b border-gray-800/30">
-            <View className="flex-row justify-between items-center py-3 px-4">
-              <View className="flex-row items-baseline space-x-1">
-                <Text
-                  className="text-4xl font-black text-foncyYellow"
-                  style={{
-                    textShadowColor: "rgba(0,0,0,0.3)",
-                    textShadowOffset: { width: 2, height: 2 },
-                    textShadowRadius: 5,
-                  }}
-                >
-                  KH
-                </Text>
-                <Text
-                  className="text-2xl font-semibold text-white tracking-wider"
-                  style={{
-                    textShadowColor: "rgba(0,0,0,0.2)",
-                    textShadowOffset: { width: 1, height: 1 },
-                    textShadowRadius: 3,
-                  }}
-                >
-                  damli
-                </Text>
-              </View>
-              <View className="flex-row items-center">
-                <TouchableOpacity
-                  onPress={handleRefresh}
-                  className="bg-white/10 w-12 h-12 p-2 mx-2 rounded-full"
-                >
-                  <Ionicons name="refresh-outline" size={24} color="#fff" />
-                </TouchableOpacity>
-                {role === 1 && (
-                  <>
-                    <TouchableOpacity
-                      className="w-12 h-12 bg-[#F8A100] rounded-full items-center justify-center"
-                      onPress={() =>
-                        router.push({
-                          pathname: "./createRequest",
-                          params: { type: "1" },
-                        })
-                      }
-                    >
-                      <FontAwesome name="plus" size={24} color="white" />
-                    </TouchableOpacity>
-                  </>
-                )}
-              </View>
-            </View>
-          </View>
-        </LinearGradient>
-        {viewingSinglePost && selectedPostId ? (
-          <ScrollView
-            ref={scrollViewRef}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{
-              flexGrow: 1, // Add this
-              paddingBottom: 20,
-            }}
-          >
-            {posts.find((p) => p.id === selectedPostId) ? (
-              renderPost({ item: posts.find((p) => p.id === selectedPostId)! })
-            ) : (
-              <View className="p-4">
-                <Text>Post not found</Text>
-              </View>
-            )}
-          </ScrollView>
-        ) : (
-          <FlatList
-            ref={flatListRef}
-            data={posts}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={renderPost}
-            onEndReached={handleEndReached}
-            onScroll={(event) => {
-              setScrollPosition(event.nativeEvent.contentOffset.y);
-            }}
-            scrollEventThrottle={16}
-            onEndReachedThreshold={0.5}
-            ListFooterComponent={
-              loading ? <ActivityIndicator style={{ margin: 20 }} /> : null
-            }
-            ListEmptyComponent={
-              !loading ? (
-                <View className="p-10 items-center">
-                  <Text className="text-gray-500 text-center">
-                    No posts found
-                  </Text>
-                </View>
-              ) : null
-            }
-            removeClippedSubviews={false}
-            maxToRenderPerBatch={10}
-            windowSize={21}
-          />
-        )}
-        {/* Image Modal */}
-        <Modal
-          visible={!!selectedImage}
-          transparent={true}
-          onRequestClose={() => setSelectedImage(null)}
-        >
-          <View className="flex-1 bg-black/90">
-            <View className="flex-row justify-end p-4">
-              <TouchableOpacity
-                onPress={() =>
-                  selectedImage && handleImageDownload(selectedImage)
-                }
-                className="bg-white/20 rounded-full p-3 mr-2"
-                disabled={downloadingMedia}
-              >
-                {downloadingMedia ? (
-                  <ActivityIndicator size="small" color="white" />
-                ) : (
-                  <Ionicons name="download-outline" size={24} color="white" />
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setSelectedImage(null)}
-                className="bg-white/20 rounded-full p-3"
-                disabled={downloadingMedia}
-              >
-                <Ionicons name="close" size={24} color="white" />
-              </TouchableOpacity>
-            </View>
-            {selectedImage && (
-              <View className="flex-1 justify-center items-center">
-                <Image
-                  source={{ uri: selectedImage }}
-                  className="w-full h-[80%]"
-                  resizeMode="contain"
-                />
-              </View>
-            )}
-          </View>
-        </Modal>
-        {/* Video Modal */}
-        <Modal
-          visible={!!selectedVideo}
-          transparent={true}
-          onRequestClose={() => setSelectedVideo(null)}
-        >
-          <View className="flex-1 bg-black">
-            <View className="flex-row justify-end p-4">
-              <TouchableOpacity
-                onPress={() =>
-                  selectedVideo && handleVideoDownload(selectedVideo)
-                }
-                className="bg-white/20 rounded-full p-3 mr-2"
-                disabled={downloadingMedia}
-              >
-                {downloadingMedia ? (
-                  <ActivityIndicator size="small" color="white" />
-                ) : (
-                  <Ionicons name="download-outline" size={24} color="white" />
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setSelectedVideo(null)}
-                className="bg-white/20 rounded-full p-3"
-                disabled={downloadingMedia}
-              >
-                <Ionicons name="close" size={24} color="white" />
-              </TouchableOpacity>
-            </View>
-            {selectedVideo && (
-              <View className="flex-1 justify-center">
-                <Video
-                  source={{ uri: selectedVideo }}
-                  useNativeControls
-                  resizeMode={ResizeMode.CONTAIN}
-                  isLooping
-                  shouldPlay
-                  style={{ width: "100%", height: 300 }}
-                />
-              </View>
-            )}
-          </View>
-        </Modal>
-      </View>
-    </KeyboardAvoidingView>
+          )}
+        </>
+      )}
+      
+      <TouchableOpacity
+        onPress={closeCommentBox}
+        style={{
+          marginTop: 16,
+          backgroundColor: '#FFFFFF',
+          borderWidth: 1,
+          borderColor: '#D1D5DB',
+          paddingHorizontal: 20,
+          paddingVertical: 12,
+          borderRadius: 8,
+          alignItems: 'center'
+        }}
+        activeOpacity={0.7}
+      >
+        <Text style={{ 
+          color: '#6B7280',
+          fontWeight: '500',
+          fontSize: 14
+        }}>
+          Close Comments
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
 };
+
+// Main Post Component - Instagram/Facebook Style
+const renderPost = ({ item }: { item: Post }) => {
+  if (!item) return null;
+
+  const formattedWorkingTime = formatWorkingTime(item.working_time);
+  const formattedDate = getFormattedDate(item.sent_time);
+
+  return (
+    <View style={{
+      backgroundColor: '#FFFFFF',
+      borderRadius: 16,
+      marginHorizontal: 16,
+      marginBottom: 16,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 4,
+      overflow: 'hidden'
+    }}>
+      {/* Header - Instagram Style */}
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F3F4F6'
+      }}>
+        <TouchableOpacity 
+          onPress={() => navigateToProfile(item.clientId, 1)}
+          activeOpacity={0.7}
+        >
+          <Image
+            source={{ uri: item.profileImage }}
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              marginRight: 12,
+              borderWidth: 2,
+              borderColor: '#22C55E'
+            }}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity 
+          onPress={() => navigateToProfile(item.clientId, 1)}
+          style={{ flex: 1 }}
+          activeOpacity={0.7}
+        >
+          <Text style={{
+            fontWeight: '600',
+            fontSize: 16,
+            color: '#111827',
+            marginBottom: 2
+          }}>
+            {item.userName}
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Ionicons name="location-outline" size={14} color="#22C55E" />
+            <Text style={{
+              fontSize: 13,
+              color: '#6B7280',
+              marginLeft: 4
+            }}>
+              {item.region}, {item.city}
+            </Text>
+            <Text style={{
+              fontSize: 13,
+              color: '#9CA3AF',
+              marginLeft: 8
+            }}>
+              • {getTimeAgo(item.sent_time)}
+            </Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+
+      {/* Description */}
+      <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
+        <Text style={{
+          color: '#374151',
+          fontSize: 15,
+          lineHeight: 22
+        }}>
+          {item.description}
+        </Text>
+      </View>
+
+      {/* Media Section */}
+      {item.media && item.media.length > 0 ? (
+        <View style={{ paddingVertical: 16 }}>
+          <FlatList
+            horizontal
+            data={item.media}
+            keyExtractor={(_, i) => `media-${i}`}
+            renderItem={renderMediaItem}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 16 }}
+          />
+        </View>
+      ) : (
+        <View style={{ 
+          paddingHorizontal: 16, 
+          paddingVertical: 12,
+          alignItems: 'center'
+        }}>
+          <View style={{
+            backgroundColor: '#F9FAFB',
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            borderRadius: 20,
+            borderWidth: 1,
+            borderColor: '#E5E7EB'
+          }}>
+            <Text style={{
+              color: '#9CA3AF',
+              fontSize: 12,
+              fontStyle: 'italic'
+            }}>
+              📝 Text only post
+            </Text>
+          </View>
+        </View>
+      )}
+
+      {/* Job Details */}
+      <View style={{
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        backgroundColor: '#F9FAFB',
+        borderTopWidth: 1,
+        borderTopColor: '#F3F4F6'
+      }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{
+              backgroundColor: '#22C55E',
+              borderRadius: 12,
+              padding: 4,
+              marginRight: 6
+            }}>
+              <MaterialCommunityIcons name="tools" size={12} color="white" />
+            </View>
+            <Text style={{ fontSize: 13, color: '#374151', fontWeight: '500' }}>
+              {item.category}
+            </Text>
+          </View>
+          
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{
+              backgroundColor: '#22C55E',
+              borderRadius: 12,
+              padding: 4,
+              marginRight: 6
+            }}>
+              <Ionicons name="time-outline" size={12} color="white" />
+            </View>
+            <Text style={{ fontSize: 13, color: '#374151' }}>
+              {formattedWorkingTime}
+            </Text>
+          </View>
+        </View>
+        
+        <View style={{ 
+          flexDirection: 'row', 
+          alignItems: 'center',
+          marginTop: 8
+        }}>
+          <View style={{
+            backgroundColor: '#22C55E',
+            borderRadius: 12,
+            padding: 4,
+            marginRight: 6
+          }}>
+            <Ionicons name="calendar-outline" size={12} color="white" />
+          </View>
+          <Text style={{ fontSize: 13, color: '#6B7280' }}>
+            {formattedDate}
+          </Text>
+        </View>
+      </View>
+
+      {/* Action Button */}
+      <View style={{
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderTopWidth: 1,
+        borderTopColor: '#F3F4F6'
+      }}>
+        <TouchableOpacity
+          onPress={() => openCommentBox(item.id)}
+          style={{
+            backgroundColor: '#22C55E',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingVertical: 12,
+            borderRadius: 8
+          }}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="chatbubble-outline" size={18} color="white" />
+          <Text style={{
+            color: 'white',
+            fontWeight: '600',
+            fontSize: 15,
+            marginLeft: 8
+          }}>
+            Comment
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Comments Section */}
+      {selectedPostId === item.id && renderCommentSection()}
+    </View>
+  );
+};
+
+// Main Component Return Statement with Clean Header
+return (
+  <KeyboardAvoidingView
+    behavior={Platform.OS === "ios" ? "padding" : "height"}
+    style={{ flex: 1 }}
+    keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+    enabled
+  >
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+      {/* Fixed Header at Top */}
+      <View style={{
+        backgroundColor: '#FFFFFF',
+        borderBottomWidth: 1,
+        borderBottomColor: '#E5E7EB',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+      }}>
+        <View style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          paddingVertical: 16,
+          paddingHorizontal: 20,
+        }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={{
+              fontSize: 28,
+              fontWeight: '800',
+              color: '#22C55E',
+              marginRight: 4
+            }}>
+              KH
+            </Text>
+            <Text style={{
+              fontSize: 20,
+              fontWeight: '600',
+              color: '#374151',
+              letterSpacing: 0.5
+            }}>
+              damli
+            </Text>
+          </View>
+          
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TouchableOpacity
+              onPress={handleRefresh}
+              style={{
+                backgroundColor: '#F3F4F6',
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: 12
+              }}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="refresh-outline" size={22} color="#22C55E" />
+            </TouchableOpacity>
+            
+            {role === 1 && (
+              <TouchableOpacity
+                style={{
+                  backgroundColor: '#22C55E',
+                  width: 44,
+                  height: 44,
+                  borderRadius: 22,
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                onPress={() =>
+                  router.push({
+                    pathname: "./createRequest",
+                    params: { type: "1" },
+                  })
+                }
+                activeOpacity={0.8}
+              >
+                <FontAwesome name="plus" size={20} color="white" />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      </View>
+
+      {/* Content - FlatList */}
+      <FlatList
+        ref={flatListRef}
+        data={posts}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderPost}
+        onEndReached={handleEndReached}
+        onScroll={(event) => {
+          setScrollPosition(event.nativeEvent.contentOffset.y);
+        }}
+        scrollEventThrottle={16}
+        onEndReachedThreshold={0.5}
+        contentContainerStyle={{ paddingVertical: 16 }}
+        showsVerticalScrollIndicator={false}
+        ListFooterComponent={
+          loading ? (
+            <View style={{ padding: 20, alignItems: 'center' }}>
+              <ActivityIndicator size="large" color="#22C55E" />
+            </View>
+          ) : null
+        }
+        ListEmptyComponent={
+          !loading ? (
+            <View style={{ 
+              padding: 40, 
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <Ionicons name="document-text-outline" size={48} color="#D1D5DB" />
+              <Text style={{
+                color: '#9CA3AF',
+                textAlign: 'center',
+                marginTop: 12,
+                fontSize: 16
+              }}>
+                No posts found
+              </Text>
+            </View>
+          ) : null
+        }
+        removeClippedSubviews={false}
+        maxToRenderPerBatch={10}
+        windowSize={21}
+      />
+
+      {/* Image Modal */}
+      <Modal
+        visible={!!selectedImage}
+        transparent={true}
+        onRequestClose={() => setSelectedImage(null)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.95)' }}>
+          <View style={{
+            flexDirection: 'row',
+            justifyContent: 'flex-end',
+            padding: 20,
+            paddingTop: Platform.OS === 'ios' ? 60 : 40
+          }}>
+            <TouchableOpacity
+              onPress={() =>
+                selectedImage && handleImageDownload(selectedImage)
+              }
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                borderRadius: 25,
+                padding: 12,
+                marginRight: 12
+              }}
+              disabled={downloadingMedia}
+              activeOpacity={0.7}
+            >
+              {downloadingMedia ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Ionicons name="download-outline" size={24} color="white" />
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setSelectedImage(null)}
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                borderRadius: 25,
+                padding: 12
+              }}
+              disabled={downloadingMedia}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="close" size={24} color="white" />
+            </TouchableOpacity>
+          </View>
+          {selectedImage && (
+            <View style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              paddingHorizontal: 20
+            }}>
+              <Image
+                source={{ uri: selectedImage }}
+                style={{ width: '100%', height: '80%' }}
+                resizeMode="contain"
+              />
+            </View>
+          )}
+        </View>
+      </Modal>
+
+      {/* Video Modal */}
+      <Modal
+        visible={!!selectedVideo}
+        transparent={true}
+        onRequestClose={() => setSelectedVideo(null)}
+      >
+        <View style={{ flex: 1, backgroundColor: '#000000' }}>
+          <View style={{
+            flexDirection: 'row',
+            justifyContent: 'flex-end',
+            padding: 20,
+            paddingTop: Platform.OS === 'ios' ? 60 : 40
+          }}>
+            <TouchableOpacity
+              onPress={() =>
+                selectedVideo && handleVideoDownload(selectedVideo)
+              }
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                borderRadius: 25,
+                padding: 12,
+                marginRight: 12
+              }}
+              disabled={downloadingMedia}
+              activeOpacity={0.7}
+            >
+              {downloadingMedia ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Ionicons name="download-outline" size={24} color="white" />
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setSelectedVideo(null)}
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                borderRadius: 25,
+                padding: 12
+              }}
+              disabled={downloadingMedia}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="close" size={24} color="white" />
+            </TouchableOpacity>
+          </View>
+          {selectedVideo && (
+            <View style={{ flex: 1, justifyContent: 'center' }}>
+              <Video
+                source={{ uri: selectedVideo }}
+                useNativeControls
+                resizeMode={ResizeMode.CONTAIN}
+                isLooping
+                shouldPlay
+                style={{ width: "100%", height: 300 }}
+              />
+            </View>
+          )}
+        </View>
+      </Modal>
+     </SafeAreaView>
+  </KeyboardAvoidingView>
+);
+}
 
 export default HomeScreen;
