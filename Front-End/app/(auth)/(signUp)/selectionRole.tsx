@@ -54,7 +54,6 @@ export default function SelectRole() {
   //HandleClient --------------------------------------
   const handleClientRole = async () => {
     router.dismissAll();
-    router.replace("/(tabs)/(home)");
     router.replace("/(tabs)/(home)"); // Navigate to home
     await setUserVerificationStatus(false);
     router.push("/(auth)/verifyAccount?sendEmail=true");

@@ -125,23 +125,21 @@ const PrivateRequests = () => {
 
   useEffect(() => {
     const handler = (data: { id: number; status: string }) => {
-      console.log('Prvate request status update:', data);
-      
+      console.log("Prvate request status update:", data);
+
       setRequests((prev) =>
         prev.map((request) =>
-          request.id === data.id 
-            ? { ...request, status: data.status } 
-            : request
+          request.id === data.id ? { ...request, status: data.status } : request
         )
       );
     };
 
     // Add listener
-    eventEmitter.on('change-private-request-status', handler);
+    eventEmitter.on("change-private-request-status", handler);
 
     // Cleanup function
     return () => {
-      eventEmitter.off('change-private-request-status', handler);
+      eventEmitter.off("change-private-request-status", handler);
     };
   }, []);
 
@@ -509,7 +507,7 @@ const PrivateRequests = () => {
     return (
       <TouchableOpacity
         onPress={() => toggleExpandRequest(item.id)}
-        className={`${item.status === RequestStatus.ON_HOLD ? 'bg-specialGreen/70' : 'bg-white'} mt-2 p-4 mb-4 rounded-lg shadow`}
+        className={`${item.status === RequestStatus.ON_HOLD ? "bg-specialGreen/70" : "bg-white"} mt-2 p-4 mb-4 rounded-lg shadow`}
       >
         <View className="flex-row justify-between items-center">
           <View className="flex-row items-center flex-1">

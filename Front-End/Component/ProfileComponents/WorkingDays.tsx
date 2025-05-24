@@ -42,6 +42,7 @@ const formatTime = (time: Date | string | undefined | null): string => {
     return "--:--";
   }
 };
+const [isWorker , setIsWorker] =useState(false);
 const WorkingDays = ({
   onChange,
 }: {
@@ -63,6 +64,9 @@ const WorkingDays = ({
         if (!user) return;
 
         const { id, role } = user;
+        if (role ===2) {
+          setIsWorker(true);
+        }
         const endpoint = role === 2 ? `/users/worker/` : null;
         if (endpoint) {
           const response = await apiClient.get(`${endpoint}${id}`);
@@ -106,7 +110,7 @@ const WorkingDays = ({
     { name: "friday", isEnabled: false },
     { name: "saturday", isEnabled: false },
   ]);
-
+ 
   const [showPicker, setShowPicker] = useState<{
     index: number;
     type: "begin" | "end";
@@ -161,8 +165,10 @@ const WorkingDays = ({
     }
   };
 
-  return (
-    <View style={styles.section}>
+   return (
+    <>
+    {isWorker && (
+      <View style={styles.section}>
       <Text style={styles.sectionTitle}>Edit Working Days</Text>
       <View style={styles.headerRow}>
         <Text style={styles.ghi}>Days</Text>
@@ -187,7 +193,11 @@ const WorkingDays = ({
         handleTimeChange={handleTimeChange}
       />
     </View>
-  );
+    )}
+    
+    </>
+    
+  );  
 };
 const styles = StyleSheet.create({
   section: {

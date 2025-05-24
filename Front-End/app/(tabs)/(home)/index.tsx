@@ -210,6 +210,7 @@ const HomeScreen = () => {
       setLoading(true);
       try {
         const userData: string | null = await AsyncStorage.getItem("user");
+        console.log(userData);
         if (userData) {
           const user = JSON.parse(userData);
           const response = await apiClient.get(
