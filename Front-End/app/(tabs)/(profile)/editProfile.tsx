@@ -249,24 +249,43 @@ const EditProfileScreen = ({ navigation }: ProfileScreenProps) => {
         const endpoint = `/users/${id}`;
 
         if (endpoint) {
-          console.log("Changes to be sent:", personalInfo);
-          // Make API call to update profile
-          const payload: any = {
-            workerInfo: {
-              workingHours: workingDays,
-              categories: userInfo.subCategories,
-              bio: userInfo.bio,
-            },
-            ...(personalInfo.region ? { address: personalInfo } : {}),
-          };
+          console.log("Changes to be sent:", changes);
+
+          // Build payload dynamically based on what actually changed
+          const payload: any = {};
+
+          // Only include workerInfo if any of its fields changed
+          if (
+            (changes.userInfo && Object.keys(changes.userInfo).length > 0) ||
+            (changes.workingDays && changes.workingDays.length > 0)
+          ) {
+            payload.workerInfo = {};
+            if (changes.workingDays && changes.workingDays.length > 0) {
+              payload.workerInfo.workingHours = changes.workingDays;
+            }
+            if (changes.userInfo?.categories) {
+              payload.workerInfo.categories = changes.userInfo.categories;
+            }
+            if (changes.userInfo?.bio) {
+              payload.workerInfo.bio = changes.userInfo.bio;
+            }
+          }
+
+          // Only include address if it changed
+          if (changes.addressInfo && changes.addressInfo.region != null) {
+            payload.address = changes.addressInfo;
+          }
+
+          // You can add other sections similarly if needed
+
           console.log(payload);
+
           const response = await apiClient.put(endpoint, payload);
           if (response.status === 200 || response.status === 201) {
-          console.log("Successfully updated profile with changes:", changes);
-          // Navigate back after successful update
-           router.back();
-           } else {
-             console.error("Failed to update profile:", response.data);
+            console.log("Successfully updated profile with changes:", changes);
+            router.back();
+          } else {
+            console.error("Failed to update profile:", response.data);
           }
         }
       } else{

@@ -4,22 +4,30 @@ import {
   Text,
   Image,
   ScrollView,
+  Dimensions,
+  FlatList,
   StyleSheet,
   TouchableOpacity,
 } from "react-native";
 import {
   Calendar,
   MapPin,
+  Clock,
   Globe,
   User,
-  MoreHorizontal,
-  CheckCircle,
+  Briefcase,
+  CreditCard,
+  MessageSquare,
 } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Video, ResizeMode } from "expo-av";
 import { router, useLocalSearchParams } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import apiClient from "@/api/appClient";
 import { AntDesign } from "@expo/vector-icons";
-import refreshAccessToken from "@/api/refreshAccessToken";
+import Dashboard from "@/Component/ProfileComponents/Dashboard";
+import Reviews from "@/Component/ProfileComponents/Reviews";
+const { width } = Dimensions.get("window");
 
 interface ProfileItemProps {
   label: string;
@@ -28,59 +36,34 @@ interface ProfileItemProps {
 }
 
 const styles = StyleSheet.create({
-  tabButton: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: 12,
-    borderBottomWidth: 2,
-    borderBottomColor: "transparent",
-  },
-  tabButtonActive: {
-    borderBottomColor: "#22C55E",
-  },
-  tabText: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#6B7280",
-    marginTop: 4,
-  },
-  tabTextActive: {
-    color: "#22C55E",
-    fontWeight: "600",
-  },
-  statsContainer: {
+  requestButton: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
-  },
-  statItem: {
     alignItems: "center",
+    backgroundColor: "#BD7D06",
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 10,
   },
-  statNumber: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#111827",
-  },
-  statLabel: {
-    fontSize: 13,
-    color: "#6B7280",
-    marginTop: 2,
+  requestButtonText: {
+    color: "white",
+    fontFamily: "Itim_400Regular",
+    fontSize: 16,
   },
 });
 
 const UserProfileView = () => {
-  const { status, requestId, userId, userRole, origin } = useLocalSearchParams();
-  
-  const [activeTab, setActiveTab] = useState("about");
+  const { status, requestId, userId, userRole, origin } =
+    useLocalSearchParams();
+  const [role, setRole] = useState(1); // 1 Client 2 worker
   const [user, setUser] = useState<{
     fullName: string | null;
     registration_date: string | null;
+    bio: string | null;
     image: string | null;
     region: string | null;
     city: string | null;
     accountType: string | null;
+    workingDays: any[] | null;
     age: number | null;
     gender: string | null;
     paymentMethod: string[] | null;
@@ -91,10 +74,12 @@ const UserProfileView = () => {
   }>({
     fullName: null,
     registration_date: null,
+    bio: null,
     image: null,
     region: null,
     city: null,
     accountType: null,
+    workingDays: null,
     age: null,
     gender: null,
     paymentMethod: null,
@@ -105,13 +90,25 @@ const UserProfileView = () => {
   });
 
   useEffect(() => {
+    const fetchUserRole = async () => {
+      const userData = await AsyncStorage.getItem("user");
+      if (userData) {
+        const user = JSON.parse(userData);
+        setRole(user.role);
+      }
+    };
+    fetchUserRole();
     const fetchUserData = async () => {
       try {
-        if (!userId) {
+        if (!userId || !userRole) {
           return;
         }
 
-        const endpoint = `/users/client/${userId}`;
+        const endpoint =
+          Number(userRole) === 1
+            ? `/users/client/${userId}`
+            : `/users/worker/${userId}`;
+
         const response = await apiClient.get(`${endpoint}`);
 
         if (Number(userRole) === 1) {
@@ -163,48 +160,32 @@ const UserProfileView = () => {
     };
 
     fetchUserData();
-  }, [userId]);
+  }, [userId, userRole]);
+
+  const formatTime = (timeString: string | null) => {
+    if (!timeString) return "";
+    // Handle various formats, returning just HH:MM
+    return timeString.split(":").slice(0, 2).join(":");
+  };
 
   // Profile item component - read-only version
   const ProfileItem = ({ label, value, Icon }: ProfileItemProps) => (
-    <View style={{
-      flexDirection: "row",
-      alignItems: "center",
-      paddingVertical: 12,
-      paddingHorizontal: 16,
-      borderBottomWidth: 1,
-      borderBottomColor: "#F9FAFB",
-    }}>
-      {Icon && (
-        <View style={{
-          width: 40,
-          height: 40,
-          borderRadius: 20,
-          backgroundColor: "#F0FDF4",
-          alignItems: "center",
-          justifyContent: "center",
-          marginRight: 12,
-        }}>
-          <Icon size={20} color="#22C55E" />
-        </View>
-      )}
-      <View style={{ flex: 1 }}>
-        <Text style={{
-          fontSize: 15,
-          color: "#6B7280",
-          marginBottom: 2,
-        }}>
-          {label}
+    <View className="flex-row justify-between items-center py-4 px-[10px] mb-[3px]">
+      <Text
+        className="font-bold text-[16px]"
+        style={{ fontFamily: "Itim_400Regular" }}
+      >
+        {label}
+      </Text>
+      <View className="flex-row items-center gap-[10px]">
+        <Text
+          className="mr-[8px] text-[#BD7D06] font-semibold"
+          style={{ fontFamily: "Itim_400Regular" }}
+        >
+          {value || "Unknown"}
+          {label === "Age" && value ? " Years" : null}
         </Text>
-        <Text style={{
-          fontSize: 16,
-          fontWeight: "600",
-          color: "#111827",
-          fontFamily: "Itim_400Regular"
-        }}>
-          {value || "Not specified"}
-          {label === "Age" && value ? " years old" : null}
-        </Text>
+        {Icon && <Icon size={20} color="#BD7D06" />}
       </View>
     </View>
   );
@@ -420,229 +401,102 @@ const UserProfileView = () => {
         />
       </View>
 
-              <ProfileItem
-                label="Account Type"
-                value="Client"
-                Icon={(props) => <User {...props} />}
-              />
-              <ProfileItem
-                label="Age"
-                value={user.age}
-                Icon={(props) => <User {...props} />}
-              />
-              <ProfileItem
-                label="Gender"
-                value={user.gender}
-                Icon={(props) => <User {...props} />}
-              />
-              <ProfileItem
-                label="Location"
-                value={`${user.city}, ${user.region}`}
-                Icon={(props) => <MapPin {...props} />}
-              />
-              <ProfileItem
-                label="Member since"
-                value={user.registration_date ? user.registration_date.split("T")[0] : ""}
-                Icon={(props) => <Calendar {...props} />}
-              />
-            </View>
-          </View>
-        );
+      {/* Personal Information Card */}
+      <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
+        <ProfileItem
+          label="Account Type"
+          value={user.accountType === "worker" ? "Worker" : "Client"}
+          Icon={(props) => <User {...props} />}
+        />
+        <ProfileItem
+          label="Age"
+          value={user.age}
+          Icon={(props) => <Clock {...props} />}
+        />
+        <ProfileItem
+          label="Gender"
+          value={user.gender}
+          Icon={(props) => <User {...props} />}
+        />
 
-      default:
-        return null;
-    }
-  };
+        {/* Worker-specific information */}
+        {user.accountType === "worker" && (
+          <>
+            {user.category?.map((cat, index) => (
+              <ProfileItem
+                key={index}
+                label={`Profession ${index + 1}`}
+                value={`${cat.name}`}
+                Icon={(props) => <Briefcase {...props} />}
+              />
+            ))}
 
-  return (
-    <ScrollView style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
-      {/* Header with Back Button */}
-      <View style={{
-        backgroundColor: "white",
-        paddingTop: 50,
-        paddingHorizontal: 16,
-        paddingBottom: 12,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 2,
-      }}>
-        <View style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}>
-          <TouchableOpacity
-            onPress={() => {
-                  router.back();
-              }
-            }
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-              backgroundColor: "#F3F4F6",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-            activeOpacity={0.7}
-          >
-            <AntDesign name="left" size={20} color="#374151" />
-          </TouchableOpacity>
-          
-          <Text style={{
-            fontSize: 18,
-            fontWeight: "600",
-            color: "#111827",
-          }}>
-            {user.fullName}
-          </Text>
-          
-          <TouchableOpacity style={{
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            backgroundColor: "#F3F4F6",
-            alignItems: "center",
-            justifyContent: "center",
-          }}>
-            <MoreHorizontal size={20} color="#374151" />
-          </TouchableOpacity>
-        </View>
+            {user.paymentMethod && (
+              <ProfileItem
+                label="Payment Method"
+                value={user.paymentMethod.join(" / ")}
+                Icon={(props) => <CreditCard {...props} />}
+              />
+            )}
+          </>
+        )}
       </View>
 
-      {/* Profile Header - Instagram Style */}
-      <View style={{ backgroundColor: "white", paddingBottom: 16 }}>
-        {/* Profile Image and Stats */}
-        <View style={{
-          flexDirection: "row",
-          alignItems: "center",
-          paddingHorizontal: 16,
-          paddingTop: 20,
-          paddingBottom: 16,
-        }}>
-          {/* Profile Image */}
-          <View style={{ position: "relative", marginRight: 20 }}>
-            <Image
-              source={{
-                uri: user.image ?? "https://cdn-icons-png.flaticon.com/512/149/149071.png",
-              }}
-              style={{
-                width: 90,
-                height: 90,
-                borderRadius: 45,
-                borderWidth: 3,
-                borderColor: "#22C55E",
-              }}
-            />
-            {/* Verified Badge */}
-            <View style={{
-              position: "absolute",
-              bottom: 2,
-              right: 2,
-              backgroundColor: "#22C55E",
-              width: 24,
-              height: 24,
-              borderRadius: 12,
-              alignItems: "center",
-              justifyContent: "center",
-              borderWidth: 2,
-              borderColor: "white",
-            }}>
-              <CheckCircle size={16} color="white" />
-            </View>
-          </View>
-
-          {/* Stats */}
-          <View style={{ flex: 1 }}>
-            <View style={styles.statsContainer}>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>0</Text>
-                <Text style={styles.statLabel}>Posts</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* Name and Info */}
-        <View style={{ paddingHorizontal: 16, marginBottom: 16 }}>
-          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 4 }}>
-            <Text style={{
-              fontSize: 16,
-              fontWeight: "700",
-              color: "#111827",
-              fontFamily: "Itim_400Regular"
-            }}>
-              {user.fullName}
-            </Text>
-            <View style={{
-              backgroundColor: "#22C55E",
-              paddingHorizontal: 8,
-              paddingVertical: 2,
-              borderRadius: 12,
-              marginLeft: 8,
-            }}>
-              <Text style={{
-                color: "white",
-                fontSize: 11,
-                fontWeight: "600",
-              }}>
-                CLIENT
-              </Text>
-            </View>
-          </View>
-          
-          <Text style={{
-            fontSize: 13,
-            color: "#6B7280",
-            marginTop: 4,
-          }}>
-            📍 {user.city}, {user.region}
-          </Text>
-          
-          {user.registration_date && (
-            <Text style={{
-              fontSize: 13,
-              color: "#6B7280",
-              marginTop: 2,
-            }}>
-              🗓️ Member since {user.registration_date.split("T")[0]}
-            </Text>
-          )}
-        </View>
-
-        {/* Navigation Tabs */}
-        <View style={{
-          flexDirection: "row",
-          borderTopWidth: 1,
-          borderTopColor: "#F3F4F6",
-        }}>
-          <TouchableOpacity
-            style={[
-              styles.tabButton,
-              activeTab === "about" && styles.tabButtonActive,
-            ]}
-            onPress={() => setActiveTab("about")}
-          >
-            <User
-              size={20}
-              color={activeTab === "about" ? "#22C55E" : "#6B7280"}
-            />
+      {/* Gallery - Worker only */}
+      {user.accountType === "worker" &&
+        user.gallery &&
+        user.gallery.length > 0 && (
+          <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
             <Text
-              style={[
-                styles.tabText,
-                activeTab === "about" && styles.tabTextActive,
-              ]}
+              className="text-center text-[#BD7D06] mb-2.5 text-[20px]"
+              style={{ fontFamily: "Itim_400Regular" }}
             >
-              About
+              Portfolio
             </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
 
-      {/* Tab Content */}
-      {renderTabContent()}
+            <FlatList
+              data={user.gallery}
+              renderItem={({ item }) => (
+                <View className="mx-4">
+                  {item.type === "image" ? (
+                    <Image
+                      source={{ uri: item.uri }}
+                      className="h-[300px] rounded-[10px] my-1.5"
+                      style={{ width: width - 32 }}
+                    />
+                  ) : (
+                    <Video
+                      source={{ uri: item.uri }}
+                      className="h-[300px] rounded-[10px] my-1.5"
+                      style={{ width: width - 32 }}
+                      useNativeControls={true}
+                      resizeMode={ResizeMode.CONTAIN}
+                      shouldPlay={false}
+                    />
+                  )}
+                </View>
+              )}
+              keyExtractor={(item, index) => item.uri + index}
+              scrollEnabled={false}
+            />
+          </View>
+        )}
+      {/* Reviews Section - Worker only */}
+      {user.accountType === "worker" && (
+        <>
+          <Reviews
+            workerId={Array.isArray(userId) ? userId[0] : userId}
+            onClientPress={(clientId) => {
+              handleNavigatetoclientprofiele(clientId);
+              // Navigate to client profile
+            }}
+            onViewAllPress={() => {
+              console.log("View all reviews");
+              // Navigate to all reviews screen
+            }}
+          />
+        </>
+      )}
     </ScrollView>
   );
 };
