@@ -795,7 +795,6 @@ const PublicRequest = () => {
     const [commentText, setCommentText] = useState(initialComment || "");
     const commentInputRef = useRef(null);
     const [keyboardVisible, setKeyboardVisible] = useState(false);
-
     useEffect(() => {
       const keyboardDidShowListener = Keyboard.addListener(
         "keyboardDidShow",

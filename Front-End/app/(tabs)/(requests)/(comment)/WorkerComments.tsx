@@ -116,9 +116,8 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
       await apiClient.put(
         `/work/job-request/${requestId}/select-worker/${workerId}`
       );
+      await storeWaitingAgreement(workerId);
       setisWaitingAgreement(workerId);
-      await storeWaitingAgreement(isWaitingAgreement);
-      console.log("Waiting agreement stored successfully:");
       setExpandedCommentIds(() => {
         const newSet = new Set<number>();
         newSet.add(workerId);
@@ -138,8 +137,8 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
       await apiClient.delete(
         `/work/job-request/${requestId}/worker/${workerId}`
       );
-      setisWaitingAgreement(null);
       await storeWaitingAgreement(null);
+      setisWaitingAgreement(null);
     } catch (error: any) {
       console.error("Error rejecting request:", error.response.data);
       Alert.alert(
@@ -164,6 +163,7 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
 
   const storeWaitingAgreement = async (waiting_agreement: number | null) => {
     try {
+      console.log(waiting_agreement, "waiting_agreement");
       if (waiting_agreement === null) {
         await AsyncStorage.removeItem(`waiting_agreement_${requestId}`);
       } else {
