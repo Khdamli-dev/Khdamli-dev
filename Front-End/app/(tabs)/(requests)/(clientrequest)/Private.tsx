@@ -36,9 +36,6 @@ import {
   handelcall,
   handleEmailPress,
 } from "../SomeStandarFunctions";
-import eventEmitter from "@/context/EventBus";
-
-//import { realTimePrivateRequestStatus, realTimeRequests } from '@/api/realTime';
 
 // Define the UserRole enum
 enum UserRole {
@@ -122,26 +119,6 @@ const PrivateRequests = () => {
       }, 50);
     }
   }, [mediaModalVisible, selectedMedia, windowWidth]);
-
-  useEffect(() => {
-    const handler = (data: { id: number; status: string }) => {
-      console.log("Prvate request status update:", data);
-
-      setRequests((prev) =>
-        prev.map((request) =>
-          request.id === data.id ? { ...request, status: data.status } : request
-        )
-      );
-    };
-
-    // Add listener
-    eventEmitter.on("change-private-request-status", handler);
-
-    // Cleanup function
-    return () => {
-      eventEmitter.off("change-private-request-status", handler);
-    };
-  }, []);
 
   const toggleExpandRequest = (id: number) => {
     setExpandedRequestId(expandedRequestId === id ? null : id);

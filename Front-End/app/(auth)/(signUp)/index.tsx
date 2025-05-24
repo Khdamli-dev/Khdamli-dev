@@ -103,7 +103,7 @@ export default function SignUp() {
       password,
     };
     try {
-      const response = await axios.post(`${CONFIG.API_URL}/auth/signup`, {
+      const response = await axios.post(`${CONFIG.API_URL}auth/signup`, {
         credentials,
       });
       if (response?.status === 201) {

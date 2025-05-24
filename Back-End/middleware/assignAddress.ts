@@ -9,7 +9,6 @@ const assignAddress = async (
   next: NextFunction
 ) => {
   try {
-    console.log(req.body);
     if (!req.body.personalInfo?.address) {
       next();
       return;
