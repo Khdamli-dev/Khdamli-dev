@@ -204,6 +204,7 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
   //Handle Save ------------------------------------------------------------------------------------------
   const [error, setError] = useState<string>("");
   const handleSubmit = async () => {
+    console.log(workerId)
     // Basic validation
     if (
       !selectedCategory ||
@@ -246,6 +247,7 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
           worker : +workerId,
           status: 3, // "On Hold"
         };
+        console.log(jobRequest)
         const response = await apiClient.post(
           `/work/job-request/`,
           jobRequest

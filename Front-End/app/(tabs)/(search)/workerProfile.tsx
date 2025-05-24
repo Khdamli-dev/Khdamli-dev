@@ -166,9 +166,10 @@ const UserProfileView = () => {
     </View>
   );
   const handleSendPrivateRequest = () => {
+    console.log(userId)
     router.push({
-      pathname: "/(tabs)/(home)/createRequest",
-      params: { type: "2" },
+      pathname: "/(tabs)/(search)/requeste",
+      params: { type: "2" , workerId : userId },
     });
   };
 
