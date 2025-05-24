@@ -210,7 +210,6 @@ const HomeScreen = () => {
       setLoading(true);
       try {
         const userData: string | null = await AsyncStorage.getItem("user");
-        console.log(userData);
         if (userData) {
           const user = JSON.parse(userData);
           const response = await apiClient.get(
@@ -378,7 +377,6 @@ const HomeScreen = () => {
           workerId: user.id, // Using timestamp as a temporary ID
           comment: commentText,
         };
-        console.log(user.role)
         const response = await apiClient.post(
           `/work/job-request/${postId}/comment`,
           newComment
