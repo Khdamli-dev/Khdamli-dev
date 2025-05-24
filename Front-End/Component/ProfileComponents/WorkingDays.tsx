@@ -50,11 +50,13 @@ const formatTime = (time: Date | string | undefined | null): string => {
     return "--:--";
   }
 };
-const [isWorker, setIsWorker] = useState(false);
+
 const WorkingDays = ({
   onChange,
 }: {
-  onChange: (days: { day: number; name: string; begin: string; end: string }[]) => void;
+  onChange: (
+    days: { day: number; name: string; begin: string; end: string }[]
+  ) => void;
 }) => {
   type Day = {
     name: string;
@@ -70,9 +72,6 @@ const WorkingDays = ({
         if (!user) return;
 
         const { id, role } = user;
-        if (role === 2) {
-          setIsWorker(true);
-        }
         const endpoint = role === 2 ? `/users/worker/` : null;
         if (endpoint) {
           const response = await apiClient.get(`${endpoint}${id}`);
@@ -107,17 +106,15 @@ const WorkingDays = ({
 
     fetchUser();
   }, []);
-  const [days, setDays] = useState<Day[]>(
-    [
-      { name: "sunday", isEnabled: false },
-      { name: "monday", isEnabled: false },
-      { name: "tuesday", isEnabled: false },
-      { name: "wednesday", isEnabled: false },
-      { name: "thursday", isEnabled: false },
-      { name: "friday", isEnabled: false },
-      { name: "saturday", isEnabled: false },
-    ]
-  );
+  const [days, setDays] = useState<Day[]>([
+    { name: "sunday", isEnabled: false },
+    { name: "monday", isEnabled: false },
+    { name: "tuesday", isEnabled: false },
+    { name: "wednesday", isEnabled: false },
+    { name: "thursday", isEnabled: false },
+    { name: "friday", isEnabled: false },
+    { name: "saturday", isEnabled: false },
+  ]);
 
   const [showPicker, setShowPicker] = useState<{
     index: number;
@@ -174,15 +171,13 @@ const WorkingDays = ({
   };
 
   return (
-    <>
-      {isWorker && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Edit Working Days</Text>
-          <View style={styles.headerRow}>
-            <Text style={styles.ghi}>Days</Text>
-            <Text style={styles.ghi}>From</Text>
-            <Text style={styles.ghi}>To</Text>
-          </View>
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Edit Working Days</Text>
+      <View style={styles.headerRow}>
+        <Text style={styles.ghi}>Days</Text>
+        <Text style={styles.ghi}>From</Text>
+        <Text style={styles.ghi}>To</Text>
+      </View>
 
           {days.map((day, index) => (
             <DayRow
@@ -195,14 +190,12 @@ const WorkingDays = ({
             />
           ))}
 
-          <TimePicker
-            showPicker={showPicker}
-            days={days}
-            handleTimeChange={handleTimeChange}
-          />
-        </View>
-      )}
-    </>
+      <TimePicker
+        showPicker={showPicker}
+        days={days}
+        handleTimeChange={handleTimeChange}
+      />
+    </View>
   );
 };
 const styles = StyleSheet.create({

@@ -200,14 +200,16 @@ const AddressSection = ({
     setFilteredData: (filtered: any[]) => void,
     key: string
   ) => {
-    if (text.length === 0) {
-      setFilteredData([]);
-    } else {
-      setFilteredData(
-        data.filter((item) =>
-          item[key].toLowerCase().includes(text.toLowerCase())
-        )
-      );
+    if (text) {
+      if (text.length === 0) {
+        setFilteredData([]);
+      } else {
+        setFilteredData(
+          data.filter((item) =>
+            item[key].toLowerCase().includes(text.toLowerCase())
+          )
+        );
+      }
     }
   };
 
