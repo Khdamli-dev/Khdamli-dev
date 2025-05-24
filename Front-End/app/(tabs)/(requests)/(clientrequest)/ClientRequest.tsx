@@ -12,7 +12,6 @@ import {
   Platform,
   Alert,
   TextInput,
-  TouchableWithoutFeedback,
   Keyboard,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
@@ -39,7 +38,6 @@ import {
 } from "../SomeStandarFunctions";
 import { useNotifications } from "@/context/NotificationContext";
 import { Rating } from "react-native-ratings";
-import eventEmitter from "@/context/EventBus";
 
 // Define the UserRole enum
 enum UserRole {
@@ -158,28 +156,6 @@ const PublicRequest = () => {
 
     getUserInfo();
   }, []);
-
-  // useEffect(() => {
-  //   const handler = (data: { id: number; status: string }) => {
-  //     console.log('Public request status update:', data);
-      
-  //     setRequests((prev) =>
-  //       prev.map((request) =>
-  //         request.id === data.id 
-  //           ? { ...request, status: data.status } 
-  //           : request
-  //       )
-  //     );
-  //   };
-
-  //   // Add listener
-  //   eventEmitter.on('change-public-request-status', handler);
-
-  //   // Cleanup function
-  //   return () => {
-  //     eventEmitter.off('change-public-request-status', handler);
-  //   };
-  // }, []);
 
   useEffect(() => {
     if (mediaModalVisible && scrollViewRef.current) {
