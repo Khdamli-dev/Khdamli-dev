@@ -125,17 +125,23 @@ const PrivateRequests = () => {
 
   useEffect(() => {
     const handler = (data: { id: number; status: string }) => {
+      console.log('Prvate request status update:', data);
+      
       setRequests((prev) =>
         prev.map((request) =>
-          request.id === data.id ? { ...request, status: data.status } : request
+          request.id === data.id 
+            ? { ...request, status: data.status } 
+            : request
         )
       );
     };
 
-    eventEmitter.on("change-private-request-status", handler);
+    // Add listener
+    eventEmitter.on('change-private-request-status', handler);
 
+    // Cleanup function
     return () => {
-      eventEmitter.off("change-private-request-status", handler); // Clean up
+      eventEmitter.off('change-private-request-status', handler);
     };
   }, []);
 
