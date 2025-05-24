@@ -25,11 +25,12 @@ export const acceptWorkerOnPublicRequest = async (
 ): Promise<void> => {
   const io: Server = getIo();
   const { worker } = request;
-  if (worker)
+  if (worker){
     io.to(worker.toString()).emit(
       'accept-worker-on-public-request',
       request.id,
     );
+  }
 };
 
 export const changeRequestStatus = (request: JobRequest): void => {
@@ -56,7 +57,6 @@ export const changeRequestStatus = (request: JobRequest): void => {
   const client: number = request.client;
   const status: string | null = getRequestStatus(request.status);
   if (status) {
-    console.log(client);
     io.to(client.toString()).emit('change-request-status', {
       requestId: request.id,
       status,
