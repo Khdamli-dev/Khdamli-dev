@@ -12,6 +12,8 @@ import PasswordInput from "@/Component/SettingComponents/PasswordInput";
 import { useFonts, Itim_400Regular } from "@expo-google-fonts/itim";
 import { NavigationProp } from "@react-navigation/native";
 import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import apiClient from "@/api/appClient";
 
 type RootStackParamList = {
   Setting: undefined;
@@ -27,18 +29,34 @@ const ChangeEmail = ({ navigation }: ChangeEmailProps) => {
   let [fontsLoaded] = useFonts({ Itim_400Regular });
   if (!fontsLoaded) return null;
 
-  const handleEmailChange = () => {
+  const handleEmailChange = async() => {
     if (!email.trim()) {
-      Alert.alert("⚠️ Warning", "Please fill in the field!");
-      return;
+      return Alert.alert("⚠️ Warning", "Please fill in field!");
     }
 
-    Alert.alert("✅ Success", "Email changed successfully!", [
-      {
-        text: "OK",
-        onPress: () => router.push("/(tabs)/(profile)/(settings)"),
-      },
-    ]);
+    try {
+      // Get user ID from AsyncStorage (or your preferred method)
+      const userData = await AsyncStorage.getItem("user");
+      const user = userData ? JSON.parse(userData) : null;
+      if (!user?.id) {
+        return Alert.alert("Error", "User not found.");
+      }
+
+      // Make API call to update phone number
+      const response = await apiClient.put(`/users/${user.id}`, {
+        credentials :{email}
+      });
+
+      if (response.status === 200 || response.status === 201) {
+        Alert.alert("✅ Success", "Email changed successfully!");
+        router.push("/(tabs)/(profile)/(settings)");
+      } else {
+        Alert.alert("❌ Error", "Failed to change email.");
+      }
+    } catch (error: any) {
+      console.error("Email change error:", error?.response?.data || error);
+      Alert.alert("❌ Error", "An error occurred while changing email.");
+    }
   };
 
   return (

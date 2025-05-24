@@ -38,132 +38,230 @@ const Dashboard: React.FC<DashboardProps> = ({
       label: 'Sent Requests',
       value: stats.sent_requests,
       icon: Send,
-      color: '#F8A100',
-      bgColor: '#FFF6E6',
+      color: '#22C55E',
+      bgColor: '#F0FDF4',
     },
     {
       key: 'completed' as const,
       label: 'Completed',
       value: stats.completed_requests,
-      icon: Calendar,
-      color: '#2B524A',
-      bgColor: '#E8EFED',
+      icon: CheckCircle,
+      color: '#22C55E',
+      bgColor: '#F0FDF4',
     },
   ];
 
   if (loading) {
     return (
-      <View className="bg-white rounded-[25px] overflow-hidden mb-6 mx-4 p-6">
-        <View
-          className="absolute inset-0 rounded-[25px]"
-          style={{
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.1,
-            shadowRadius: 12,
-            elevation: 8,
-          }}
-        />
-        <View className="flex-row items-center justify-center mb-6">
-          <TrendingUp size={28} color="#BD7D06" />
-          <Text
-            className="text-center text-[#BD7D06] ml-3 text-[24px] font-bold"
-            style={{ fontFamily: 'Itim_400Regular' }}
-          >
+      <View style={{ backgroundColor: "white", padding: 16 }}>
+        {/* Header */}
+        <View style={{
+          flexDirection: "row",
+          alignItems: "center",
+          paddingBottom: 16,
+          borderBottomWidth: 1,
+          borderBottomColor: "#F3F4F6",
+          marginBottom: 16,
+        }}>
+          <TrendingUp size={20} color="#22C55E" />
+          <Text style={{
+            fontSize: 18,
+            fontWeight: "600",
+            color: "#111827",
+            marginLeft: 8,
+          }}>
             Dashboard
           </Text>
         </View>
 
         {/* Loading Skeleton */}
-        <View className="space-y-4">
-          {[1, 2, 3].map((index) => (
-            <View
-              key={index}
-              className="flex-row items-center bg-gray-50 rounded-2xl p-4"
-            >
-              <View className="w-14 h-14 rounded-full bg-gray-200 mr-4" />
-              <View className="flex-1">
-                <View className="w-20 h-4 bg-gray-200 rounded mb-2" />
-                <View className="w-32 h-3 bg-gray-200 rounded" />
-              </View>
-              <View className="w-8 h-8 bg-gray-200 rounded-full" />
-            </View>
-          ))}
+        <View style={{
+          backgroundColor: "#F9FAFB",
+          borderRadius: 12,
+          padding: 16,
+          alignItems: "center",
+          marginBottom: 16,
+        }}>
+          <View style={{
+            width: 120,
+            height: 20,
+            backgroundColor: "#E5E7EB",
+            borderRadius: 4,
+            marginBottom: 8,
+          }} />
+          <View style={{
+            width: 80,
+            height: 28,
+            backgroundColor: "#E5E7EB",
+            borderRadius: 4,
+          }} />
         </View>
+
+        {[1, 2].map((index) => (
+          <View key={index} style={{
+            backgroundColor: "white",
+            borderRadius: 12,
+            padding: 16,
+            marginBottom: 12,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.05,
+            shadowRadius: 2,
+            elevation: 2,
+          }}>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <View style={{
+                  width: 40,
+                  height: 40,
+                  backgroundColor: "#E5E7EB",
+                  borderRadius: 20,
+                  marginRight: 12,
+                }} />
+                <View>
+                  <View style={{
+                    width: 100,
+                    height: 16,
+                    backgroundColor: "#E5E7EB",
+                    borderRadius: 4,
+                    marginBottom: 4,
+                  }} />
+                  <View style={{
+                    width: 80,
+                    height: 12,
+                    backgroundColor: "#E5E7EB",
+                    borderRadius: 4,
+                  }} />
+                </View>
+              </View>
+              <View style={{
+                width: 32,
+                height: 24,
+                backgroundColor: "#E5E7EB",
+                borderRadius: 4,
+              }} />
+            </View>
+          </View>
+        ))}
       </View>
     );
   }
 
   return (
-    <View className="bg-white rounded-3xl px-6 py-3 mb-2">
+    <View style={{ backgroundColor: "white", padding: 16 }}>
       {/* Header */}
-      <View className="flex-row items-center mb-4">
-        <View className="flex-1">
-          <Text
-            className="text-[#2B524A] text-2xl font-bold"
-            style={{ fontFamily: 'Itim_400Regular' }}
-          >
+      <View style={{ marginBottom: 16 }}>
+        {/* Section Title */}
+        <View style={{
+          flexDirection: "row",
+          alignItems: "center",
+          paddingBottom: 16,
+          borderBottomWidth: 1,
+          borderBottomColor: "#F3F4F6",
+          marginBottom: 16,
+        }}>
+          <TrendingUp size={20} color="#22C55E" />
+          <Text style={{
+            fontSize: 18,
+            fontWeight: "600",
+            color: "#111827",
+            marginLeft: 8,
+            fontFamily: 'Itim_400Regular',
+          }}>
             Dashboard
           </Text>
-          <Text className="text-gray-500 mt-1">Activity Overview</Text>
         </View>
-        <View className="bg-[#F8A100]/5 p-3 rounded-2xl">
-          <TrendingUp size={24} color="#F8A100" />
+
+        {/* Activity Overview Card */}
+        <View style={{
+          backgroundColor: "#F0FDF4",
+          borderRadius: 12,
+          padding: 16,
+          alignItems: "center",
+          marginBottom: 16,
+        }}>
+          <Text style={{
+            fontSize: 24,
+            fontWeight: "700",
+            color: "#22C55E",
+            fontFamily: 'Itim_400Regular',
+          }}>
+            {stats.sent_requests + stats.completed_requests}
+          </Text>
+          <Text style={{
+            color: "#6B7280",
+            fontSize: 14,
+            fontFamily: 'Itim_400Regular',
+          }}>
+            Total Requests
+          </Text>
         </View>
       </View>
 
-      {/* Stats Grid - New Design */}
-      <View className="grid grid-cols-2 gap-4">
-        {statsData.map((stat) => (
-          <View
-            key={stat.key}
-            className="rounded-2xl px-4 py-1 my-2"
-            style={{
+      {/* Stats Cards */}
+      {statsData.map((stat) => (
+        <View
+          key={stat.key}
+          style={{
+            backgroundColor: "white",
+            borderRadius: 12,
+            padding: 16,
+            marginBottom: 12,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.05,
+            shadowRadius: 2,
+            elevation: 2,
+          }}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            {/* Icon Container */}
+            <View style={{
+              width: 40,
+              height: 40,
               backgroundColor: stat.bgColor,
-            }}
-          >
-            {/* Top Section */}
-            <View className="flex-row items-center justify-between mb-2">
-              <View
-                className="w-10 h-10 rounded-xl items-center justify-center"
-                style={{ backgroundColor: `${stat.color}15` }}
-              >
-                <stat.icon size={20} color={stat.color} strokeWidth={2.5} />
-              </View>
-              <Text
-                className="text-2xl font-bold"
-                style={{
-                  fontFamily: 'Itim_400Regular',
-                  color: stat.color,
-                }}
-              >
-                {stat.value}
+              borderRadius: 20,
+              alignItems: "center",
+              justifyContent: "center",
+              marginRight: 12,
+            }}>
+              <stat.icon size={20} color={stat.color} strokeWidth={2.5} />
+            </View>
+
+            {/* Content */}
+            <View style={{ flex: 1 }}>
+              <Text style={{
+                fontSize: 16,
+                fontWeight: "600",
+                color: "#111827",
+                fontFamily: 'Itim_400Regular',
+                marginBottom: 2,
+              }}>
+                {stat.label}
+              </Text>
+              <Text style={{
+                color: "#6B7280",
+                fontSize: 14,
+                fontFamily: 'Itim_400Regular',
+              }}>
+                Activity count
               </Text>
             </View>
 
-            {/* Label */}
-            <Text
-              className="text-sm"
-              style={{
-                fontFamily: 'Itim_400Regular',
+            {/* Value */}
+            <View style={{ alignItems: "flex-end" }}>
+              <Text style={{
+                fontSize: 20,
+                fontWeight: "700",
                 color: stat.color,
-              }}
-            >
-              {stat.label}
-            </Text>
+                fontFamily: 'Itim_400Regular',
+              }}>
+                {stat.value}
+              </Text>
+            </View>
           </View>
-        ))}
-      </View>
-
-      {/* Summary Footer */}
-      <View className="mt-4 pt-2 border-t border-gray-100">
-        <Text
-          className="text-center text-gray-600 text-sm"
-          style={{ fontFamily: 'Itim_400Regular' }}
-        >
-          Total Requests: {stats.sent_requests + stats.completed_requests}
-        </Text>
-      </View>
+        </View>
+      ))}
     </View>
   );
 };
