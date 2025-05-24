@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,8 +8,8 @@ import {
   FlatList,
   StyleSheet,
   TouchableOpacity,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Calendar,
   MapPin,
@@ -19,21 +19,21 @@ import {
   Briefcase,
   CreditCard,
   MessageSquare,
-} from "lucide-react-native";
-import CONFIG from "../../../config";
-import { LinearGradient } from "expo-linear-gradient";
-import { useFonts, Itim_400Regular } from "@expo-google-fonts/itim";
-import { useRoute } from "@react-navigation/native";
-import { Video, ResizeMode } from "expo-av";
-import axios from "axios";
-import { router, useLocalSearchParams } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import apiClient from "@/api/appClient";
-import { AntDesign } from "@expo/vector-icons";
-import Dashboard from "@/Component/ProfileComponents/Dashboard";
-import Reviews from "@/Component/ProfileComponents/Reviews";
-import refreshAccessToken from "@/api/refreshAccessToken";
-const { width } = Dimensions.get("window");
+} from 'lucide-react-native';
+import CONFIG from '../../../config';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useFonts, Itim_400Regular } from '@expo-google-fonts/itim';
+import { useRoute } from '@react-navigation/native';
+import { Video, ResizeMode } from 'expo-av';
+import axios from 'axios';
+import { router, useLocalSearchParams } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import apiClient from '@/api/appClient';
+import { AntDesign } from '@expo/vector-icons';
+import Dashboard from '@/Component/ProfileComponents/Dashboard';
+import Reviews from '@/Component/ProfileComponents/Reviews';
+import refreshAccessToken from '@/api/refreshAccessToken';
+const { width } = Dimensions.get('window');
 
 interface ProfileItemProps {
   label: string;
@@ -43,16 +43,16 @@ interface ProfileItemProps {
 
 const styles = StyleSheet.create({
   requestButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#BD7D06",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#BD7D06',
     padding: 10,
     borderRadius: 8,
     marginTop: 10,
   },
   requestButtonText: {
-    color: "white",
-    fontFamily: "Itim_400Regular",
+    color: 'white',
+    fontFamily: 'Itim_400Regular',
     fontSize: 16,
   },
 });
@@ -95,6 +95,17 @@ const UserProfileView = () => {
     sentRequests: null,
     completedRequests: null,
   });
+  const getUserData = async () => {
+    try {
+      const userDataString = await AsyncStorage.getItem('user');
+      if (userDataString) {
+        const user = JSON.parse(userDataString);
+        setRole(user.role);
+      }
+    } catch (error) {
+      console.error('Error getting user data:', error);
+    }
+  };
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -112,7 +123,7 @@ const UserProfileView = () => {
           gender: response.data.worker.sex,
           region: response.data.worker.location.region,
           city: response.data.worker.location.city,
-          accountType: "worker",
+          accountType: 'worker',
           bio: response.data.worker.bio,
           workingDays: response.data.worker.availability,
           category: response.data.worker.categories,
@@ -128,17 +139,17 @@ const UserProfileView = () => {
             await fetchUserData();
           }
         }
-        console.error("Failed to fetch user data", error.response?.data);
+        console.error('Failed to fetch user data', error.response?.data);
       }
     };
-
+    getUserData();
     fetchUserData();
   }, [userId, userRole]);
 
   const formatTime = (timeString: string | null) => {
-    if (!timeString) return "";
+    if (!timeString) return '';
     // Handle various formats, returning just HH:MM
-    return timeString.split(":").slice(0, 2).join(":");
+    return timeString.split(':').slice(0, 2).join(':');
   };
 
   // Profile item component - read-only version
@@ -146,17 +157,17 @@ const UserProfileView = () => {
     <View className="flex-row justify-between items-center py-4 px-[10px] mb-[3px]">
       <Text
         className="font-bold text-[16px]"
-        style={{ fontFamily: "Itim_400Regular" }}
+        style={{ fontFamily: 'Itim_400Regular' }}
       >
         {label}
       </Text>
       <View className="flex-row items-center gap-[10px]">
         <Text
           className="mr-[8px] text-[#BD7D06] font-semibold"
-          style={{ fontFamily: "Itim_400Regular" }}
+          style={{ fontFamily: 'Itim_400Regular' }}
         >
-          {value || "Unknown"}
-          {label === "Age" && value ? " Years" : null}
+          {value || 'Unknown'}
+          {label === 'Age' && value ? ' Years' : null}
         </Text>
         {Icon && <Icon size={20} color="#BD7D06" />}
       </View>
@@ -164,19 +175,19 @@ const UserProfileView = () => {
   );
   const handleSendPrivateRequest = () => {
     router.push({
-      pathname: "/(tabs)/(search)/requeste",
-      params: { type: "2", workerId: userId },
+      pathname: '/(tabs)/(search)/requeste',
+      params: { type: '2', workerId: userId },
     });
   };
 
   const handleNavigatetoclientprofiele = (clientId: string) => {
     console.log(`Navigate to client: ${clientId}`);
     router.push({
-      pathname: "/profileAsView",
+      pathname: '/profileAsView',
       params: {
         userId: clientId,
         userRole: 1,
-        origin: "search",
+        origin: 'search',
       },
     });
     // Navigate to client profile
@@ -186,7 +197,7 @@ const UserProfileView = () => {
     <ScrollView>
       {/* Profile Header - Without Edit Buttons */}
       <LinearGradient
-        colors={["#5EB4A2", "#2B524A"]}
+        colors={['#5EB4A2', '#2B524A']}
         start={{ x: 0, y: 1 }}
         end={{ x: 1, y: 0 }}
         locations={[0.22, 1]}
@@ -204,19 +215,19 @@ const UserProfileView = () => {
           <View
             className="absolute rounded-[15px] w-[120px] h-[80px] top-[70px] right-[-30px]"
             style={{
-              backgroundColor: "rgba(255, 255, 255, 0.1)",
-              transform: [{ rotate: "-30deg" }],
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              transform: [{ rotate: '-30deg' }],
               borderRadius: 15,
-              overflow: "hidden",
+              overflow: 'hidden',
             }}
           />
           <View
             className="absolute rounded-[15px] w-[110px] h-[80px] bottom-[20px] left-[-20px]"
             style={{
-              backgroundColor: "rgba(255, 255, 255, 0.1)",
-              transform: [{ rotate: "-30deg" }],
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              transform: [{ rotate: '-30deg' }],
               borderRadius: 15,
-              overflow: "hidden",
+              overflow: 'hidden',
             }}
           />
 
@@ -226,7 +237,7 @@ const UserProfileView = () => {
               source={{
                 uri:
                   user.image ??
-                  "https://cdn-icons-png.flaticon.com/512/149/149071.png",
+                  'https://cdn-icons-png.flaticon.com/512/149/149071.png',
               }}
               className="w-[130px] h-[130px] rounded-full border-[3px] border-white"
             />
@@ -235,11 +246,11 @@ const UserProfileView = () => {
           {/* User Name */}
           <Text
             className="text-white text-[27px] mb-1.5 mt-2.5"
-            style={{ fontFamily: "Itim_400Regular" }}
+            style={{ fontFamily: 'Itim_400Regular' }}
           >
             {user.fullName}
           </Text>
-          {user.accountType === "worker" && role === 1 && (
+          {user.accountType === 'worker' && role === 1 && (
             <>
               <TouchableOpacity
                 onPress={handleSendPrivateRequest}
@@ -260,7 +271,7 @@ const UserProfileView = () => {
       </LinearGradient>
 
       {/* Worker-specific sections */}
-      {user.accountType === "worker" && (
+      {user.accountType === 'worker' && (
         <>
           <Dashboard
             workerId={Array.isArray(userId) ? userId[0] : userId} // Pass the userId to the Dashboard component
@@ -271,13 +282,13 @@ const UserProfileView = () => {
           <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
             <Text
               className="text-center text-[#BD7D06] mb-2.5"
-              style={{ fontFamily: "Itim_400Regular" }}
+              style={{ fontFamily: 'Itim_400Regular' }}
             >
               Short Bio
             </Text>
             <Text
               className="text-center mt-2 text-[16px]"
-              style={{ fontFamily: "Itim_400Regular" }}
+              style={{ fontFamily: 'Itim_400Regular' }}
             >
               {user.bio}
             </Text>
@@ -287,7 +298,7 @@ const UserProfileView = () => {
           <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
             <Text
               className="text-center text-[#BD7D06] mb-2.5"
-              style={{ fontFamily: "Itim_400Regular" }}
+              style={{ fontFamily: 'Itim_400Regular' }}
             >
               Working Days
             </Text>
@@ -299,13 +310,13 @@ const UserProfileView = () => {
                 <Text className="text-[16px] font-semibold">{item.day}</Text>
                 <Text
                   className="mr-2 text-[#BD7D06]"
-                  style={{ fontFamily: "Itim_400Regular" }}
+                  style={{ fontFamily: 'Itim_400Regular' }}
                 >
                   From {formatTime(item.begin)}
                 </Text>
                 <Text
                   className="mr-2 text-[#BD7D06]"
-                  style={{ fontFamily: "Itim_400Regular" }}
+                  style={{ fontFamily: 'Itim_400Regular' }}
                 >
                   To {formatTime(item.end)}
                 </Text>
@@ -320,7 +331,7 @@ const UserProfileView = () => {
         <ProfileItem
           label="Registration Date"
           value={
-            user.registration_date ? user.registration_date.split("T")[0] : ""
+            user.registration_date ? user.registration_date.split('T')[0] : ''
           }
           Icon={(props) => <Calendar {...props} />}
         />
@@ -340,7 +351,7 @@ const UserProfileView = () => {
       <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
         <ProfileItem
           label="Account Type"
-          value={user.accountType === "worker" ? "Worker" : "Client"}
+          value={user.accountType === 'worker' ? 'Worker' : 'Client'}
           Icon={(props) => <User {...props} />}
         />
         <ProfileItem
@@ -355,7 +366,7 @@ const UserProfileView = () => {
         />
 
         {/* Worker-specific information */}
-        {user.accountType === "worker" && (
+        {user.accountType === 'worker' && (
           <>
             {user.category?.map((cat, index) => (
               <ProfileItem
@@ -369,7 +380,7 @@ const UserProfileView = () => {
             {user.paymentMethod && (
               <ProfileItem
                 label="Payment Method"
-                value={user.paymentMethod.join(" / ")}
+                value={user.paymentMethod.join(' / ')}
                 Icon={(props) => <CreditCard {...props} />}
               />
             )}
@@ -378,13 +389,13 @@ const UserProfileView = () => {
       </View>
 
       {/* Gallery - Worker only */}
-      {user.accountType === "worker" &&
+      {user.accountType === 'worker' &&
         user.gallery &&
         user.gallery.length > 0 && (
           <View className="bg-white rounded-[20px] overflow-hidden mb-2.5 mx-1.75 p-4 border border-gray-200 shadow-md">
             <Text
               className="text-center text-[#BD7D06] mb-2.5 text-[20px]"
-              style={{ fontFamily: "Itim_400Regular" }}
+              style={{ fontFamily: 'Itim_400Regular' }}
             >
               Portfolio
             </Text>
@@ -393,7 +404,7 @@ const UserProfileView = () => {
               data={user.gallery}
               renderItem={({ item }) => (
                 <View className="mx-4">
-                  {item.type === "image" ? (
+                  {item.type === 'image' ? (
                     <Image
                       source={{ uri: item.uri }}
                       className="h-[300px] rounded-[10px] my-1.5"
@@ -417,7 +428,7 @@ const UserProfileView = () => {
           </View>
         )}
       {/* Reviews Section - Worker only */}
-      {user.accountType === "worker" && (
+      {user.accountType === 'worker' && (
         <>
           <Reviews
             workerId={Array.isArray(userId) ? userId[0] : userId}
@@ -426,7 +437,7 @@ const UserProfileView = () => {
               // Navigate to client profile
             }}
             onViewAllPress={() => {
-              console.log("View all reviews");
+              console.log('View all reviews');
               // Navigate to all reviews screen
             }}
           />
