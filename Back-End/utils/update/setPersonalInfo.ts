@@ -28,7 +28,6 @@ const setPersonalInfo = async (req: Request, res: Response) => {
     query = query.slice(0, -1);
     query += ` WHERE id = $${counter}`;
     values.push(id);
-    console.log(query);
     const { rowCount } = await pool.query(query, values);
 
     // check if user exist
