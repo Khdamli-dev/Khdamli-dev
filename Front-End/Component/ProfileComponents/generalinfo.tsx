@@ -33,9 +33,11 @@ interface GeneralInfoProps {
     subCategories: number[];
   }) => void;
 }
+
 const GeneralInfo: React.FC<GeneralInfoProps> = ({ onInfoChange }) => {
   const [loading, setLoading] = useState(false);
   const [prevpay, setPrevpay] = useState<string[]>([]);
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -61,10 +63,16 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onInfoChange }) => {
                     fullName: response.data.worker.username,
                     accountType: "worker",
                     bio: response.data.worker.bio,
-                    category: response.data.worker.categories.filter(
-                      (cat: Category) => cat.parent_category !== null
-                    ),
-                    paymentMethod: response.data.worker.payment_methods,
+                    category: Array.isArray(response.data.worker.categories)
+                      ? response.data.worker.categories.filter(
+                          (cat: Category) => cat.parent_category !== null
+                        )
+                      : [],
+                    paymentMethod: Array.isArray(
+                      response.data.worker.payment_methods
+                    )
+                      ? response.data.worker.payment_methods
+                      : [],
                   }
                 : null;
           const initialRoleValue =
@@ -77,10 +85,15 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onInfoChange }) => {
           setPreviousName(newUserData?.fullName || null);
           setRole(initialRoleValue);
           setInitialRole(initialRoleValue);
-          setprevcat(newUserData?.category);
-          setPrevpay(newUserData?.paymentMethod || []);
-
-          setBio(newUserData?.bio);
+          setprevcat(
+            Array.isArray(newUserData?.category) ? newUserData.category : []
+          );
+          setPrevpay(
+            Array.isArray(newUserData?.paymentMethod)
+              ? newUserData.paymentMethod
+              : []
+          );
+          setBio(newUserData?.bio || "");
         }
       } catch (error: any) {
         if (error.response?.status === 401) {
@@ -102,7 +115,11 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onInfoChange }) => {
     try {
       const response = await apiClient.get(`/work/categories`);
       // Filter categories to include only top-level categories
-      setfilteredCategories(response.data.categories);
+      if (Array.isArray(response.data.categories)) {
+        setfilteredCategories(response.data.categories);
+      } else {
+        setfilteredCategories([]);
+      }
     } catch (error: any) {
       if (error.response?.status === 401) {
         if (await refreshAccessToken()) {
@@ -115,11 +132,19 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onInfoChange }) => {
       console.log(error);
     }
   };
+
   //Fetch Payment Methods
   const fetchPaymentMethods = async () => {
     try {
       const response = await apiClient.get(`/work/payment`);
-      if (response.status === 200) setPayment(response.data.paymentMethods);
+      if (
+        response.status === 200 &&
+        Array.isArray(response.data.paymentMethods)
+      ) {
+        setPayment(response.data.paymentMethods);
+      } else {
+        setPayment([]);
+      }
     } catch (error: any) {
       if (error.response?.status === 401) {
         if (await refreshAccessToken()) {
@@ -132,6 +157,7 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onInfoChange }) => {
       console.log(error);
     }
   };
+
   useEffect(() => {
     const loadInitialData = async () => {
       try {
@@ -147,13 +173,16 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onInfoChange }) => {
     };
     loadInitialData();
   }, []);
+
   // Add a separate useEffect to handle filtering categories
   useEffect(() => {
-    if (filteredCategories.length > 0) {
+    if (Array.isArray(filteredCategories) && filteredCategories.length > 0) {
       const parentCategories = filteredCategories.filter(
         (category: Category) => category?.parent_category === null
       );
       setCategories(parentCategories);
+    } else {
+      setCategories([]);
     }
   }, [filteredCategories]);
 
@@ -184,6 +213,7 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onInfoChange }) => {
   const [showCategoryList, setShowCategoryList] = useState(false);
   const [showSubCategoryList, setShowSubCategoryList] = useState(false);
   const [bio, setBio] = useState<string>("");
+
   const toggleCategorySelection = (item: { id: number; name: string }) => {
     const category = categories.find((c) => String(c.id) === String(item.id));
     if (category) {
@@ -214,22 +244,27 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onInfoChange }) => {
   const togglePaymentSelection = (selectedItem: Payment) => {
     toggleSelection(setSelectedPayments, selectedItem);
   };
+
   const fetchSubCategoriesForSelectedCategories = (
     selectedCats: Category[]
   ) => {
-    if (selectedCats.length === 0) {
+    if (!Array.isArray(selectedCats) || selectedCats.length === 0) {
       setSubCategories([]);
       return;
     }
 
     const categoryIds = selectedCats.map((cat) => cat.id.toString());
 
-    const newSubCategories = filteredCategories.filter((cat: Category) =>
-      categoryIds.includes(String(cat.parent_category))
-    );
-
-    setSubCategories(newSubCategories);
+    if (Array.isArray(filteredCategories)) {
+      const newSubCategories = filteredCategories.filter((cat: Category) =>
+        categoryIds.includes(String(cat.parent_category))
+      );
+      setSubCategories(newSubCategories);
+    } else {
+      setSubCategories([]);
+    }
   };
+
   const toggleSubCategorySelection = (subCategory: {
     id: number;
     name: string;
@@ -247,13 +282,18 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onInfoChange }) => {
       return updatedSubCategories;
     });
   };
+
   useEffect(() => {
     const userInfo = {
       fullName: fullName || "",
       accountType: role?.id || null,
-      paymentMethods: selectedPayments.map((p) => p.id),
+      paymentMethods: Array.isArray(selectedPayments)
+        ? selectedPayments.map((p) => p.id)
+        : [],
       bio: bio || "",
-      subCategories: selectedSubCategories.map((sc) => sc.id),
+      subCategories: Array.isArray(selectedSubCategories)
+        ? selectedSubCategories.map((sc) => sc.id)
+        : [],
     };
 
     onInfoChange(userInfo);
@@ -265,6 +305,7 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onInfoChange }) => {
     bio,
     onInfoChange,
   ]);
+
   return (
     <View
       className="bg-white p-4 rounded-[20px] mb-4 shadow-lg"
@@ -318,7 +359,11 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onInfoChange }) => {
           <View className="mb-3">
             <Dropdown
               label="Categories"
-              prev={prevcat?.map((cat) => cat.name).join(", ") || ""}
+              prev={
+                Array.isArray(prevcat)
+                  ? prevcat.map((cat) => cat.name).join(", ")
+                  : ""
+              }
               icon={Briefcase}
               selectedItems={
                 Array.isArray(selectedCategories)
@@ -329,10 +374,15 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onInfoChange }) => {
                     }))
                   : []
               }
-              allItems={categories.map((cat) => ({
-                id: typeof cat.id === "string" ? parseInt(cat.id) : cat.id,
-                name: cat.name,
-              }))}
+              allItems={
+                Array.isArray(categories)
+                  ? categories.map((cat) => ({
+                      id:
+                        typeof cat.id === "string" ? parseInt(cat.id) : cat.id,
+                      name: cat.name,
+                    }))
+                  : []
+              }
               showList={showCategoryList}
               setShowList={setShowCategoryList}
               toggleSelection={toggleCategorySelection}
@@ -340,17 +390,26 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onInfoChange }) => {
 
             <Dropdown
               label="Branches"
-              prev={prevcat?.map((cat) => cat.name).join(", ") || ""}
+              prev={
+                Array.isArray(prevcat)
+                  ? prevcat.map((cat) => cat.name).join(", ")
+                  : ""
+              }
               icon={Network}
               selectedItems={
                 Array.isArray(selectedSubCategories)
                   ? selectedSubCategories
                   : []
               }
-              allItems={subCategories.map((cat) => ({
-                id: typeof cat.id === "string" ? parseInt(cat.id) : cat.id,
-                name: cat.name,
-              }))}
+              allItems={
+                Array.isArray(subCategories)
+                  ? subCategories.map((cat) => ({
+                      id:
+                        typeof cat.id === "string" ? parseInt(cat.id) : cat.id,
+                      name: cat.name,
+                    }))
+                  : []
+              }
               showList={showSubCategoryList}
               setShowList={setShowSubCategoryList}
               toggleSelection={toggleSubCategorySelection as any}
@@ -360,13 +419,15 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onInfoChange }) => {
           <Dropdown
             label="Payment Methods"
             prev={
-              prevpay.length > 0
+              Array.isArray(prevpay) && prevpay.length > 0
                 ? prevpay.join(", ")
                 : "Payment Method Not Selected"
             }
             icon={Wallet}
-            selectedItems={selectedPayments}
-            allItems={payment}
+            selectedItems={
+              Array.isArray(selectedPayments) ? selectedPayments : []
+            }
+            allItems={Array.isArray(payment) ? payment : []}
             showList={showPaymentList}
             setShowList={setShowPaymentList}
             toggleSelection={togglePaymentSelection}
