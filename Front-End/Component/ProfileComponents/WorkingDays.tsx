@@ -14,8 +14,6 @@ const getCurrentUser = async () => {
   return JSON.parse(userdata);
 }
 
-
-
 const formatTime = (time: Date | string | undefined | null): string => {
   if (!time) return "--:--";
 
@@ -65,16 +63,24 @@ const WorkingDays = ({
     end?: Date;
   };
 
+  const [userRole, setUserRole] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const user = await getCurrentUser();
-        if (!user) return;
+        if (!user) {
+          setIsLoading(false);
+          return;
+        }
 
         const { id, role } = user;
-        const endpoint = role === 2 ? `/users/worker/` : null;
-        if (endpoint) {
-          const response = await apiClient.get(`${endpoint}${id}`);
+        setUserRole(role);
+
+        // Only fetch availability data if user is a worker (role 2)
+        if (role === 2) {
+          const response = await apiClient.get(`/users/worker/${id}`);
           if (response.data.worker.availability) {
             const availableDays = response.data.worker.availability;
             console.log("Available days from API:", availableDays);
@@ -101,11 +107,14 @@ const WorkingDays = ({
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchUser();
   }, []);
+
   const [days, setDays] = useState<Day[]>([
     { name: "sunday", isEnabled: false },
     { name: "monday", isEnabled: false },
@@ -170,6 +179,16 @@ const WorkingDays = ({
     }
   };
 
+  // Don't render anything while loading
+  if (isLoading) {
+    return null;
+  }
+
+  // Don't render for clients (role 1) - only show for workers (role 2)
+  if (userRole !== 2) {
+    return null;
+  }
+
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Edit Working Days</Text>
@@ -198,6 +217,7 @@ const WorkingDays = ({
     </View>
   );
 };
+
 const styles = StyleSheet.create({
   section: {
     backgroundColor: "#fff",
@@ -251,4 +271,5 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 });
+
 export default WorkingDays;

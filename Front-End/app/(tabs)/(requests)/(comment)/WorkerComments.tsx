@@ -18,6 +18,7 @@ import apiClient from "@/api/appClient";
 import { handelcall, handleEmailPress } from "../SomeStandarFunctions";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { store } from "expo-router/build/global-state/router-store";
+import { CheckCircle } from "lucide-react-native";
 
 // Updated interface to match backend response from getRequestMessages
 interface WorkerComment {
@@ -123,8 +124,8 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
         newSet.add(workerId);
         return newSet;
       });
-    } catch (error) {
-      console.error("Error accepting request:", error);
+    } catch (error: any) {
+      console.error("Error accepting request:", error.response.data);
       Alert.alert(
         "Error",
         "Failed to accept the work request. Please try again."
@@ -244,15 +245,45 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-100">
+    <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1"
+        style={{ flex: 1 }}
       >
+        {/* Header */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            paddingHorizontal: 16,
+            paddingVertical: 16,
+            borderBottomWidth: 1,
+            borderBottomColor: "#F3F4F6",
+            backgroundColor: "white",
+          }}
+        >
+          <MaterialCommunityIcons
+            name="comment-multiple-outline"
+            size={20}
+            color="#22C55E"
+          />
+          <Text
+            style={{
+              fontSize: 18,
+              fontWeight: "600",
+              color: "#111827",
+              marginLeft: 8,
+              fontFamily: "Itim_400Regular",
+            }}
+          >
+            Worker Responses
+          </Text>
+        </View>
+
         <FlatList
           data={workerCommentsArray}
           keyExtractor={(item: WorkerComment) => item.worker_id.toString()}
-          contentContainerStyle={{ padding: 10 }}
+          contentContainerStyle={{ padding: 16 }}
           onEndReached={() => {
             if (requestId && !isNaN(requestId) && hasMore && !loading) {
               fetchWorkerComments(requestId, page);
@@ -260,13 +291,48 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
           }}
           onEndReachedThreshold={0.5}
           ListFooterComponent={
-            loading ? <ActivityIndicator size="large" color="#0000ff" /> : null
+            loading ? (
+              <View style={{ padding: 20, alignItems: "center" }}>
+                <ActivityIndicator size="large" color="#22C55E" />
+              </View>
+            ) : null
           }
           ListEmptyComponent={
             !loading ? (
-              <View className="mt-10 items-center">
-                <Text className="text-gray-500 text-lg">
+              <View
+                style={{
+                  backgroundColor: "#F9FAFB",
+                  borderRadius: 12,
+                  padding: 32,
+                  alignItems: "center",
+                  marginTop: 20,
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="comment-remove-outline"
+                  size={48}
+                  color="#9CA3AF"
+                />
+                <Text
+                  style={{
+                    color: "#6B7280",
+                    fontSize: 16,
+                    marginTop: 12,
+                    fontFamily: "Itim_400Regular",
+                  }}
+                >
                   No worker responses yet
+                </Text>
+                <Text
+                  style={{
+                    color: "#9CA3AF",
+                    fontSize: 14,
+                    marginTop: 4,
+                    textAlign: "center",
+                    fontFamily: "Itim_400Regular",
+                  }}
+                >
+                  Workers will appear here when they respond to your request
                 </Text>
               </View>
             ) : null
@@ -274,142 +340,322 @@ const WorkerComments: React.FC<WorkerCommentsProps> = ({
           renderItem={({ item }: { item: WorkerComment }) => {
             const isExpanded = expandedCommentIds.has(item.worker_id);
             return (
-              <View className="mb-4">
-                <View className="bg-white rounded-lg shadow-sm overflow-hidden">
-                  {/* Header with user info */}
-                  <View className=" flex-row p-4 border-b border-gray-100">
+              <View
+                style={{
+                  backgroundColor: "white",
+                  borderRadius: 12,
+                  marginBottom: 12,
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.05,
+                  shadowRadius: 2,
+                  elevation: 2,
+                  overflow: "hidden",
+                }}
+              >
+                {/* Header with user info */}
+                <View
+                  style={{
+                    flexDirection: "row",
+                    padding: 16,
+                    alignItems: "center",
+                  }}
+                >
+                  <TouchableOpacity
+                    style={{ marginRight: 12 }}
+                    onPress={() => {
+                      navigateToProfile(item.worker_id, 2);
+                    }}
+                  >
+                    {item.profile_image ? (
+                      <Image
+                        source={{ uri: item.profile_image }}
+                        style={{
+                          width: 48,
+                          height: 48,
+                          borderRadius: 24,
+                        }}
+                      />
+                    ) : (
+                      <View
+                        style={{
+                          width: 48,
+                          height: 48,
+                          borderRadius: 24,
+                          backgroundColor: "#22C55E",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "white",
+                            fontSize: 18,
+                            fontWeight: "600",
+                            fontFamily: "Itim_400Regular",
+                          }}
+                        >
+                          {item.username.charAt(0).toUpperCase()}
+                        </Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+
+                  <View style={{ flex: 1 }}>
                     <TouchableOpacity
-                      className=" mr-3"
                       onPress={() => {
                         navigateToProfile(item.worker_id, 2);
                       }}
                     >
-                      {item.profile_image ? (
-                        <Image
-                          source={{ uri: item.profile_image }}
-                          className="w-12 h-12 rounded-full"
-                        />
-                      ) : (
-                        <View className="w-12 h-12 rounded-full bg-green-700 items-center justify-center">
-                          <Text className="text-white text-lg font-bold">
-                            {item.username.charAt(0).toUpperCase()}
-                          </Text>
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                    <View className="flex-1 justify-center">
-                      <TouchableOpacity
-                        onPress={() => {
-                          navigateToProfile(item.worker_id, 2);
+                      <Text
+                        style={{
+                          fontSize: 16,
+                          fontWeight: "600",
+                          color: "#111827",
+                          fontFamily: "Itim_400Regular",
+                          marginBottom: 2,
                         }}
                       >
-                        <Text className="text-lg font-semibold">
-                          {item.username}
-                        </Text>
-                      </TouchableOpacity>
-                      <Text className="text-xs text-gray-500">
-                        {item.location.city || "Unknown"},{" "}
-                        {item.location.region || "Unknown"}
+                        {item.username}
                       </Text>
-                      {item.categories.length > 0 && (
-                        <Text className="text-xs text-gray-600 mt-1">
-                          {item.categories.join(", ")}
-                        </Text>
-                      )}
-                    </View>
-                    <View className=" flex-col justify-between py-3">
-                      <View className="flex-row ">
-                        {requestStatus == "Accepted" && (
-                          <View style={{ flexDirection: "row" }}>
-                            <TouchableOpacity
-                              className="mr-4"
-                              onPress={() => {
-                                handelcall(item.phone_number);
-                              }}
-                            >
-                              <Ionicons name="call" size={32} color="#000" />
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              onPress={() => {
-                                handleEmailPress(item.email);
-                              }}
-                            >
-                              <MaterialCommunityIcons
-                                name="message-badge-outline"
-                                size={32}
-                                color="#000"
-                              />
-                            </TouchableOpacity>
-                          </View>
-                        )}
-                      </View>
-                      <Text className="text-xs text-gray-500">
-                        {formatDate(item.created_at)}
+                    </TouchableOpacity>
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: "#6B7280",
+                        fontFamily: "Itim_400Regular",
+                        marginBottom: 2,
+                      }}
+                    >
+                      {item.location.city || "Unknown"},{" "}
+                      {item.location.region || "Unknown"}
+                    </Text>
+                    {item.categories.length > 0 && (
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          color: "#9CA3AF",
+                          fontFamily: "Itim_400Regular",
+                        }}
+                      >
+                        {item.categories.length > 3
+                          ? `${item.categories.slice(0, 3).join(", ")} +${item.categories.length - 3} more`
+                          : item.categories.join(", ")}
                       </Text>
-                    </View>
+                    )}
                   </View>
 
-                  {/* Comment section - clickable */}
-                  <TouchableOpacity
-                    className="p-4 bg-gray-50"
-                    onPress={() => toggleCommentExpansion(item.worker_id)}
-                  >
-                    <Text className="text-gray-800">
-                      {isExpanded
-                        ? item.message
-                        : item.message && item.message.length > 60
-                          ? `${item.message.substring(0, 60)}...`
-                          : item.message}
+                  <View style={{ alignItems: "flex-end" }}>
+                    {requestStatus == "Accepted" && (
+                      <View style={{ flexDirection: "row", marginBottom: 8 }}>
+                        <TouchableOpacity
+                          style={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: 18,
+                            backgroundColor: "#F0FDF4",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            marginRight: 8,
+                          }}
+                          onPress={() => {
+                            handelcall(item.phone_number);
+                          }}
+                        >
+                          <Ionicons name="call" size={18} color="#22C55E" />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: 18,
+                            backgroundColor: "#F0FDF4",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                          onPress={() => {
+                            handleEmailPress(item.email);
+                          }}
+                        >
+                          <MaterialCommunityIcons
+                            name="message-badge-outline"
+                            size={18}
+                            color="#22C55E"
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                    <Text
+                      style={{
+                        fontSize: 11,
+                        color: "#9CA3AF",
+                        fontFamily: "Itim_400Regular",
+                      }}
+                    >
+                      {formatDate(item.created_at)}
                     </Text>
-                    {!isExpanded &&
-                      item.message &&
-                      item.message.length > 60 && (
-                        <Text className="text-blue-600 mt-1">Read more</Text>
-                      )}
-                  </TouchableOpacity>
+                  </View>
+                </View>
 
-                  {/* Action buttons - only shown when expanded */}
-                  {isExpanded && (
-                    <View className="flex-col w-full">
-                      {!(
-                        (isWaitingAgreement == item.worker_id ||
-                          status == "verification pending") &&
-                        (item.worker_id == workerIdNumber ||
-                          item.worker_id == isWaitingAgreement)
-                      ) ? (
-                        !isWaitingAgreement &&
-                        !(status == "Accepted") && (
-                          <TouchableOpacity
-                            onPress={() => {
-                              handleAccept(item.worker_id);
+                {/* Comment section - clickable */}
+                <TouchableOpacity
+                  style={{
+                    paddingHorizontal: 16,
+                    paddingVertical: 12,
+                    backgroundColor: "#F9FAFB",
+                    borderTopWidth: 1,
+                    borderTopColor: "#F3F4F6",
+                  }}
+                  onPress={() => toggleCommentExpansion(item.worker_id)}
+                >
+                  <Text
+                    style={{
+                      color: "#374151",
+                      fontSize: 14,
+                      lineHeight: 20,
+                      fontFamily: "Itim_400Regular",
+                    }}
+                  >
+                    {isExpanded
+                      ? item.message
+                      : item.message && item.message.length > 60
+                        ? `${item.message.substring(0, 60)}...`
+                        : item.message}
+                  </Text>
+                  {!isExpanded && item.message && item.message.length > 60 && (
+                    <Text
+                      style={{
+                        color: "#22C55E",
+                        fontSize: 13,
+                        marginTop: 4,
+                        fontWeight: "500",
+                        fontFamily: "Itim_400Regular",
+                      }}
+                    >
+                      Read more
+                    </Text>
+                  )}
+                </TouchableOpacity>
+
+                {/* Action buttons - only shown when expanded */}
+                {isExpanded && (
+                  <View>
+                    {!(
+                      (isWaitingAgreement == item.worker_id ||
+                        status == "verification pending") &&
+                      (item.worker_id == workerIdNumber ||
+                        item.worker_id == isWaitingAgreement)
+                    ) ? (
+                      !isWaitingAgreement &&
+                      !(status == "Accepted") && (
+                        <TouchableOpacity
+                          onPress={() => {
+                            handleAccept(item.worker_id);
+                          }}
+                          style={{
+                            backgroundColor: "#22C55E",
+                            paddingVertical: 14,
+                            alignItems: "center",
+                            borderTopWidth: 1,
+                            borderTopColor: "#F3F4F6",
+                          }}
+                        >
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              alignItems: "center",
                             }}
-                            className="bg-specialGreen py-3 items-center"
                           >
-                            <Text className="text-white font-bold">
+                            <CheckCircle
+                              size={16}
+                              color="white"
+                              strokeWidth={2.5}
+                            />
+                            <Text
+                              style={{
+                                color: "white",
+                                fontSize: 15,
+                                fontWeight: "600",
+                                marginLeft: 6,
+                                fontFamily: "Itim_400Regular",
+                              }}
+                            >
                               Accept Worker
                             </Text>
-                          </TouchableOpacity>
-                        )
-                      ) : (
-                        <View>
-                          <View className="bg-gray-200 py-3 items-center">
-                            <Text className="text-white font-bold">
+                          </View>
+                        </TouchableOpacity>
+                      )
+                    ) : (
+                      <View>
+                        <View
+                          style={{
+                            backgroundColor: "#F3F4F6",
+                            paddingVertical: 14,
+                            alignItems: "center",
+                            borderTopWidth: 1,
+                            borderTopColor: "#E5E7EB",
+                          }}
+                        >
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              alignItems: "center",
+                            }}
+                          >
+                            <MaterialCommunityIcons
+                              name="clock-outline"
+                              size={16}
+                              color="#6B7280"
+                            />
+                            <Text
+                              style={{
+                                color: "#6B7280",
+                                fontSize: 15,
+                                fontWeight: "500",
+                                marginLeft: 6,
+                                fontFamily: "Itim_400Regular",
+                              }}
+                            >
                               Waiting for agreement
                             </Text>
                           </View>
-                          <TouchableOpacity
-                            className="bg-red-900 py-3 items-center"
-                            onPress={() => handleReject(item.worker_id)}
-                          >
-                            <Text className="text-white font-bold">
-                              Cansele
-                            </Text>
-                          </TouchableOpacity>
                         </View>
-                      )}
-                    </View>
-                  )}
-                </View>
+                        <TouchableOpacity
+                          style={{
+                            backgroundColor: "#DC2626",
+                            paddingVertical: 14,
+                            alignItems: "center",
+                          }}
+                          onPress={() => handleReject(item.worker_id)}
+                        >
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              alignItems: "center",
+                            }}
+                          >
+                            <MaterialCommunityIcons
+                              name="close-circle-outline"
+                              size={16}
+                              color="white"
+                            />
+                            <Text
+                              style={{
+                                color: "white",
+                                fontSize: 15,
+                                fontWeight: "600",
+                                marginLeft: 6,
+                                fontFamily: "Itim_400Regular",
+                              }}
+                            >
+                              Cancel
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+                )}
               </View>
             );
           }}

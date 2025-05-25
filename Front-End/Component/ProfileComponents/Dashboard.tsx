@@ -173,7 +173,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         </View>
 
         {/* Activity Overview Card */}
-        <View style={{
+        {/* <View style={{
           backgroundColor: "#F0FDF4",
           borderRadius: 12,
           padding: 16,
@@ -195,7 +195,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           }}>
             Total Requests
           </Text>
-        </View>
+        </View> */}
       </View>
 
       {/* Stats Cards */}
