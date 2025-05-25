@@ -129,7 +129,7 @@ const AddressSection = ({
       try {
         setLoading(true);
         const response = await apiClient.get(
-          `${CONFIG.API_URL}/address/regions/1`
+          `/address/regions/1`
         );
         setWilayas(response.data.regions);
         setFilteredWilayas(response.data.regions);
@@ -200,14 +200,16 @@ const AddressSection = ({
     setFilteredData: (filtered: any[]) => void,
     key: string
   ) => {
-    if (text.length === 0) {
-      setFilteredData([]);
-    } else {
-      setFilteredData(
-        data.filter((item) =>
-          item[key].toLowerCase().includes(text.toLowerCase())
-        )
-      );
+    if (text) {
+      if (text.length === 0) {
+        setFilteredData([]);
+      } else {
+        setFilteredData(
+          data.filter((item) =>
+            item[key].toLowerCase().includes(text.toLowerCase())
+          )
+        );
+      }
     }
   };
 

@@ -17,6 +17,8 @@ import PasswordInput from "@/Component/SettingComponents/PasswordInput";
 import { useRouter } from "expo-router";
 import { useFonts, Itim_400Regular } from "@expo-google-fonts/itim";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import apiClient from "@/api/appClient";
 type RootStackParamList = {
   Setting: undefined;
 };
@@ -28,9 +30,11 @@ const ChangePassword = ({ navigation }: ChangePasswordprops) => {
   const [password, setPassword] = useState("");
   const [newpassword, setNewPassword] = useState("");
   const [repeatnewpassword, setrepeatnewpassword] = useState("");
+    const [error, setError] = useState("");
+
   const [same, setsame] = useState(false);
   const router = useRouter();
-  const handlePasswordChange = () => {
+  const handlePasswordChange = async() => {
     
     if (!newpassword.trim() || !repeatnewpassword.trim()) {
       return Alert.alert("⚠️ Warning", "Please fill in all fields!");
@@ -51,9 +55,30 @@ const ChangePassword = ({ navigation }: ChangePasswordprops) => {
       );
     }
     setsame(true);
-    Alert.alert("✅ Success", "Password changed successfully!", [
-      { text: "OK", onPress: () => router.push("/(tabs)/(profile)/(settings)") },
-    ]);
+    try {
+      const userData = await AsyncStorage.getItem("user");
+      const user = userData ? JSON.parse(userData) : null;
+      if (!user?.id) {
+        return Alert.alert("Error", "User not found.");
+      }
+      const response = await apiClient.post(`/users/${user.id}/reset`, {
+        password :password
+      });
+
+      if (response.status === 200 ) {
+        const res = await apiClient.put(`/users/${user.id}`, {
+        credentials :{password : newpassword}});
+      if (res.status === 200) {
+      Alert.alert("✅ Success", "Password changed successfully!");
+      router.push("/(tabs)/(profile)/(settings)");
+      }
+    }
+    } catch (error : any){
+     Alert.alert("❌ Error", "An error occurred while changing password.");
+     console.log(error.response.data);
+     setError(error.response.data.message);
+    }
+
   };
 
   return (
@@ -80,9 +105,10 @@ const ChangePassword = ({ navigation }: ChangePasswordprops) => {
               <PasswordInput
                 label="Current Password"
                 placeholder="Enter The Current Password"
-                onValueChange={setPassword}
+                onValueChange={(e)=>{setPassword(e) ,setError('')}}
                 validate={false}
               />
+              {error !== '' ? <Text className="text-red-500"> {error}</Text> : null}
 
               <PasswordInput
                 label="New Password"

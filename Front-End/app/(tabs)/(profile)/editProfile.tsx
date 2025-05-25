@@ -12,6 +12,7 @@ import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import apiClient from "@/api/appClient";
 import refreshAccessToken from "@/api/refreshAccessToken";
+import { object } from "yup";
 type RootStackParamList = {
   Profile: undefined;
 };
@@ -90,14 +91,14 @@ const EditProfileScreen = ({ navigation }: ProfileScreenProps) => {
   const [userInfo, setUserInfo] = useState<UserInfoData>({
     fullName: "",
     accountType: null,
-    paymentMethods: [],
+    paymentMethods: [], // Initialize as empty array
     bio: "",
-    subCategories: [],
+    subCategories: [], // Initialize as empty array
   });
 
   const [workingDays, setWorkingDays] = useState<
-    { day : number,name: string; begin: string; end: string }[]
-  >([]);
+    { day: number; name: string; begin: string; end: string }[]
+  >([]); // Initialize with empty array
   type AddressInfo = {
     region: number | null;
     city: number | null;
@@ -140,15 +141,15 @@ const EditProfileScreen = ({ navigation }: ProfileScreenProps) => {
     const initialPaymentIds = (initialData.paymentMethod || []).map(
       (item: any) => (typeof item === "object" ? item.id : item)
     );
-
-    if (
-      userInfo.paymentMethods.length > 0 &&
-      JSON.stringify(userInfo.paymentMethods.sort()) !==
-        JSON.stringify(initialPaymentIds.sort())
-    ) {
-      changes.paymentMethods = userInfo.paymentMethods;
+    if (userInfo.paymentMethods) {
+      if (
+        userInfo.paymentMethods.length > 0 &&
+        JSON.stringify(userInfo.paymentMethods.sort()) !==
+          JSON.stringify(initialPaymentIds.sort())
+      ) {
+        changes.paymentMethods = userInfo.paymentMethods;
+      }
     }
-
     // Compare bio - only add if it has changed and is not empty
     if (
       userInfo.bio &&
@@ -162,15 +163,15 @@ const EditProfileScreen = ({ navigation }: ProfileScreenProps) => {
     const initialCategoryIds = (initialData.category || []).map((cat: any) =>
       typeof cat === "object" ? cat.id : cat
     );
-
-    if (
-      userInfo.subCategories.length > 0 &&
-      JSON.stringify(userInfo.subCategories.sort()) !==
-        JSON.stringify(initialCategoryIds.sort())
-    ) {
-      changes.subCategories = userInfo.subCategories;
+    if (userInfo.subCategories) {
+      if (
+        userInfo.subCategories.length > 0 &&
+        JSON.stringify(userInfo.subCategories.sort()) !==
+          JSON.stringify(initialCategoryIds.sort())
+      ) {
+        changes.subCategories = userInfo.subCategories;
+      }
     }
-
     return changes;
   };
 
@@ -217,28 +218,23 @@ const EditProfileScreen = ({ navigation }: ProfileScreenProps) => {
 
       // Get changed user info and add to changes object if not empty
       const changedUserInfo = getChangedUserInfo();
-      if (Object.keys(changedUserInfo).length > 0) {
+      if (changedUserInfo && Object.keys(changedUserInfo).length > 0) {
         changes.userInfo = changedUserInfo;
       }
-
       // Add workingDays directly if not empty
-      if (workingDays.length > 0) {
+      if (workingDays && workingDays.length > 0) {
         changes.workingDays = workingDays;
       }
-
       // Get changed address info and add to changes object if not empty
       const changedAddressInfo = getChangedAddressInfo();
-      if (
-        Object.keys(changedAddressInfo).length > 0 &&
-        changedAddressInfo.region != null
-      ) {
+      if (changedAddressInfo && Object.keys(changedAddressInfo).length > 0) {
         changes.addressInfo = changedAddressInfo;
       } else {
         changes.addressInfo = null;
       }
 
       // Only make API request if there are actual changes
-      if (Object.keys(changes).length > 0) {
+      if (changes && Object.keys(changes).length > 0) {
         // Retrieve user data for the API call
         const userData = await AsyncStorage.getItem("user");
         const user: any = JSON.parse(userData as any);
@@ -255,18 +251,19 @@ const EditProfileScreen = ({ navigation }: ProfileScreenProps) => {
           const payload: any = {};
 
           // Only include workerInfo if any of its fields changed
+
           if (
-            (changes.userInfo && Object.keys(changes.userInfo).length > 0) ||
-            (changes.workingDays && changes.workingDays.length > 0)
+            (changes.userInfo && Object.keys(changes.userInfo)?.length > 0) ||
+            (changes.workingDays && changes.workingDays?.length > 0)
           ) {
             payload.workerInfo = {};
-            if (changes.workingDays && changes.workingDays.length > 0) {
+            if (changes.workingDays && changes.workingDays?.length > 0) {
               payload.workerInfo.workingHours = changes.workingDays;
             }
-            if (changes.userInfo?.categories) {
+            if (changes.userInfo && changes.userInfo.categories) {
               payload.workerInfo.categories = changes.userInfo.categories;
             }
-            if (changes.userInfo?.bio) {
+            if (changes.userInfo && changes.userInfo.bio) {
               payload.workerInfo.bio = changes.userInfo.bio;
             }
           }
@@ -288,7 +285,7 @@ const EditProfileScreen = ({ navigation }: ProfileScreenProps) => {
             console.error("Failed to update profile:", response.data);
           }
         }
-      } else{
+      } else {
         console.log("No changes to save");
         router.back();
       }
@@ -302,7 +299,6 @@ const EditProfileScreen = ({ navigation }: ProfileScreenProps) => {
       // Handle error (show alert, etc.)
     }
   };
-
   const renderItem = () => (
     <>
       <GeneralInfo onInfoChange={setUserInfo} />

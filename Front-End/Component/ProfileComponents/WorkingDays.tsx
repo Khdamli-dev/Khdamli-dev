@@ -8,6 +8,12 @@ import TimePicker from "./TimePicker";
 import apiClient from "@/api/appClient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import refreshAccessToken from "@/api/refreshAccessToken";
+
+const getCurrentUser = async () => {
+  const userdata = await AsyncStorage.getItem("user") || '';
+  return JSON.parse(userdata);
+}
+
 const formatTime = (time: Date | string | undefined | null): string => {
   if (!time) return "--:--";
 
@@ -42,11 +48,13 @@ const formatTime = (time: Date | string | undefined | null): string => {
     return "--:--";
   }
 };
-const [isWorker , setIsWorker] =useState(false);
+
 const WorkingDays = ({
   onChange,
 }: {
-  onChange: (days: { day : number ;name: string; begin: string; end: string }[]) => void;
+  onChange: (
+    days: { day: number; name: string; begin: string; end: string }[]
+  ) => void;
 }) => {
   type Day = {
     name: string;
@@ -55,21 +63,24 @@ const WorkingDays = ({
     end?: Date;
   };
 
+  const [userRole, setUserRole] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const userData = await AsyncStorage.getItem("user");
-        const user: any = JSON.parse(userData as any);
-
-        if (!user) return;
+        const user = await getCurrentUser();
+        if (!user) {
+          setIsLoading(false);
+          return;
+        }
 
         const { id, role } = user;
-        if (role ===2) {
-          setIsWorker(true);
-        }
-        const endpoint = role === 2 ? `/users/worker/` : null;
-        if (endpoint) {
-          const response = await apiClient.get(`${endpoint}${id}`);
+        setUserRole(role);
+
+        // Only fetch availability data if user is a worker (role 2)
+        if (role === 2) {
+          const response = await apiClient.get(`/users/worker/${id}`);
           if (response.data.worker.availability) {
             const availableDays = response.data.worker.availability;
             console.log("Available days from API:", availableDays);
@@ -96,11 +107,14 @@ const WorkingDays = ({
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchUser();
   }, []);
+
   const [days, setDays] = useState<Day[]>([
     { name: "sunday", isEnabled: false },
     { name: "monday", isEnabled: false },
@@ -110,7 +124,7 @@ const WorkingDays = ({
     { name: "friday", isEnabled: false },
     { name: "saturday", isEnabled: false },
   ]);
- 
+
   const [showPicker, setShowPicker] = useState<{
     index: number;
     type: "begin" | "end";
@@ -132,7 +146,7 @@ const WorkingDays = ({
     const selectedDays = newDays
       .filter((day) => day.isEnabled)
       .map((day) => ({
-        name : day.name,
+        name: day.name,
         day: dayNameToNumber[day.name], // Use number instead of name
         begin: day.begin ? formatTime(day.begin) : "08:00",
         end: day.end ? formatTime(day.end) : "16:00",
@@ -165,10 +179,18 @@ const WorkingDays = ({
     }
   };
 
-   return (
-    <>
-    {isWorker && (
-      <View style={styles.section}>
+  // Don't render anything while loading
+  if (isLoading) {
+    return null;
+  }
+
+  // Don't render for clients (role 1) - only show for workers (role 2)
+  if (userRole !== 2) {
+    return null;
+  }
+
+  return (
+    <View style={styles.section}>
       <Text style={styles.sectionTitle}>Edit Working Days</Text>
       <View style={styles.headerRow}>
         <Text style={styles.ghi}>Days</Text>
@@ -176,16 +198,16 @@ const WorkingDays = ({
         <Text style={styles.ghi}>To</Text>
       </View>
 
-      {days.map((day, index) => (
-        <DayRow
-          key={day.name}
-          day={day}
-          index={index}
-          toggleDay={toggleDay}
-          setShowPicker={setShowPicker}
-          formatTime={formatTime}
-        />
-      ))}
+          {days.map((day, index) => (
+            <DayRow
+              key={day.name}
+              day={day}
+              index={index}
+              toggleDay={toggleDay}
+              setShowPicker={setShowPicker}
+              formatTime={formatTime}
+            />
+          ))}
 
       <TimePicker
         showPicker={showPicker}
@@ -193,12 +215,9 @@ const WorkingDays = ({
         handleTimeChange={handleTimeChange}
       />
     </View>
-    )}
-    
-    </>
-    
-  );  
+  );
 };
+
 const styles = StyleSheet.create({
   section: {
     backgroundColor: "#fff",
@@ -252,4 +271,5 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 });
+
 export default WorkingDays;
