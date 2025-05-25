@@ -95,9 +95,14 @@ const getPublicRequests = async (req: Request, res: Response) => {
     ];
 
     if (role === "worker") {
-      conditions.push(category ? "r.category = $1" : "r.category = ANY($1)");
+      conditions.push(`
+    r.category = ANY (
+      SELECT DISTINCT c.parent_category
+      FROM category c
+      WHERE c.id = ANY($1)
+    )
+  `);
     }
-
     const values: any[] =
       role === "worker" ? [category || workerCategories] : [];
     const query = `
