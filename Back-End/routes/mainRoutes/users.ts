@@ -9,6 +9,7 @@ import getClientProfile from "../../controller/profile/getClientProfile";
 import getWorkerProfile from "../../controller/profile/getWorkerProfile";
 import checkRole from "../../middleware/checkRole";
 import { uploadWorkerMedia } from "../../controller/upload/uploadWorkerMedia";
+import authPassword from "../../utils/update/authPassword";
 
 const users: Router = express.Router();
 
@@ -19,6 +20,7 @@ const workerRoleId = Number(process.env.WORKER_ROLE_ID);
 users.put("/:id", assignAddress, updateProfile);
 users.put("/:id/role/worker", checkRole([clientRoleId]), changeToWorkerRole);
 users.put("/:id/profile-picture", uploadProfilePicture);
+users.post("/:id/reset", authPassword);
 users.delete("/:id", deleteUser);
 users.get("/client/:id", getClientProfile);
 users.get("/worker/:id", getWorkerProfile);
