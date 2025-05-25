@@ -38,7 +38,7 @@ export default function SelectRole() {
       if (userData) {
         const user: any = JSON.parse(userData); // Parse the user data
         // Make the API request to update the role
-        const response = await apiClient.put(`users/${user.id}/role/worker`);
+        const response = await apiClient.put(`/users/${user.id}/role/worker`);
 
         if (response.data.success) {
                   const {

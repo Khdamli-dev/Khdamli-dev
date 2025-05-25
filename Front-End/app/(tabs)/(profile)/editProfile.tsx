@@ -253,11 +253,11 @@ const EditProfileScreen = ({ navigation }: ProfileScreenProps) => {
           // Only include workerInfo if any of its fields changed
 
           if (
-            (changes.userInfo && Object.keys(changes.userInfo).length > 0) ||
-            (changes.workingDays && changes.workingDays.length > 0)
+            (changes.userInfo && Object.keys(changes.userInfo)?.length > 0) ||
+            (changes.workingDays && changes.workingDays?.length > 0)
           ) {
             payload.workerInfo = {};
-            if (changes.workingDays && changes.workingDays.length > 0) {
+            if (changes.workingDays && changes.workingDays?.length > 0) {
               payload.workerInfo.workingHours = changes.workingDays;
             }
             if (changes.userInfo && changes.userInfo.categories) {

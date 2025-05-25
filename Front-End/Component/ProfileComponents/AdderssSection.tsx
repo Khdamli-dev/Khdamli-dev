@@ -129,7 +129,7 @@ const AddressSection = ({
       try {
         setLoading(true);
         const response = await apiClient.get(
-          `${CONFIG.API_URL}/address/regions/1`
+          `/address/regions/1`
         );
         setWilayas(response.data.regions);
         setFilteredWilayas(response.data.regions);

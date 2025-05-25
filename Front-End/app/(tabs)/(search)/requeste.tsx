@@ -184,7 +184,7 @@ const CreateRequestScreen: React.FC<Props> = ({ type }) => {
 
     try {
       const response = await apiClient.put(
-        `work/job-request/media/${requestId}`,
+        `/work/job-request/media/${requestId}`,
         formData,
         {
           headers: {

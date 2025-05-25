@@ -55,7 +55,7 @@ export default function Login() {
     setEmailError('');
     setPasswordError('');
     try {
-      const response = await apiClient.post(`auth/login`, values);
+      const response = await apiClient.post(`/auth/login`, values);
       if (response.data.success) {
         const user: any = response.data.user;
         await AsyncStorage.setItem('user', JSON.stringify(user));
