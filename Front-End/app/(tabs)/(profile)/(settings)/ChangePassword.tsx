@@ -75,7 +75,6 @@ const ChangePassword = ({ navigation }: ChangePasswordprops) => {
     }
     } catch (error : any){
      Alert.alert("❌ Error", "An error occurred while changing password.");
-     console.log(error.response.data);
      setError(error.response.data.message);
     }
 
