@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,35 +8,35 @@ import {
   Dimensions,
   Pressable,
   Platform,
-} from "react-native";
-import * as SecureStore from "expo-secure-store";
+} from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 import {
   AntDesign,
   FontAwesome5,
   Fontisto,
   FontAwesome,
   MaterialCommunityIcons,
-} from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { KeyboardAvoidingView, ScrollView } from "react-native";
-import CONFIG from "../../../config";
-import { Formik } from "formik";
-import * as Yup from "yup";
-import { useRouter } from "expo-router";
-import axios from "axios";
-import { LinearGradient } from "expo-linear-gradient";
-import * as Linking from "expo-linking";
-import apiClient from "@/api/appClient";
+} from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { KeyboardAvoidingView, ScrollView } from 'react-native';
+import CONFIG from '../../../config';
+import { Formik } from 'formik';
+import * as Yup from 'yup';
+import { useRouter } from 'expo-router';
+import axios from 'axios';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Linking from 'expo-linking';
+import apiClient from '@/api/appClient';
 
 export default function SignUp() {
-  const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
+  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
   const router = useRouter();
   //Foucused Input : To hidden the Icon
   const [usernameFocusedInput, setUsernameFocusedInputt] = useState<
     string | null
   >(null);
   const [emailFocusedInput, setEmailFocusedInput] = useState<string | null>(
-    null
+    null,
   );
   const [phonenumberFocusedInput, setPhonenumberFocusedInput] = useState<
     string | null
@@ -51,38 +51,38 @@ export default function SignUp() {
   // Validation schema using Yup
   const validationSchema = Yup.object({
     username: Yup.string()
-      .required("Username is required")
-      .min(3, "Username must be at least 3 characters")
-      .max(20, "Username cannot exceed 20 characters")
+      .required('Username is required')
+      .min(3, 'Username must be at least 3 characters')
+      .max(20, 'Username cannot exceed 20 characters')
       .matches(
         /^[a-zA-Z0-9_ ]+$/,
-        "Only letters, numbers, and underscores are allowed"
+        'Only letters, numbers, and underscores are allowed',
       ),
     email: Yup.string()
-      .email("Invalid email address")
-      .required("Email Is Required"),
+      .email('Invalid email address')
+      .required('Email Is Required'),
     phoneNumber: Yup.string().matches(
       /^0(5|6|7)[0-9]{8}$/,
-      "Invalid  phone number"
+      'Invalid  phone number',
     ),
     password: Yup.string()
-      .required("Password is required")
+      .required('Password is required')
       .matches(
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*#.?&_-]).{8,64}$/,
-        "Password must be 8-64 characters long and include at least one lowercase letter, one uppercase letter, one number, and one special character"
+        'Password must be 8-64 characters long and include at least one lowercase letter, one uppercase letter, one number, and one special character',
       ),
     retypePassword: Yup.string()
-      .oneOf([Yup.ref("password"), undefined], "Passwords must match")
-      .required("Retype Password "),
+      .oneOf([Yup.ref('password'), undefined], 'Passwords must match')
+      .required('Retype Password '),
     terms: Yup.boolean()
-      .oneOf([true], "You must accept the terms and conditions")
-      .required("You Must Agrre to The Terms"),
+      .oneOf([true], 'You must accept the terms and conditions')
+      .required('You Must Agrre to The Terms'),
   });
 
   // handSignUp
-  const [usernameError, setUsernameError] = useState("");
-  const [emailError, setEmailError] = useState("");
-  const [phoneNumberError, setPhoneNumberError] = useState("");
+  const [usernameError, setUsernameError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [phoneNumberError, setPhoneNumberError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   const handlSignUp = async ({
@@ -108,34 +108,36 @@ export default function SignUp() {
       });
       if (response?.status === 201) {
         const user = response.data.user;
-        await AsyncStorage.setItem("user", JSON.stringify(user));
+        await AsyncStorage.setItem('user', JSON.stringify(user));
         const {
           accessToken,
           refreshToken,
         }: { accessToken: string; refreshToken: string } = response.data;
-        await SecureStore.setItemAsync("accessToken", accessToken);
-        await SecureStore.setItemAsync("refreshToken", refreshToken);
-        await SecureStore.setItemAsync("email", email);
-        await SecureStore.setItemAsync("password", password);
-        router.replace("/OtherInformation");
+        await SecureStore.setItemAsync('accessToken', accessToken);
+        await SecureStore.setItemAsync('refreshToken', refreshToken);
+        await SecureStore.setItemAsync('email', email);
+        await SecureStore.setItemAsync('password', password);
+        router.replace('/OtherInformation');
       }
     } catch (error: any) {
       console.log(error.response.data);
       if (error.response?.status === 400 && error.response.data) {
         setUsernameError(
-          !error.response.data.username ? "Username is already used" : ""
+          !error.response.data.username ? 'Username is already used' : '',
         );
         setEmailError(
-          !error.response.data.email ? "Email is already used" : ""
+          !error.response.data.email ? 'Email is already used' : '',
         );
         setPhoneNumberError(
-          !error.response.data.phoneNumber ? "Phone number is already used" : ""
+          !error.response.data.phoneNumber
+            ? 'Phone number is already used'
+            : '',
         );
       } else {
-        setUsernameError("");
-        setEmailError("");
-        setPhoneNumberError("");
-        alert("Server is busy, please try again later");
+        setUsernameError('');
+        setEmailError('');
+        setPhoneNumberError('');
+        alert('Server is busy, please try again later');
         console.log(error);
       }
     }
@@ -148,25 +150,25 @@ export default function SignUp() {
       if (!url) return;
 
       let { path, queryParams } = Linking.parse(url);
-      if (path === "confirm-email" && queryParams?.token) {
+      if (path === 'confirm-email' && queryParams?.token) {
         try {
           const token = queryParams.token;
           const response = await apiClient.post(
-            `/signup/confirm-email/${token}`
+            `/signup/confirm-email/${token}`,
           );
           if (response.data.success) {
-            alert("Success , Email verified successfully!");
-            router.push("/(auth)/(RestorAccount)");
+            alert('Success , Email verified successfully!');
+            router.push('/(auth)/(RestorAccount)');
           } else {
-            alert("Error : Invalid or expired verification link.");
+            alert('Error : Invalid or expired verification link.');
           }
         } catch (error) {
-          alert("Error : Server error. Please try again later.");
+          alert('Error : Server error. Please try again later.');
         }
       }
     };
 
-    const subscription = Linking.addEventListener("url", handleDeepLink);
+    const subscription = Linking.addEventListener('url', handleDeepLink);
 
     return () => {
       subscription.remove();
@@ -176,13 +178,13 @@ export default function SignUp() {
   return (
     <SafeAreaView className="flex- min-h-screen ">
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "padding"}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
           {/* Header */}
           <LinearGradient
-            colors={["#2B524A", "#5EB4A2"]}
+            colors={['#2B524A', '#5EB4A2']}
             start={{ x: 1, y: 0 }}
             end={{ x: 0, y: 1 }}
             style={{
@@ -199,7 +201,7 @@ export default function SignUp() {
             <View className="px-10 pb-5 pt-5">
               <Text
                 style={{
-                  textShadowColor: "#000",
+                  textShadowColor: '#000',
                   textShadowOffset: { width: 1, height: 1 },
                   textShadowRadius: 5,
                 }}
@@ -209,7 +211,7 @@ export default function SignUp() {
               </Text>
               <Text
                 style={{
-                  textShadowColor: "#000",
+                  textShadowColor: '#000',
                   textShadowOffset: { width: 1, height: 1 },
                   textShadowRadius: 5,
                 }}
@@ -223,11 +225,11 @@ export default function SignUp() {
           {/* Form */}
           <Formik
             initialValues={{
-              username: "",
-              email: "",
-              phoneNumber: "",
-              password: "",
-              retypePassword: "",
+              username: '',
+              email: '',
+              phoneNumber: '',
+              password: '',
+              retypePassword: '',
               terms: false,
             }}
             validationSchema={validationSchema}
@@ -252,7 +254,7 @@ export default function SignUp() {
             }) => (
               <View className="w-full flex-1 justify-center items-center  ">
                 <View className="relative w-10/12 h-20 my-2 self-center">
-                  {usernameFocusedInput !== "username" && (
+                  {usernameFocusedInput !== 'username' && (
                     <FontAwesome5
                       name="user-alt"
                       color="#396F65"
@@ -263,20 +265,20 @@ export default function SignUp() {
 
                   <TextInput
                     className={`${
-                      usernameFocusedInput === "username" ? "px-10" : "pl-28"
-                    } w-full h-full  text-2xl font-medium border-2 ${usernameError || (errors.username && touched.username) ? "border-red-600" : "border-specialGreen"}  rounded-full py-2 `}
+                      usernameFocusedInput === 'username' ? 'px-10' : 'pl-28'
+                    } w-full h-full  text-2xl font-medium border-2 ${usernameError || (errors.username && touched.username) ? 'border-red-600' : 'border-specialGreen'}  rounded-full py-2 `}
                     value={values.username}
-                    onChangeText={handleChange("username")}
+                    onChangeText={handleChange('username')}
                     onBlur={() => {
-                      if (values.username === "") {
+                      if (values.username === '') {
                         setUsernameFocusedInputt(null);
                       }
-                      handleBlur("username");
+                      handleBlur('username');
                     }}
                     onFocus={() => {
-                      setUsernameFocusedInputt("username");
-                      setUsernameError("");
-                      setFieldTouched("username", false);
+                      setUsernameFocusedInputt('username');
+                      setUsernameError('');
+                      setFieldTouched('username', false);
                     }}
                     placeholder="User Name"
                     placeholderTextColor="#4C8479"
@@ -294,7 +296,7 @@ export default function SignUp() {
                 ) : null}
 
                 <View className="relative w-10/12 h-20 my-2 self-center">
-                  {emailFocusedInput !== "email" && (
+                  {emailFocusedInput !== 'email' && (
                     <MaterialCommunityIcons
                       name="email"
                       color="#396F65"
@@ -305,20 +307,20 @@ export default function SignUp() {
 
                   <TextInput
                     className={`${
-                      emailFocusedInput === "email" ? "px-10" : "pl-28"
-                    } w-full h-full  text-2xl font-medium border-2 ${emailError || (errors.email && touched.email) ? "border-red-600" : "border-specialGreen"}  rounded-full py-2 `}
+                      emailFocusedInput === 'email' ? 'px-10' : 'pl-28'
+                    } w-full h-full  text-2xl font-medium border-2 ${emailError || (errors.email && touched.email) ? 'border-red-600' : 'border-specialGreen'}  rounded-full py-2 `}
                     value={values.email}
-                    onChangeText={handleChange("email")}
+                    onChangeText={handleChange('email')}
                     onBlur={() => {
-                      if (values.email === "") {
+                      if (values.email === '') {
                         setEmailFocusedInput(null);
                       }
-                      handleBlur("email");
+                      handleBlur('email');
                     }}
                     onFocus={() => {
-                      setEmailFocusedInput("email");
-                      setEmailError("");
-                      setFieldTouched("email", false);
+                      setEmailFocusedInput('email');
+                      setEmailError('');
+                      setFieldTouched('email', false);
                     }}
                     placeholder="Email Address"
                     placeholderTextColor="#4C8479"
@@ -337,7 +339,7 @@ export default function SignUp() {
                 ) : null}
 
                 <View className="relative w-10/12 h-20 my-2 self-center">
-                  {phonenumberFocusedInput !== "phoneNumber" && (
+                  {phonenumberFocusedInput !== 'phoneNumber' && (
                     <FontAwesome
                       name="phone"
                       color="#396F65"
@@ -348,22 +350,22 @@ export default function SignUp() {
 
                   <TextInput
                     className={`${
-                      phonenumberFocusedInput === "phoneNumber"
-                        ? "px-10"
-                        : "pl-28"
-                    } w-full h-full text-2xl font-medium border-2 ${phoneNumberError || (errors.phoneNumber && touched.phoneNumber) ? "border-red-600" : "border-specialGreen"}  rounded-full py-2 `}
+                      phonenumberFocusedInput === 'phoneNumber'
+                        ? 'px-10'
+                        : 'pl-28'
+                    } w-full h-full text-2xl font-medium border-2 ${phoneNumberError || (errors.phoneNumber && touched.phoneNumber) ? 'border-red-600' : 'border-specialGreen'}  rounded-full py-2 `}
                     value={values.phoneNumber}
-                    onChangeText={handleChange("phoneNumber")}
+                    onChangeText={handleChange('phoneNumber')}
                     onBlur={() => {
-                      if (values.phoneNumber === "") {
+                      if (values.phoneNumber === '') {
                         setPhonenumberFocusedInput(null);
                       }
-                      handleBlur("phoneNumber");
+                      handleBlur('phoneNumber');
                     }}
                     onFocus={() => {
-                      setPhonenumberFocusedInput("phoneNumber");
-                      setPhoneNumberError("");
-                      setFieldTouched("phoneNumber", false);
+                      setPhonenumberFocusedInput('phoneNumber');
+                      setPhoneNumberError('');
+                      setFieldTouched('phoneNumber', false);
                     }}
                     placeholder="Phone Number"
                     placeholderTextColor="#4C8479"
@@ -382,7 +384,7 @@ export default function SignUp() {
                 ) : null}
 
                 <View className="relative w-10/12 h-20 my-2 self-center">
-                  {passwordFocusedInput !== "password" && (
+                  {passwordFocusedInput !== 'password' && (
                     <Fontisto
                       name="locked"
                       color="#396F65"
@@ -393,20 +395,20 @@ export default function SignUp() {
 
                   <TextInput
                     className={`${
-                      passwordFocusedInput === "password" ? "pl-10" : "pl-28"
-                    } w-full h-full  text-2xl pr-14 font-medium border-2 ${errors.password && touched.password ? "border-red-600" : "border-specialGreen"}  rounded-full py-2 `}
+                      passwordFocusedInput === 'password' ? 'pl-10' : 'pl-28'
+                    } w-full h-full  text-2xl pr-14 font-medium border-2 ${errors.password && touched.password ? 'border-red-600' : 'border-specialGreen'}  rounded-full py-2 `}
                     value={values.password}
-                    onChangeText={handleChange("password")}
+                    onChangeText={handleChange('password')}
                     onBlur={() => {
-                      if (values.password === "") {
+                      if (values.password === '') {
                         setpasswordFocusedInput(null);
                       }
-                      handleBlur("phoenNumber");
+                      handleBlur('phoenNumber');
                     }}
                     onFocus={() => {
-                      setpasswordFocusedInput("password");
+                      setpasswordFocusedInput('password');
 
-                      setFieldTouched("password", false);
+                      setFieldTouched('password', false);
                     }}
                     placeholder="Password"
                     placeholderTextColor="#4C8479"
@@ -418,7 +420,7 @@ export default function SignUp() {
                   >
                     <MaterialCommunityIcons
                       name="eye"
-                      color={showPassword ? "#4C8479" : "#BED2D0"}
+                      color={showPassword ? '#4C8479' : '#BED2D0'}
                       size={35}
                     />
                   </TouchableOpacity>
@@ -430,7 +432,7 @@ export default function SignUp() {
                 )}
 
                 <View className="relative w-10/12 h-20 my-2 self-center">
-                  {retypepasswordFocusedInput !== "retypePassword" && (
+                  {retypepasswordFocusedInput !== 'retypePassword' && (
                     <Fontisto
                       name="locked"
                       color="#396F65"
@@ -441,22 +443,22 @@ export default function SignUp() {
 
                   <TextInput
                     className={`${
-                      retypepasswordFocusedInput === "retypePassword"
-                        ? "px-10"
-                        : "pl-28"
-                    } w-full h-full  text-2xl font-medium border-2 ${errors.retypePassword && touched.retypePassword ? "border-red-600" : "border-specialGreen"}  rounded-full py-2 `}
+                      retypepasswordFocusedInput === 'retypePassword'
+                        ? 'px-10'
+                        : 'pl-28'
+                    } w-full h-full  text-2xl font-medium border-2 ${errors.retypePassword && touched.retypePassword ? 'border-red-600' : 'border-specialGreen'}  rounded-full py-2 `}
                     value={values.retypePassword}
-                    onChangeText={handleChange("retypePassword")}
+                    onChangeText={handleChange('retypePassword')}
                     onBlur={() => {
-                      if (values.retypePassword === "") {
+                      if (values.retypePassword === '') {
                         setRetypoepasswordFocusedInput(null);
                       }
-                      handleBlur("retypePassword");
+                      handleBlur('retypePassword');
                     }}
                     onFocus={() => {
-                      setRetypoepasswordFocusedInput("retypePassword");
+                      setRetypoepasswordFocusedInput('retypePassword');
 
-                      setFieldTouched("retypePassword", false);
+                      setFieldTouched('retypePassword', false);
                     }}
                     placeholder="Retype Password"
                     placeholderTextColor="#4C8479"
@@ -474,19 +476,19 @@ export default function SignUp() {
                   <Pressable
                     className={`flex items-center justify-center w-6 h-6 mr-2 border-2 rounded-md ${
                       values.terms
-                        ? "bg-green-500 border-green-700"
-                        : "bg-white border-foncyGreen"
+                        ? 'bg-green-500 border-green-700'
+                        : 'bg-white border-foncyGreen'
                     }`}
-                    onPress={() => setFieldValue("terms", !values.terms)}
+                    onPress={() => setFieldValue('terms', !values.terms)}
                   >
                     {values.terms && (
                       <Text className="text-white font-bold">✓</Text>
                     )}
                   </Pressable>
                   <Text className="text-specialGreen text-lg">
-                    I agree to the{" "}
+                    I agree to the{' '}
                   </Text>
-                  <TouchableOpacity onPress={() => router.push("/terms")}>
+                  <TouchableOpacity onPress={() => router.push('/terms')}>
                     <Text className="text-TrmesColor font-bold text-xl border-b-2 border-b-TrmesColor pb-0">
                       Terms & Conditions
                     </Text>
