@@ -71,7 +71,7 @@ Khdamli was developed by a team of six ESI SBA students:
    - [Bouaabdellah](https://github.com/Bouaabdellah)
    - [Mossablt](https://github.com/Mossablt)
    - [mohammedseghiralaa](https://github.com/mohammedseghiralaa)
-   - [filasouf2005](https://github.com/nefsi-abdelouahab)
+   - [nefsi-abdelouahab](https://github.com/nefsi-abdelouahab)
    - [KHALIL-hub5](https://github.com/KHALIL-hub5)
    - [Mino046](https://github.com/Mino046) or [faraday002](https://github.com/faraday002) (both are the same person)
 if you run into any problem with setting the project, contact any person that has put his contact info in his github account from the team above
